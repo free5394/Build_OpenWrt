@@ -124,9 +124,10 @@ jobs:
 
       - name: 复制自定义文件
         run: |
-          cp -rf $GITHUB_WORKSPACE/x86-64/* ${{env.OPENWRT_DIR}}/
-          chmod +x ${{env.OPENWRT_DIR}}/files/etc/uci-defaults/*.sh
-          chmod +x ${{env.OPENWRT_DIR}}/custom_scripts/*.sh
+          cd ${{env.OPENWRT_DIR}}
+          cp -rf ../x86-64/* .
+          chmod +x files/etc/uci-defaults/*.sh
+          chmod +x custom_scripts/*.sh
 
       - name: 更新&安装插件
         run: |
