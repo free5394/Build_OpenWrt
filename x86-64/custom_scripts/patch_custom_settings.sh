@@ -12,8 +12,8 @@ fi
 # =============================================
 # 2. 日志目录创建与输出重定向
 # =============================================
-mkdir -p ./logs
-exec >./logs/patch_custom_settings.log 2>&1
+# mkdir -p ./logs
+# exec >./logs/patch_custom_settings.log 2>&1
 
 # =============================================
 # 业务逻辑开始
@@ -51,7 +51,7 @@ set_ip_address() {
 # 主函数
 main() {
 	set_password
-	set_pppoe
+	# set_pppoe
 	# set_ip_address
 }
 
