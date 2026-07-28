@@ -29,9 +29,9 @@ root_password="password"
 # LAN 的 IPv4 地址
 lan_ip_address=""
 
-# PPPoE 用户名和密码
-pppoe_username=""
-pppoe_password=""
+# # PPPoE 用户名和密码
+# pppoe_username=""
+# pppoe_password=""
 
 # 修改root 密码
 if [ -n "$root_password" ]; then
@@ -48,12 +48,12 @@ if [ -n "$lan_ip_address" ]; then
 	uci commit network
 fi
 
-if [ -n "$pppoe_username" ] && [ -n "$pppoe_password" ]; then
-	uci set network.wan.proto=pppoe
-	uci set network.wan.username="$pppoe_username"
-	uci set network.wan.password="$pppoe_password"
-	uci commit network
-fi
+# if [ -n "$pppoe_username" ] && [ -n "$pppoe_password" ]; then
+# 	uci set network.wan.proto=pppoe
+# 	uci set network.wan.username="$pppoe_username"
+# 	uci set network.wan.password="$pppoe_password"
+# 	uci commit network
+# fi
 
 # 修改系统时区为东八区（上海）
 uci set system.@system[0].timezone='CST-8'
