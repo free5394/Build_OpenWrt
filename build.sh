@@ -7,7 +7,7 @@ echo "开始克隆OpenWrt仓库..."
 git clone -b $OPENWRT_BRANCH --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git $OPENWRT_DIR
 
 echo "复制文件..."
-cp -r ./$TARGET_ARCH/* $OPENWRT_DIR/
+cp -r ./$DEVICE_ARCH/* $OPENWRT_DIR/
 
 echo "设置文件权限..."
 chmod +x $OPENWRT_DIR/files/etc/uci-defaults/*.sh
@@ -24,8 +24,11 @@ echo "更新feeds并安装..."
 # make menuconfig
 # ./scripts/diffconfig.sh >default.config
 
+echo "清理构建缓存..."
+rm -rf scripts/config/conf scripts/config/*.o tmp/
+
 echo "配置文件..."
-cp -f full.config .config && make defconfig
+cp -f full.config .config && make defconfig V=s
 
 echo "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh
