@@ -66,3 +66,12 @@ else
 	# 使用 -exec ... + 批量移动，高效且避免命令行长度限制
 	find "$src_dir" -type f -name "*wrt*.img.gz" -exec mv -f {} "$dest_dir/" +
 fi
+
+# 6. 压缩日志目录（若存在）
+logs_dir="./logs"
+if [ ! -d "$logs_dir" ]; then
+	echo "警告：日志目录 $logs_dir 不存在，无文件可处理。"
+else
+	echo "压缩日志目录 $logs_dir"
+	tar -czvf "$dest_dir/logs.tar.gz" "$logs_dir"
+fi
