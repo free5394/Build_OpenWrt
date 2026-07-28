@@ -76,16 +76,10 @@ clone_repo() {
 		git clone --depth 1 "$repo_url" "$target_dir" 2>/dev/null
 	fi
 
-	if [ $? -eq 0 ]; then
-		echo "[成功] 已克隆: $repo_url -> $target_dir"
-	else
-		echo "[错误] 克隆失败: $repo_url"
-		return 1
-	fi
 }
 
 # 克隆自定义插件
-clone_packages() {
+clone_packages1() {
 	echo "克隆自定义插件..."
 	git clone --depth 1 https://github.com/kenzok8/openwrt-packages.git feeds/packages/kenzo
 	git clone --depth 1 https://github.com/kenzok8/small.git feeds/packages/small
@@ -103,7 +97,7 @@ clone_packages() {
 }
 
 # 添加自定义Feeds
-add_custom_feeds() {
+add_custom_feeds1() {
 	add_feed "src-git passwall_packages https://github.com/Openwrt-Passwall/openwrt-passwall-packages.git;main" '1i'
 	add_feed "src-git passwall_luci https://github.com/Openwrt-Passwall/openwrt-passwall.git;main" '2i'
 	add_feed "src-git nikki https://github.com/nikkinikki-org/OpenWrt-nikki.git;main"
@@ -114,7 +108,7 @@ add_custom_feeds() {
 }
 
 # 添加自定义Feeds
-add_custom_feeds1() {
+add_custom_feeds() {
 	# 添加自定义Feeds
 	add_feed "src-git kenzo https://github.com/kenzok8/openwrt-packages" '1i'
 	add_feed "src-git small https://github.com/kenzok8/small" '2i'
