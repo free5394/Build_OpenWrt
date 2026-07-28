@@ -87,8 +87,8 @@ jobs:
       matrix:
         config_name:
           # - minimal
-          - standard
-          # - full
+          # - standard
+          - full
 
     steps:
       - name: 克隆仓库
