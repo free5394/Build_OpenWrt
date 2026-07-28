@@ -1,13 +1,7 @@
 #!/bin/sh
 
-export OPENWRT_REPO=immortalwrt/immortalwrt
-export OPENWRT_BRANCH=v25.12.1
-export OPENWRT_DIR=openwrt
-export TARGET_ARCH=x86-64
-
-export PART_SIZE=1024
-export GITHUB_WORKSPACE=$(pwd)
-export UPLOAD_DIR=uploads
+chmod +x set-env.sh
+. ./set-env.sh
 
 echo "开始克隆OpenWrt仓库..."
 git clone -b $OPENWRT_BRANCH --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git $OPENWRT_DIR
@@ -41,12 +35,11 @@ echo "开始下载依赖..."
 make download -j $(($(nproc) + 1)) V=s || make download -j1 V=s
 
 echo "开始编译OpenWrt..."
-echo $(date "+%Y-%m-%d %H:%M:%S start") >build.txt
+echo "$(date '+%Y-%m-%d %H:%M:%S start')" >build.txt
 make -j $(($(nproc) + 1)) V=s || make -j1 V=s
-echo $(date "+%Y-%m-%d %H:%M:%S end") >>build.txt
+echo "$(date '+%Y-%m-%d %H:%M:%S end')" >>build.txt
 
 echo "开始上传..."
-export NAME_SUFFIX=walk6834
 ./custom_scripts/collect_upload.sh
 
 echo "全部完成"
