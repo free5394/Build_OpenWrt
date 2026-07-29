@@ -7,14 +7,19 @@ set -e
 # 兼容开启管道失败检测（BusyBox ash 不支持时静默忽略）
 set -o pipefail 2>/dev/null || true
 
-# 保存脚本名以供提示
-SCRIPT_NAME="$(basename "$0")"
-log_file="/tmp/$SCRIPT_NAME.log"
+# 脚本所在目录（绝对路径）
+SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
+# 脚本全名（含后缀）
+SCRIPT_FULLNAME="${0##*/}"
+# 脚本名（不含后缀）
+SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
+# 日志文件路径
+LOG_FILE="/tmp/$SCRIPT_NAME.log"
 
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
 # =============================================
-exec >"$log_file" 2>&1
+exec >"$LOG_FILE" 2>&1
 
 # =============================================
 # 业务逻辑开始
