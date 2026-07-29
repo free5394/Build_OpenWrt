@@ -22,3 +22,9 @@ export UPLOAD_RELEASE=true
 # 编译缓存
 export USE_CCACHE=1
 export CCACHE_DIR=${CCACHE_DIR:-/tmp/ccache}
+
+echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+echo "OPENWRT_DIR: $OPENWRT_DIR"
+echo "UPLOAD_DIR: $UPLOAD_DIR"
+
+echo "环境变量设置完成"
