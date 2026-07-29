@@ -46,3 +46,4 @@ grep -Hn "kenzo\|small" /etc/apk/repositories.d/distfeeds.list || echo "无匹�
 grep "mirrors.pku.edu.cn" /etc/apk/repositories.d/distfeeds.list || echo "镜像源替换失败"
 
 echo "设置完成"
+exit 0
