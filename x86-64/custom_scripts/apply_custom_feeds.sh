@@ -192,6 +192,10 @@ add_custom_feeds() {
 	echo "更新feeds..."
 	./scripts/feeds update -a
 
+	echo "删除出错插件"
+	rm -rf feeds/small/luci-app-fchomo
+	rm -rf feeds/kenzo/luci-app-eqos
+
 	# echo "删除冲突的插件..."
 	# rm -rf feeds/luci/applications/luci-app-mosdns
 	# rm -rf feeds/packages/net/{alist,adguardhome,mosdns,xray*,v2ray*,sing*,smartdns}
@@ -200,9 +204,6 @@ add_custom_feeds() {
 	echo "删除冲突的插件..."
 	del_matching_dirs feeds/kenzo feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video
 	del_matching_dirs feeds/small feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video
-
-	echo "删除出错插件"
-	rm -rf feeds/small/luci-app-fchomo
 
 	echo "安装golang..."
 	rm -rf feeds/packages/lang/golang
