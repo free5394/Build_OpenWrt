@@ -33,10 +33,6 @@ log_debug "日志文件: $LOG_FILE"
 # =============================================
 # 业务逻辑开始
 # =============================================
-log_info "脚本开始执行 - $(date)"
-
-# 示例命令1：正常执行
-log_info "当前工作目录: $(pwd)"
 
 # 查找目录
 find_dir() {
@@ -191,10 +187,6 @@ del_matching_dirs() {
 	done <"$tmpfile"
 
 	log_info "=== 执行完成 ==="
-	log_info "注意："
-	log_info "  1. **删除操作无确认环节**，所有匹配项已自动删除"
-	log_info "  2. 基准目录的所有隐藏子目录（以.开头）已被忽略"
-	log_info "  3. 仅处理了深度≤3的匹配目录（目标目录=0层）"
 }
 
 # 添加自定义Feeds
@@ -229,8 +221,14 @@ add_custom_feeds() {
 
 # 主函数
 main() {
+	log_info "$SCRIPT_NAME 脚本开始执行"
+
+	# 示例命令1：正常执行
+	log_info "当前工作目录: $(pwd)"
 	# 添加自定义Feeds
 	add_custom_feeds
+
+	log_info "$SCRIPT_NAME 脚本执行完成"
 }
 
 # 调用主函数
