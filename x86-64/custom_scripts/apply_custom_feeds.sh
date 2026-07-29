@@ -33,10 +33,10 @@ log_debug "日志文件: $LOG_FILE"
 # =============================================
 # 业务逻辑开始
 # =============================================
-echo "脚本开始执行 - $(date)"
+log_info "脚本开始执行 - $(date)"
 
 # 示例命令1：正常执行
-echo "当前工作目录: $(pwd)"
+log_info "当前工作目录: $(pwd)"
 
 # 查找目录
 find_dir() {
@@ -52,12 +52,12 @@ add_feed() {
 
 	# 已存在则跳过
 	if grep -qF "$feed_line" feeds.conf.default; then
-		echo "[跳过] 已存在: $feed_line"
+		log_info "[跳过] 已存在: $feed_line"
 		return
 	fi
 
 	sed -i "${insert_line} $feed_line" feeds.conf.default
-	echo "[新增] $feed_line"
+	log_info "[新增] $feed_line"
 }
 
 # 克隆Git仓库到指定目录
@@ -68,7 +68,7 @@ clone_repo() {
 	target_dir="$3"
 
 	if [ -z "$repo_url" ] || [ -z "$target_dir" ]; then
-		echo "[错误] 缺少必要参数: clone_repo <仓库URL> [分支] <目标目录>"
+		log_error "缺少必要参数: clone_repo <仓库URL> [分支] <目标目录>"
 		return 1
 	fi
 
@@ -86,8 +86,8 @@ clone_repo() {
 del_matching_dirs() {
 	# 参数校验
 	if [ $# -lt 2 ]; then
-		printf "错误：参数数量不足\n"
-		printf "用法：%s <基准目录A> <目标目录1> [目标目录2 ...]\n" "$SCRIPT_NAME"
+		log_error "参数数量不足"
+		log_error "用法：$SCRIPT_NAME <基准目录A> <目标目录1> [目标目录2 ...]"
 		exit 1
 	fi
 
@@ -98,7 +98,7 @@ del_matching_dirs() {
 	if command -v realpath >/dev/null 2>&1; then
 		# 规范化基准目录
 		BASE_DIR=$(realpath -m "$BASE_DIR") || {
-			printf "错误：无法解析基准目录 '%s'\n" "$BASE_DIR" >&2
+			log_error "无法解析基准目录 '$BASE_DIR'"
 			exit 1
 		}
 
@@ -112,7 +112,7 @@ del_matching_dirs() {
 '
 		for dir in $ORIG_TARGETS; do
 			norm=$(realpath -m "$dir") || {
-				printf "错误：无法解析目标目录 '%s'\n" "$dir" >&2
+				log_error "无法解析目标目录 '$dir'"
 				exit 1
 			}
 			set -- "$@" "$norm"
@@ -120,13 +120,13 @@ del_matching_dirs() {
 		IFS="$oldIFS"
 		# 此时 "$@" 包含所有规范化后的目标目录
 	else
-		printf "警告：未找到 realpath，跳过路径规范化，脚本将使用原始路径\n" >&2
+		log_warn "未找到 realpath，跳过路径规范化，脚本将使用原始路径"
 		# "$@" 已经是原始目标目录，保持不变
 	fi
 
 	# 检查基准目录是否存在
 	if [ ! -d "$BASE_DIR" ]; then
-		printf "错误：基准目录 '%s' 不存在或不是目录\n" "$BASE_DIR" >&2
+		log_error "基准目录 '$BASE_DIR' 不存在或不是目录"
 		exit 1
 	fi
 
@@ -143,18 +143,18 @@ del_matching_dirs() {
 	BASE_SUBDIRS=$(printf "%s" "$BASE_SUBDIRS" | sed '/^$/d')
 
 	if [ -z "$BASE_SUBDIRS" ]; then
-		printf "警告：基准目录 '%s' 中没有有效直接子目录（已忽略隐藏目录），无需处理\n" "$BASE_DIR"
+		log_warn "基准目录 '$BASE_DIR' 中没有有效直接子目录（已忽略隐藏目录），无需处理"
 		exit 0
 	fi
 
 	# ---------- 显示基准子目录 ----------
-	printf "=== 基准目录 '%s' 的有效直接子目录 ===\n" "$BASE_DIR"
+	log_info "=== 基准目录 '$BASE_DIR' 的有效直接子目录 ==="
 	printf "%s" "$BASE_SUBDIRS" | sed 's/^/  /'
-	printf "======================================\n"
+	log_info "======================================"
 
 	# ---------- 创建临时文件保存 find 输出（避免管道子 shell 导致变量丢失） ----------
 	tmpfile=$(mktemp) || {
-		printf "错误：无法创建临时文件\n" >&2
+		log_error "无法创建临时文件"
 		exit 1
 	}
 	trap 'rm -f "$tmpfile"' EXIT
@@ -181,20 +181,20 @@ del_matching_dirs() {
 		printf "%s" "$BASE_SUBDIRS" | grep -Fxq "$DIR_NAME" || continue
 
 		# 自动删除匹配的目录
-		printf "自动删除匹配项: %s (匹配基准子目录: '%s')\n" "$MATCH_PATH" "$DIR_NAME"
+		log_info "自动删除匹配项: $MATCH_PATH (匹配基准子目录: '$DIR_NAME')"
 		if rm -rf "$MATCH_PATH"; then
-			printf "  成功删除: %s\n" "$MATCH_PATH"
+			log_info "  成功删除: $MATCH_PATH"
 		else
-			printf "  删除失败: %s (权限问题?)\n" "$MATCH_PATH" >&2
+			log_error "  删除失败: $MATCH_PATH (权限问题?)"
 			exit 1
 		fi
 	done <"$tmpfile"
 
-	printf "\n=== 执行完成 ===\n"
-	printf "注意：\n"
-	printf "  1. **删除操作无确认环节**，所有匹配项已自动删除\n"
-	printf "  2. 基准目录的所有隐藏子目录（以.开头）已被忽略\n"
-	printf "  3. 仅处理了深度≤3的匹配目录（目标目录=0层）\n"
+	log_info "=== 执行完成 ==="
+	log_info "注意："
+	log_info "  1. **删除操作无确认环节**，所有匹配项已自动删除"
+	log_info "  2. 基准目录的所有隐藏子目录（以.开头）已被忽略"
+	log_info "  3. 仅处理了深度≤3的匹配目录（目标目录=0层）"
 }
 
 # 添加自定义Feeds
@@ -203,10 +203,10 @@ add_custom_feeds() {
 	add_feed "src-git kenzo https://github.com/kenzok8/openwrt-packages" '1i'
 	add_feed "src-git small https://github.com/kenzok8/small" '2i'
 
-	echo "更新feeds..."
+	log_info "更新feeds..."
 	./scripts/feeds update -a
 
-	echo "删除出错插件"
+	log_info "删除出错插件"
 	rm -rf feeds/small/luci-app-fchomo
 	rm -rf feeds/kenzo/luci-app-eqos
 
@@ -215,15 +215,15 @@ add_custom_feeds() {
 	# rm -rf feeds/packages/net/{alist,adguardhome,mosdns,xray*,v2ray*,sing*,smartdns}
 	# rm -rf feeds/packages/utils/v2dat
 
-	echo "删除冲突的插件..."
+	log_info "删除冲突的插件..."
 	del_matching_dirs feeds/kenzo feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video
 	del_matching_dirs feeds/small feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video
 
-	echo "安装golang..."
+	log_info "安装golang..."
 	rm -rf feeds/packages/lang/golang
 	git clone https://github.com/kenzok8/golang -b 1.26 feeds/packages/lang/golang
 
-	echo "安装feeds..."
+	log_info "安装feeds..."
 	./scripts/feeds install -a
 }
 
