@@ -4,8 +4,11 @@
 # =============================================
 set -e
 
-# 兼容开启管道失败检测（BusyBox ash 不支持时静默忽略）
-set -o pipefail 2>/dev/null || true
+# 安全地尝试开启 pipefail
+if (set -o pipefail) 2>/dev/null; then
+	set -o pipefail
+	set -o | grep pipefail
+fi
 
 # 脚本所在目录（绝对路径）
 SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
