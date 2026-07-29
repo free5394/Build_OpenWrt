@@ -30,7 +30,6 @@ log() {
 
 die() {
 	log "错误: $*"
-	echo "错误: $*" >&2
 	exit 1
 }
 
@@ -202,7 +201,7 @@ main() {
 	elif [ "$count" -gt 1 ]; then
 		# 最后一个为 WAN，其余为 LAN
 		wan_if=$(echo "$ifnames" | awk '{print $NF}')
-		lan_ifs=$(echo "$ifnames" | awk '{$NF=""; print}' | awk '{$1=$1};1')
+		lan_ifs=$(echo "$ifnames" | awk '{$NF=""; $1=$1; print}')
 		configure_multi "$wan_if" $lan_ifs
 	fi
 
