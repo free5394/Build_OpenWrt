@@ -24,6 +24,11 @@ LOG_FILE="/tmp/$SCRIPT_NAME.log"
 # =============================================
 exec >"$LOG_FILE" 2>&1
 
+echo "目录: $SCRIPT_DIR"
+echo "全名: $SCRIPT_FULLNAME"
+echo "名称: $SCRIPT_NAME"
+echo "日志文件: $LOG_FILE"
+
 # PPPoE 用户名和密码
 pppoe_username=""
 pppoe_password=""
