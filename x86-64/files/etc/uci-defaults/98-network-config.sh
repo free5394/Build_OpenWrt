@@ -7,10 +7,8 @@
 # =============================================
 set -e
 
-# 兼容开启管道失败检测（如 bash 环境）
-if set -o | grep -q 'pipefail' 2>/dev/null; then
-	set -o pipefail
-fi
+# 兼容开启管道失败检测（BusyBox ash 不支持时静默忽略）
+set -o pipefail 2>/dev/null || true
 
 # 保存脚本名以供提示
 SCRIPT_NAME="$(basename "$0")"
