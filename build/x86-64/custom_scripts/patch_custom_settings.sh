@@ -50,7 +50,7 @@ set_password() {
 		return 0
 	fi
 	if [ ! -f "$CUSTOM_SETTINGS" ]; then
-		log_error "自设置文件 $CUSTOM_SETTINGS 不存在: $CUSTOM_SETTINGS"
+		log_error "自设置文件 $CUSTOM_SETTINGS 不存在"
 		return 1
 	fi
 	log_info "设置根密码"
@@ -64,7 +64,7 @@ set_pppoe() {
 		return 0
 	fi
 	if [ ! -f "$NETWORK_CONFIG" ]; then
-		log_error "网络配置文件 $NETWORK_CONFIG 不存在: $NETWORK_CONFIG"
+		log_error "网络配置文件 $NETWORK_CONFIG 不存在"
 		return 1
 	fi
 	log_info "设置 PPPoE 配置"
