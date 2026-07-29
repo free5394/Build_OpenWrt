@@ -35,6 +35,8 @@ echo "日志文件: $LOG_FILE"
 # =============================================
 # 业务逻辑开始
 # =============================================
+echo "切换到工作目录..."
+cd "$GITHUB_WORKSPACE"
 
 echo "开始克隆OpenWrt仓库..."
 git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git "$OPENWRT_DIR"
