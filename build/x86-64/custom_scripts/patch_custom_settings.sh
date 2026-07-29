@@ -41,28 +41,37 @@ log_debug "日志文件: $LOG_FILE"
 # =============================================
 
 CUSTOM_SETTINGS="files/etc/uci-defaults/99-custom-settings.sh"
+NETWORK_CONFIG="files/etc/uci-defaults/98-network-config.sh"
 
+# 设置根密码
 set_password() {
-	# 根据环境变量替换默认密码
-	if [ -n "${ROOT_PASSWORD:-}" ]; then
-		sed -i "s|^root_password=.*|root_password=\"${PASSWORD}\"|" "$CUSTOM_SETTINGS"
+	if [ -z "$ROOT_PASSWORD" ]; then
+		log_info "未配置根密码，跳过根密码配置"
+		return 0
 	fi
+	if [ ! -f "$CUSTOM_SETTINGS" ]; then
+		log_error "自设置文件 $CUSTOM_SETTINGS 不存在: $CUSTOM_SETTINGS"
+		return 1
+	fi
+	log_info "设置根密码"
+	sed -i "s|^root_password=.*|root_password=\"${ROOT_PASSWORD}\"|" "$CUSTOM_SETTINGS"
 }
 
+# 设置 PPPoE 配置
 set_pppoe() {
-	# 根据环境变量替换PPPoE账号密码（两者均存在时才替换）
-	if [ -n "${PPPPOE_USERNAME:-}" ] && [ -n "${PPPPOE_PASSWORD:-}" ]; then
-		sed -i "s|^pppoe_username=.*|pppoe_username=\"${PPPPOE_USERNAME}\"|" "$CUSTOM_SETTINGS"
-		sed -i "s|^pppoe_password=.*|pppoe_password=\"${PPPPOE_PASSWORD}\"|" "$CUSTOM_SETTINGS"
+	if [ -z "$PPPPOE_USERNAME" ] || [ -z "$PPPPOE_PASSWORD" ]; then
+		log_info "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
+		return 0
 	fi
-}
-
-# 方案二，修改默认LAN IP地址
-set_ip_address() {
-	# 根据环境变量替换默认LAN IP地址
-	if [ -n "${IP_ADDRESS:-}" ]; then
-		sed -i "s|^lan_ip_address=.*|lan_ip_address=\"${IP_ADDRESS}\"|" "$CUSTOM_SETTINGS"
+	if [ ! -f "$NETWORK_CONFIG" ]; then
+		log_error "网络配置文件 $NETWORK_CONFIG 不存在: $NETWORK_CONFIG"
+		return 1
 	fi
+	log_info "设置 PPPoE 配置"
+	sed -i \
+		-e "s|^pppoe_username=.*|pppoe_username=\"${PPPPOE_USERNAME}\"|" \
+		-e "s|^pppoe_password=.*|pppoe_password=\"${PPPPOE_PASSWORD}\"|" \
+		"$NETWORK_CONFIG"
 }
 
 # 主函数
@@ -70,8 +79,7 @@ main() {
 	log_info "$SCRIPT_NAME 脚本开始执行"
 
 	set_password
-	# set_pppoe
-	# set_ip_address
+	set_pppoe
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
