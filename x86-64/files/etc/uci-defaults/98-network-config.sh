@@ -118,7 +118,7 @@ configure_multi() {
 	uci set network.wan6.proto='dhcpv6'
 
 	# 更新 br-lan 的端口
-	section
+	section=""
 	section=$(uci show network | awk -F '[.=]' '/\.@?device\[\d+\]\.name=.br-lan.$/ {print $2; exit}')
 	if [ -z "$section" ]; then
 		die "未找到 br-lan 设备配置段"
@@ -156,8 +156,8 @@ verify_config() {
 	ok=1
 
 	# 检查 LAN 是否已配置
-	lan_proto
-	lan_proto=$(uci get network.lan.proto 2>/dev/null)
+	lan_proto=""
+	lan_proto=$(uci -q get network.lan.proto 2>/dev/null)
 	if [ -z "$lan_proto" ]; then
 		log "验证失败: LAN 协议未设置"
 		ok=0
