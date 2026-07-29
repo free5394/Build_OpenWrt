@@ -166,14 +166,14 @@ verify_config() {
 	fi
 
 	# 多网口时检查 WAN
-	wan_dev=$(uci get network.wan.device 2>/dev/null)
+	wan_dev=$(uci -q get network.wan.device 2>/dev/null)
 	if [ -n "$wan_dev" ]; then
-		wan_proto=$(uci get network.wan.proto 2>/dev/null)
+		wan_proto=$(uci -q get network.wan.proto 2>/dev/null)
 		log "WAN 设备: $wan_dev, 协议: $wan_proto"
 	fi
 
 	# 检查 br-lan 端口
-	br_ports=$(uci show network | grep 'br-lan' | grep 'ports' 2>/dev/null)
+	br_ports=$(uci -q show network | grep -F 'br-lan' | grep -F 'ports' || true)
 	if [ -n "$br_ports" ]; then
 		log "br-lan 端口配置: $br_ports"
 	fi
