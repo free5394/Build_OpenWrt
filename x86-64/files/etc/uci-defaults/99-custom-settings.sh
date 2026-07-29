@@ -39,12 +39,31 @@ lan_ip_addr=""
 pppoe_username=""
 pppoe_password=""
 
-# 修改LAN口IP
+# 修改LAN口IP（纯 IP 校验；合法时补 /24 写入）
 modify_lan_ip() {
-	# 修改默认LAN口IP
-	if [ -n "$lan_ip_addr" ]; then
-		[ -n "$(uci -q get network.lan.ipaddr)" ] || (uci set network.lan.ipaddr="$lan_ip_addr/24" && uci commit network)
+	[ -n "$lan_ip_addr" ] || return 0
+
+	# 校验：4 段，每段 0-255
+	local ip="$lan_ip_addr" i ok=1 seg
+	# trim 空白
+	ip=$(echo "$ip" | awk '{$1=$1};1')
+	set -- $(echo "$ip" | tr '.' ' ')
+	[ "$#" -eq 4 ] || { log "LAN IP 格式错误: $lan_ip_addr"; return 0; }
+	for seg in "$1" "$2" "$3" "$4"; do
+		case "$seg" in
+		*[!0-9]*) ok=0; break ;;
+		esac
+		[ "$seg" -ge 0 ] && [ "$seg" -le 255 ] || { ok=0; break; }
+	done
+	if [ "$ok" -ne 1 ]; then
+		log "LAN IP 格式错误: $lan_ip_addr"
+		return 0
 	fi
+
+	uci -q batch <<EOF
+set network.lan.ipaddr='${ip}/24'
+commit network
+EOF
 }
 
 # 修改WAN口为PPPoE
