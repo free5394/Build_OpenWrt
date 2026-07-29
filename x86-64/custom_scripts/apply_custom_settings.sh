@@ -7,22 +7,32 @@ set -e
 # 兼容开启管道失败检测（BusyBox ash 不支持时静默忽略）
 set -o pipefail 2>/dev/null || true
 
-# 保存脚本名以供提示
-SCRIPT_NAME="$(basename "$0")"
-log_file="./logs/$SCRIPT_NAME.log"
+# 脚本所在目录（绝对路径）
+SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
+# 脚本全名（含后缀）
+SCRIPT_FULLNAME="${0##*/}"
+# 脚本名（不含后缀）
+SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
+# 日志文件路径
+LOG_FILE="./logs/$SCRIPT_NAME.log"
+
+# 引入日志模块（假设 logger.sh 在同目录下）
+. "$SCRIPT_DIR"/logger.sh
+
+# check logger.sh
+log_debug "目录: $SCRIPT_DIR"
+log_debug "全名: $SCRIPT_FULLNAME"
+log_debug "名称: $SCRIPT_NAME"
+log_debug "日志文件: $LOG_FILE"
 
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
 # =============================================
-# exec >"$log_file" 2>&1
+# exec >"$LOG_FILE" 2>&1
 
 # =============================================
 # 业务逻辑开始
 # =============================================
-echo "脚本开始执行 - $(date)"
-
-# 示例命令1：正常执行
-echo "当前工作目录: $(pwd)"
 
 # 修补配置文件
 patch_config() {
@@ -30,7 +40,7 @@ patch_config() {
 	# 设置固件rootfs大小
 	if [ -n "${PART_SIZE:-}" ]; then
 		sed -i '/ROOTFS_PARTSIZE/d' "$CONFIG_FILE"
-		echo "CONFIG_TARGET_ROOTFS_PARTSIZE=$PART_SIZE" >>"$CONFIG_FILE"
+		log_info "CONFIG_TARGET_ROOTFS_PARTSIZE=$PART_SIZE" >>"$CONFIG_FILE"
 	fi
 }
 
@@ -51,7 +61,7 @@ modify_theme() {
 	BG_SRC="$GITHUB_WORKSPACE/images/bg1.jpg"
 	BG_DST="feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg"
 	if [ -f "$BG_SRC" ]; then
-		cp -f "$BG_SRC" "$BG_DST" && echo "已替换 Argon 主题背景" || echo "Argon 主题背景替换失败"
+		cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
 	fi
 }
 
@@ -65,10 +75,14 @@ apply_custom_settings() {
 
 # 主函数
 main() {
+	log_info "$SCRIPT_NAME 脚本开始执行"
+
 	patch_config
 	modify_ip_address
 	modify_theme
 	apply_custom_settings
+
+	log_info "$SCRIPT_NAME 脚本执行完成"
 }
 
 # 调用主函数
