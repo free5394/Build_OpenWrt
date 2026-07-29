@@ -87,7 +87,7 @@ del_matching_dirs() {
 	if [ $# -lt 2 ]; then
 		log_error "参数数量不足"
 		log_error "用法：$SCRIPT_NAME <基准目录A> <目标目录1> [目标目录2 ...]"
-		exit 1
+		return 1
 	fi
 
 	BASE_DIR="$1"
@@ -98,7 +98,7 @@ del_matching_dirs() {
 		# 规范化基准目录
 		BASE_DIR=$(realpath -m "$BASE_DIR") || {
 			log_error "无法解析基准目录 '$BASE_DIR'"
-			exit 1
+			return 1
 		}
 
 		# 保存原始目标目录（使用换行分隔，假设路径不含换行符，OpenWrt 环境满足）
@@ -112,7 +112,7 @@ del_matching_dirs() {
 		for dir in $ORIG_TARGETS; do
 			norm=$(realpath -m "$dir") || {
 				log_error "无法解析目标目录 '$dir'"
-				exit 1
+				return 1
 			}
 			set -- "$@" "$norm"
 		done
@@ -126,7 +126,7 @@ del_matching_dirs() {
 	# 检查基准目录是否存在
 	if [ ! -d "$BASE_DIR" ]; then
 		log_error "基准目录 '$BASE_DIR' 不存在或不是目录"
-		exit 1
+		return 1
 	fi
 
 	# ---------- 获取基准目录的直接可见子目录名（忽略隐藏目录） ----------
@@ -143,7 +143,7 @@ del_matching_dirs() {
 
 	if [ -z "$BASE_SUBDIRS" ]; then
 		log_warn "基准目录 '$BASE_DIR' 中没有有效直接子目录（已忽略隐藏目录），无需处理"
-		exit 0
+		return 0
 	fi
 
 	# ---------- 显示基准子目录 ----------
@@ -154,7 +154,7 @@ del_matching_dirs() {
 	# ---------- 创建临时文件保存 find 输出（避免管道子 shell 导致变量丢失） ----------
 	tmpfile=$(mktemp) || {
 		log_error "无法创建临时文件"
-		exit 1
+		return 1
 	}
 	trap 'rm -f "$tmpfile"' EXIT
 
@@ -185,7 +185,7 @@ del_matching_dirs() {
 			log_info "  成功删除: $MATCH_PATH"
 		else
 			log_error "  删除失败: $MATCH_PATH (权限问题?)"
-			exit 1
+			return 1
 		fi
 	done <"$tmpfile"
 
