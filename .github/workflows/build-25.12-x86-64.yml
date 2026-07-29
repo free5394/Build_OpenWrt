@@ -178,13 +178,12 @@ jobs:
           df -hT
 
       - name: 组织编译后的固件
-        if: steps.compile.outputs.status == 'success' && !cancelled()
         run: |
           cd ${{env.OPENWRT_DIR}} 
           ./custom_scripts/collect_upload.sh
 
       - name: 上传固件到Artifacts
-        if: steps.compile.outputs.status == 'success' && !cancelled() && env.UPLOAD_ARTIFACT == 'true'
+        if: env.UPLOAD_ARTIFACT == 'true' && !cancelled()
         uses: actions/upload-artifact@main
         with:
           name: ${{env.OPENWRT_BRANCH}}-${{env.COMPILE_DATE}}
