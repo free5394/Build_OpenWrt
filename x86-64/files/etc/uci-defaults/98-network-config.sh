@@ -80,15 +80,21 @@ count_ifaces() {
 # ============================================================
 configure_single() {
 	iface="$1"
-	log "单网口模式: $iface → LAN (DHCP)"
+	log "单网口模式: $iface → LAN (DHCP 旁路由)"
 
-	uci set network.lan=device
-	uci set network.lan.name='br-lan'
+	# 独立 device section：与 interface section 分离，避免 UCI 模型破坏
+	uci set network.lan_dev=device
+	uci set network.lan_dev.name='br-lan'
+	uci set network.lan_dev.ports="$iface"
+
+	# network.lan 保持 interface：旁路由通过 DHCP 上联
+	uci set network.lan=interface
+	uci set network.lan.device='br-lan'
 	uci set network.lan.proto='dhcp'
-	uci delete network.lan.ipaddr 2>/dev/null
-	uci delete network.lan.netmask 2>/dev/null
-	uci delete network.lan.gateway 2>/dev/null
-	uci delete network.lan.dns 2>/dev/null
+	uci -q delete network.lan.ipaddr
+	uci -q delete network.lan.netmask
+	uci -q delete network.lan.gateway
+	uci -q delete network.lan.dns
 	uci commit network || die "UCI 提交失败"
 }
 
