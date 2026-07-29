@@ -17,13 +17,18 @@ log_file="/tmp/$SCRIPT_NAME.log"
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
 # =============================================
-exec >>"$log_file" 2>&1
+exec >"$log_file" 2>&1
+
+# LAN 的 IPv4 地址（纯 IP，留空则不修改）
+lan_ip_addr=""
+
+# # PPPoE 用户名和密码
+pppoe_username=""
+pppoe_password=""
 
 # =============================================
 # 业务逻辑开始
 # =============================================
-echo "脚本开始执行 - $(date)"
-
 log() {
 	echo "[$(date '+%H:%M:%S')] $*"
 }
@@ -35,15 +40,14 @@ die() {
 
 # 首次启动探针：br-lan device section 存在且 ports 已配置视为已完成
 is_first_boot() {
-	local sec
 	sec=$(uci -q show network |
 		awk -F'.' '/^network\.@device\[[0-9]+\]\.name=br-lan$/ {print $2; exit}')
 	[ -n "$sec" ] || return 1
-	local ports
 	ports=$(uci -q get "network.$sec.ports" 2>/dev/null)
 	[ -n "$ports" ]
 }
 
+# 检查是否已生效
 is_first_boot || {
 	log "[$SCRIPT_NAME] 已生效，跳过"
 	exit 0
@@ -106,7 +110,6 @@ configure_single() {
 
 # 查找 br-lan device section 名；找不到返回非零
 get_br_lan_device_section() {
-	local sec
 	sec=$(uci -q show network |
 		awk -F'.' '/^network\.@device\[[0-9]+\]\.name=br-lan$/ {print $2; exit}')
 	if [ -z "$sec" ]; then
@@ -117,6 +120,7 @@ get_br_lan_device_section() {
 	echo "$sec"
 }
 
+# 配置多网口网络，最后一个为 WAN，其余为 LAN
 configure_multi() {
 	wan_if="$1"
 	shift
@@ -145,8 +149,8 @@ configure_multi() {
 	# LAN 静态 IP（多网口传统路由；99 脚本可按 lan_ip_addr 覆盖）
 	uci set network.lan.proto='static'
 	uci set network.lan.netmask='255.255.255.0'
-	uci set network.lan.ipaddr='192.168.100.1'
-	log "默认管理地址: 192.168.100.1（99 脚本可覆盖）"
+	uci set network.lan.ipaddr="$lan_ip_addr"
+	log "默认管理地址: $lan_ip_addr"
 
 	uci commit network || die "UCI 提交失败"
 }
@@ -188,7 +192,7 @@ verify_config() {
 # 主流程
 # ============================================================
 main() {
-	log "========== 网络配置脚本开始 =========="
+	log "[$SCRIPT_NAME] 开始执行"
 
 	ifnames=$(get_physical_ifaces)
 
@@ -209,7 +213,7 @@ main() {
 	fi
 
 	verify_config
-	log "========== 网络配置脚本完成 =========="
+	log "[$SCRIPT_NAME] 配置验证通过"
 }
 
 main "$@"
