@@ -125,7 +125,7 @@ jobs:
       - name: 复制自定义文件
         run: |
           cd ${{env.OPENWRT_DIR}}
-          cp -rf ../x86-64/* .
+          cp -rf ../build/x86-64/* .
           chmod +x files/etc/uci-defaults/*.sh
           chmod +x custom_scripts/*.sh
           mkdir -p ./logs
