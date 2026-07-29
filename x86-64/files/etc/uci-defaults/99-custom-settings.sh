@@ -69,9 +69,14 @@ EOF
 # 修改WAN口为PPPoE
 modify_wan_pppoe() {
 	if [ -n "$pppoe_username" ] && [ -n "$pppoe_password" ]; then
-		uci set network.wan.proto=pppoe
-		uci set network.wan.username="$pppoe_username"
-		uci set network.wan.password="$pppoe_password"
+		# 旁路由单网口路径下 98 脚本不会创建 network.wan
+		[ -n "$(uci -q get network.wan 2>/dev/null)" ] || {
+			log "未检测到 network.wan，跳过 PPPoE 配置"
+			return 0
+		}
+		uci -q set network.wan.proto=pppoe
+		uci -q set network.wan.username="$pppoe_username"
+		uci -q set network.wan.password="$pppoe_password"
 		uci commit network
 	fi
 }
