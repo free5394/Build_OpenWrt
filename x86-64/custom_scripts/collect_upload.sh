@@ -7,46 +7,61 @@ set -e
 # 兼容开启管道失败检测（BusyBox ash 不支持时静默忽略）
 set -o pipefail 2>/dev/null || true
 
-# 保存脚本名以供提示
-SCRIPT_NAME="$(basename "$0")"
-log_file="./logs/$SCRIPT_NAME.log"
+# 脚本所在目录（绝对路径）
+SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
+# 脚本全名（含后缀）
+SCRIPT_FULLNAME="${0##*/}"
+# 脚本名（不含后缀）
+SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
+# 日志文件路径
+LOG_FILE="./logs/$SCRIPT_NAME.log"
+
+# 引入日志模块（假设 logger.sh 在同目录下）
+. "$SCRIPT_DIR"/logger.sh
+
+# check logger.sh
+log_debug "目录: $SCRIPT_DIR"
+log_debug "全名: $SCRIPT_FULLNAME"
+log_debug "名称: $SCRIPT_NAME"
+log_debug "日志文件: $LOG_FILE"
 
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
 # =============================================
-# exec >"$log_file" 2>&1
+# exec >"$LOG_FILE" 2>&1
 
 # =============================================
 # 业务逻辑开始
 # =============================================
-echo "脚本开始执行 - $(date)"
 
-# 示例命令1：正常执行
-echo "当前工作目录: $(pwd)"
+# 主函数
+main() {
+	log_info "$SCRIPT_NAME 脚本开始执行"
 
-# 1. 校验关键环境变量
-: "${GITHUB_WORKSPACE:?错误：环境变量 GITHUB_WORKSPACE 未设置}"
-: "${UPLOAD_DIR:?错误：环境变量 UPLOAD_DIR 未设置}"
+	# 1. 校验关键环境变量
+	: "${GITHUB_WORKSPACE:?错误：环境变量 GITHUB_WORKSPACE 未设置}"
+	: "${UPLOAD_DIR:?错误：环境变量 UPLOAD_DIR 未设置}"
 
-# 2. 定义路径
-src_dir="./bin/targets"
-dest_dir="$GITHUB_WORKSPACE/$UPLOAD_DIR"
+	# 2. 定义路径
+	src_dir="./bin/targets"
+	dest_dir="$GITHUB_WORKSPACE/$UPLOAD_DIR"
 
-# 3. 创建目标目录（若不存在）
-mkdir -p "$dest_dir"
+	# 3. 创建目标目录（若不存在）
+	mkdir -p "$dest_dir"
 
-# 4. 检查源目录是否存在
-if [ ! -d "$src_dir" ]; then
-	echo "警告：源目录 $src_dir 不存在，无文件可处理。" >&2
-	exit 0
-fi
+	# 4. 检查源目录是否存在
+	if [ ! -d "$src_dir" ]; then
+		log_warn "源目录 $src_dir 不存在，无文件可处理。"
+		log_info "$SCRIPT_NAME 脚本执行完成"
+		exit 0
+	fi
 
-# 5. 根据 NAME_SUFFIX 执行不同逻辑
-if [ -n "$NAME_SUFFIX" ]; then
-	echo "NAME_SUFFIX 非空，将重命名文件并移动至 $dest_dir"
+	# 5. 根据 NAME_SUFFIX 执行不同逻辑
+	if [ -n "$NAME_SUFFIX" ]; then
+		log_info "NAME_SUFFIX 非空，将重命名文件并移动至 $dest_dir"
 
-	# 使用 find + sh -c 批量处理，传入目标目录和后缀作为参数
-	find "$src_dir" -type f -name "*wrt*.img.gz" -exec sh -c '
+		# 使用 find + sh -c 批量处理，传入目标目录和后缀作为参数
+		find "$src_dir" -type f -name "*wrt*.img.gz" -exec sh -c '
         dest="$1"
         suffix="$2"
         shift 2
@@ -58,18 +73,24 @@ if [ -n "$NAME_SUFFIX" ]; then
             echo "已移动并重命名：$f -> $dest/$newname"
         done
     ' sh "$dest_dir" "$NAME_SUFFIX" {} +
-else
-	echo "NAME_SUFFIX 为空，直接移动文件至 $dest_dir"
+	else
+		log_info "NAME_SUFFIX 为空，直接移动文件至 $dest_dir"
 
-	# 使用 -exec ... + 批量移动，高效且避免命令行长度限制
-	find "$src_dir" -type f -name "*wrt*.img.gz" -exec mv -f {} "$dest_dir/" +
-fi
+		# 使用 -exec ... + 批量移动，高效且避免命令行长度限制
+		find "$src_dir" -type f -name "*wrt*.img.gz" -exec mv -f {} "$dest_dir/" +
+	fi
 
-# 6. 压缩日志目录（若存在）
-logs_dir="./logs"
-if [ ! -d "$logs_dir" ]; then
-	echo "警告：日志目录 $logs_dir 不存在，无文件可处理。"
-else
-	echo "压缩日志目录 $logs_dir"
-	tar -czvf "$dest_dir/logs.tar.gz" "$logs_dir"
-fi
+	# 6. 压缩日志目录（若存在）
+	logs_dir="./logs"
+	if [ ! -d "$logs_dir" ]; then
+		log_warn "日志目录 $logs_dir 不存在，无文件可处理。"
+	else
+		log_info "压缩日志目录 $logs_dir"
+		tar -czvf "$dest_dir/logs.tar.gz" "$logs_dir"
+	fi
+
+	log_info "$SCRIPT_NAME 脚本执行完成"
+}
+
+# 调用主函数
+main "$@"
