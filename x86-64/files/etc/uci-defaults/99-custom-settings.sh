@@ -32,32 +32,18 @@ is_first_boot || { log "[$SCRIPT_NAME] 已生效，跳过"; exit 0; }
 
 echo "脚本开始执行 - $(date)"
 
-# 系统后台密码（为空则不修改）
-root_password="password"
-
-# LAN 的 IPv4 地址
-lan_ip_address=""
+# LAN 的 IPv4 地址（纯 IP，留空则不修改）
+lan_ip_addr=""
 
 # # PPPoE 用户名和密码
 pppoe_username=""
 pppoe_password=""
 
-# 修改root 密码
-modify_root_password() {
-	if [ -n "$root_password" ]; then
-		(
-			echo "$root_password"
-			sleep 1
-			echo "$root_password"
-		) | passwd root >/dev/null
-	fi
-}
-
 # 修改LAN口IP
 modify_lan_ip() {
 	# 修改默认LAN口IP
-	if [ -n "$lan_ip_address" ]; then
-		[ -n "$(uci -q get network.lan.ipaddr)" ] || (uci set network.lan.ipaddr="$lan_ip_address/24" && uci commit network)
+	if [ -n "$lan_ip_addr" ]; then
+		[ -n "$(uci -q get network.lan.ipaddr)" ] || (uci set network.lan.ipaddr="$lan_ip_addr/24" && uci commit network)
 	fi
 }
 
@@ -78,21 +64,10 @@ modify_timezone() {
 	uci commit system
 }
 
-# # 修改Web界面默认主题为 Argon
-modify_luci_theme() {
-	uci set luci.main.mediaurlbase='/luci-static/argon'
-	uci commit luci
-}
-
 main() {
-	# 检查是否首次启动（避免重复执行）
-	[ -f /etc/config/network ] || exit 0
-
-	modify_root_password
-	# modify_lan_ip
 	modify_timezone
 	modify_wan_pppoe
-	# modify_luci_theme
+	modify_lan_ip
 }
 
 # 调用主函数
