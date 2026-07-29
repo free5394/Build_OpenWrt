@@ -1,7 +1,32 @@
 #!/bin/sh
+# =============================================
+# 1. 严格模式：命令失败即退出
+# =============================================
+set -e
 
-chmod +x set-env.sh
-. ./set-env.sh
+# 兼容开启管道失败检测（BusyBox ash 不支持时静默忽略）
+set -o pipefail 2>/dev/null || true
+
+# 脚本所在目录（绝对路径）
+SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
+# 脚本全名（含后缀）
+SCRIPT_FULLNAME="${0##*/}"
+# 脚本名（不含后缀）
+SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
+# 日志文件路径
+LOG_FILE="./logs/$SCRIPT_NAME.log"
+
+# 引入环境变量设置脚本
+. "$SCRIPT_DIR"/set-env.sh
+
+# =============================================
+# 2. 统一日志输出重定向（追加模式）
+# =============================================
+# exec >"$LOG_FILE" 2>&1
+
+# =============================================
+# 业务逻辑开始
+# =============================================
 
 echo "开始克隆OpenWrt仓库..."
 git clone -b $OPENWRT_BRANCH --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git $OPENWRT_DIR
