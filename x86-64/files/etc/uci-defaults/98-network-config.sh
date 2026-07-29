@@ -101,6 +101,20 @@ configure_single() {
 # ============================================================
 # 4. 配置网络（多网口）
 # ============================================================
+
+# 查找 br-lan device section 名；找不到返回非零
+get_br_lan_device_section() {
+	local sec
+	sec=$(uci -q show network | \
+		awk -F'.' '/^network\.@device\[[0-9]+\]\.name=br-lan$/ {print $2; exit}')
+	if [ -z "$sec" ]; then
+		# 兜底：grep + head + awk 兼容 awk 不支持 \d+ 的实现
+		sec=$(uci -q show network | grep -F ".name='br-lan'" | head -n1 | awk -F'.' '{print $2}')
+	fi
+	[ -n "$sec" ] || return 1
+	echo "$sec"
+}
+
 configure_multi() {
 	wan_if="$1"
 	shift
@@ -118,11 +132,7 @@ configure_multi() {
 	uci set network.wan6.proto='dhcpv6'
 
 	# 更新 br-lan 的端口
-	section=""
-	section=$(uci show network | awk -F '[.=]' '/\.@?device\[\d+\]\.name=.br-lan.$/ {print $2; exit}')
-	if [ -z "$section" ]; then
-		die "未找到 br-lan 设备配置段"
-	fi
+	section=$(get_br_lan_device_section) || die "未找到 br-lan 设备配置段"
 
 	uci -q delete "network.$section.ports"
 	for port in $lan_ifs; do
