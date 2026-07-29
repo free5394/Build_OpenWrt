@@ -19,6 +19,9 @@ LOG_FILE="./logs/$SCRIPT_NAME.log"
 # 引入日志模块（假设 logger.sh 在同目录下）
 . "$SCRIPT_DIR"/logger.sh
 
+# 可选：动态调整日志级别
+LOG_LEVEL=20 # 显示日志，包括INFO、WARN、ERROR
+
 # check logger.sh
 log_debug "目录: $SCRIPT_DIR"
 log_debug "全名: $SCRIPT_FULLNAME"
