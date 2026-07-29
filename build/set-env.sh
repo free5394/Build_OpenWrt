@@ -7,7 +7,7 @@ export NAME_SUFFIX=full
 
 export OPENWRT_REPO=immortalwrt/immortalwrt
 export OPENWRT_BRANCH=v25.12.1
-export OPENWRT_DIR=openwwrt
+export OPENWRT_DIR=openwrt
 export DEVICE_ARCH=x86-64
 
 export PART_SIZE=1024
