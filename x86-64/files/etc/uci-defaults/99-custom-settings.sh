@@ -46,6 +46,8 @@ main() {
 	log "[$SCRIPT_NAME] 开始执行"
 
 	modify_timezone
+
+	log "[$SCRIPT_NAME] 执行完成"
 }
 
 # 调用主函数
