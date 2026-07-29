@@ -12,7 +12,7 @@ set -o pipefail 2>/dev/null || true
 
 # 保存脚本名以供提示
 SCRIPT_NAME="$(basename "$0")"
-log_file="/tmp/uci-defaults.log"
+log_file="/tmp/$SCRIPT_NAME.log"
 
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
@@ -36,7 +36,7 @@ die() {
 # 首次启动探针：br-lan device section 存在且 ports 已配置视为已完成
 is_first_boot() {
 	local sec
-	sec=$(uci -q show network | \
+	sec=$(uci -q show network |
 		awk -F'.' '/^network\.@device\[[0-9]+\]\.name=br-lan$/ {print $2; exit}')
 	[ -n "$sec" ] || return 1
 	local ports
@@ -44,7 +44,10 @@ is_first_boot() {
 	[ -n "$ports" ]
 }
 
-is_first_boot || { log "[$SCRIPT_NAME] 已生效，跳过"; exit 0; }
+is_first_boot || {
+	log "[$SCRIPT_NAME] 已生效，跳过"
+	exit 0
+}
 
 # ============================================================
 # 1. 检测所有物理网络接口
@@ -104,7 +107,7 @@ configure_single() {
 # 查找 br-lan device section 名；找不到返回非零
 get_br_lan_device_section() {
 	local sec
-	sec=$(uci -q show network | \
+	sec=$(uci -q show network |
 		awk -F'.' '/^network\.@device\[[0-9]+\]\.name=br-lan$/ {print $2; exit}')
 	if [ -z "$sec" ]; then
 		# 兜底：grep + head + awk 兼容 awk 不支持 \d+ 的实现

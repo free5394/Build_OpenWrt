@@ -9,7 +9,7 @@ set -o pipefail 2>/dev/null || true
 
 # 保存脚本名以供提示
 SCRIPT_NAME="$(basename "$0")"
-log_file="/tmp/uci-defaults.log"
+log_file="/tmp/$SCRIPT_NAME.log"
 
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
@@ -31,7 +31,10 @@ is_first_boot() {
 	! grep -q "mirrors.vsean.net" "$f"
 }
 
-is_first_boot || { log "[$SCRIPT_NAME] 已生效，跳过"; exit 0; }
+is_first_boot || {
+	log "[$SCRIPT_NAME] 已生效，跳过"
+	exit 0
+}
 
 echo "脚本开始执行 - $(date)"
 
@@ -45,7 +48,10 @@ if [ ! -f "$DISTFEEDS" ]; then
 fi
 
 # 备份以便失败回滚
-cp "$DISTFEEDS" "$DISTFEEDS_BAK" || { log "备份 $DISTFEEDS 失败"; exit 0; }
+cp "$DISTFEEDS" "$DISTFEEDS_BAK" || {
+	log "备份 $DISTFEEDS 失败"
+	exit 0
+}
 
 # 删除 kenzo/small 源（BusyBox sed BRE 下用 ; 分隔更稳）
 sed -i '/kenzo/d; /small/d' "$DISTFEEDS" || {

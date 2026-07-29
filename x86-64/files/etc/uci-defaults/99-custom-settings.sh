@@ -9,7 +9,7 @@ set -o pipefail 2>/dev/null || true
 
 # 保存脚本名以供提示
 SCRIPT_NAME="$(basename "$0")"
-log_file="/tmp/uci-defaults.log"
+log_file="/tmp/$SCRIPT_NAME.log"
 
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
@@ -28,7 +28,10 @@ is_first_boot() {
 	[ "$(uci -q get system.@system[0].zonename)" = "Asia/Shanghai" ]
 }
 
-is_first_boot || { log "[$SCRIPT_NAME] 已生效，跳过"; exit 0; }
+is_first_boot || {
+	log "[$SCRIPT_NAME] 已生效，跳过"
+	exit 0
+}
 
 echo "脚本开始执行 - $(date)"
 
@@ -48,12 +51,21 @@ modify_lan_ip() {
 	# trim 空白
 	ip=$(echo "$ip" | awk '{$1=$1};1')
 	set -- $(echo "$ip" | tr '.' ' ')
-	[ "$#" -eq 4 ] || { log "LAN IP 格式错误: $lan_ip_addr"; return 0; }
+	[ "$#" -eq 4 ] || {
+		log "LAN IP 格式错误: $lan_ip_addr"
+		return 0
+	}
 	for seg in "$1" "$2" "$3" "$4"; do
 		case "$seg" in
-		*[!0-9]*) ok=0; break ;;
+		*[!0-9]*)
+			ok=0
+			break
+			;;
 		esac
-		[ "$seg" -ge 0 ] && [ "$seg" -le 255 ] || { ok=0; break; }
+		[ "$seg" -ge 0 ] && [ "$seg" -le 255 ] || {
+			ok=0
+			break
+		}
 	done
 	if [ "$ok" -ne 1 ]; then
 		log "LAN IP 格式错误: $lan_ip_addr"
