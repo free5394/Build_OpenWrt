@@ -140,20 +140,11 @@ configure_multi() {
 	done
 	log "br-lan 端口已更新: $lan_ifs"
 
-	# LAN 静态 IP
+	# LAN 静态 IP（多网口传统路由；99 脚本可按 lan_ip_addr 覆盖）
 	uci set network.lan.proto='static'
 	uci set network.lan.netmask='255.255.255.0'
-
-	# 支持自定义路由器后台地址
-	IP_FILE="/etc/config/custom_router_ip.txt"
-	if [ -f "$IP_FILE" ]; then
-		custom_ip=$(cat "$IP_FILE")
-		uci set network.lan.ipaddr="$custom_ip"
-		log "自定义管理地址: $custom_ip"
-	else
-		uci set network.lan.ipaddr='192.168.100.1'
-		log "默认管理地址: 192.168.100.1"
-	fi
+	uci set network.lan.ipaddr='192.168.100.1'
+	log "默认管理地址: 192.168.100.1（99 脚本可覆盖）"
 
 	uci commit network || die "UCI 提交失败"
 }
