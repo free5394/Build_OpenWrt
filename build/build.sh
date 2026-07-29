@@ -16,6 +16,11 @@ SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
 # 日志文件路径
 LOG_FILE="./logs/$SCRIPT_NAME.log"
 
+echo "目录: $SCRIPT_DIR"
+echo "全名: $SCRIPT_FULLNAME"
+echo "名称: $SCRIPT_NAME"
+echo "日志文件: $LOG_FILE"
+
 # 引入环境变量设置脚本
 . "$SCRIPT_DIR"/set-env.sh
 
