@@ -29,19 +29,20 @@ LOG_FILE="./logs/$SCRIPT_NAME.log"
 # =============================================
 
 echo "开始克隆OpenWrt仓库..."
-git clone -b $OPENWRT_BRANCH --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git $OPENWRT_DIR
+git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git "$OPENWRT_DIR"
 
 echo "复制文件..."
-cp -r $SCRIPT_DIR/$DEVICE_ARCH/* $OPENWRT_DIR/
-
-echo "设置文件权限..."
-cd $OPENWRT_DIR
-chmod +x files/etc/uci-defaults/*.sh
-chmod +x custom_scripts/*.sh
+cp -rf $SCRIPT_DIR/$DEVICE_ARCH/* $OPENWRT_DIR/
 
 echo "切换到OpenWrt目录..."
-cd $OPENWRT_DIR
+cd "$OPENWRT_DIR"
+
+echo "创建日志目录..."
 mkdir -p logs
+
+echo "设置文件权限..."
+chmod +x files/etc/uci-defaults/*.sh
+chmod +x custom_scripts/*.sh
 
 echo "更新feeds并安装..."
 ./custom_scripts/apply_custom_feeds.sh
@@ -54,7 +55,7 @@ echo "清理构建缓存..."
 rm -rf scripts/config/conf scripts/config/*.o tmp/
 
 echo "配置文件..."
-cp -f full.config .config && make defconfig V=s
+cp -f custom_config/full.config .config && make defconfig V=s
 
 echo "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh
