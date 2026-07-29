@@ -43,9 +43,12 @@ log_debug "日志文件: $LOG_FILE"
 # 修补配置文件
 patch_config() {
 	CONFIG_FILE=".config"
-	# 设置固件rootfs大小
 	if [ -z "$PART_SIZE" ]; then
 		log_error "PART_SIZE is empty"
+		return 0
+	fi
+	if [ ! -f "$CONFIG_FILE" ]; then
+		log_error "配置文件 $CONFIG_FILE 不存在"
 		return 1
 	fi
 	sed -i.bak -e '/^CONFIG_TARGET_ROOTFS_PARTSIZE=/d' \
@@ -57,10 +60,16 @@ patch_config() {
 # 方案一, 修改默认LAN IP地址
 modify_ip_address() {
 	CONFIG_GENERATE="package/base-files/files/bin/config_generate"
-	if [ -n "${IP_ADDRESS:-}" ]; then
-		sed -i '/lan) ipad/s/".*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
-		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
+	if [ -z "$IP_ADDRESS" ]; then
+		log_info "未配置 IP地址，跳过 IP地址配置"
+		return 0
 	fi
+	if [ ! -f "$CONFIG_GENERATE" ]; then
+		log_error "配置生成文件 $CONFIG_GENERATE 不存在"
+		return 1
+	fi
+	sed -i '/lan) ipad/s/".*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
+	log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
 }
 
 modify_theme() {
@@ -70,9 +79,11 @@ modify_theme() {
 	# 更改argon主题背景
 	BG_SRC="$GITHUB_WORKSPACE/images/bg1.jpg"
 	BG_DST="feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg"
-	if [ -f "$BG_SRC" ]; then
-		cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
+	if [ ! -f "$BG_SRC" ]; then
+		log_error "背景文件 $BG_SRC 不存在"
+		return 1
 	fi
+	cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
 }
 
 apply_custom_settings() {
