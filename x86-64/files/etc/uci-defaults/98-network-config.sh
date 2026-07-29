@@ -32,7 +32,7 @@ log() {
 
 die() {
 	log "错误: $*"
-	exit 1
+	return 1
 }
 
 # 修改WAN口为PPPoE
