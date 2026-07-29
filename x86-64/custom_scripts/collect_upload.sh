@@ -56,7 +56,7 @@ main() {
 	if [ ! -d "$src_dir" ]; then
 		log_warn "源目录 $src_dir 不存在，无文件可处理。"
 		log_info "$SCRIPT_NAME 脚本执行完成"
-		exit 0
+		return 0
 	fi
 
 	# 5. 根据 NAME_SUFFIX 执行不同逻辑
