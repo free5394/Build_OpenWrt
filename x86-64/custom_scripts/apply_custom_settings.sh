@@ -38,18 +38,22 @@ log_debug "日志文件: $LOG_FILE"
 patch_config() {
 	CONFIG_FILE=".config"
 	# 设置固件rootfs大小
-	if [ -n "${PART_SIZE:-}" ]; then
-		sed -i '/ROOTFS_PARTSIZE/d' "$CONFIG_FILE"
-		log_info "CONFIG_TARGET_ROOTFS_PARTSIZE=$PART_SIZE" >>"$CONFIG_FILE"
+	if [ -z "$PART_SIZE" ]; then
+		log_error "PART_SIZE is empty"
+		return 1
 	fi
+	sed -i.bak -e '/^CONFIG_TARGET_ROOTFS_PARTSIZE=/d' \
+		-e '$a CONFIG_TARGET_ROOTFS_PARTSIZE='"$PART_SIZE" \
+		"$CONFIG_FILE"
+	log_info "已设置固件rootfs大小为: $PART_SIZE"
 }
 
 # 方案一, 修改默认LAN IP地址
 modify_ip_address() {
 	CONFIG_GENERATE="package/base-files/files/bin/config_generate"
-	# 根据环境变量替换默认LAN IP地址
 	if [ -n "${IP_ADDRESS:-}" ]; then
 		sed -i '/lan) ipad/s/".*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
+		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
 	fi
 }
 
