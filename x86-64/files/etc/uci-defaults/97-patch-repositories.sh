@@ -10,13 +10,13 @@ if set -o | grep -q 'pipefail' 2>/dev/null; then
 fi
 
 # 保存脚本名以供提示
-SCRIPT_NAME="$0"
+SCRIPT_NAME="$(basename "$0")"
+log_file="/tmp/uci-defaults.log"
 
 # =============================================
-# 2. 日志目录创建与输出重定向
+# 2. 统一日志输出重定向（追加模式）
 # =============================================
-mkdir -p ./logs
-exec >./logs/${SCRIPT_NAME%.sh}.log 2>&1
+exec >>"$log_file" 2>&1
 
 # =============================================
 # 业务逻辑开始
