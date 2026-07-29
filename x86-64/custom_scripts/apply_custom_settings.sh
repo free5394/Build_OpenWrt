@@ -9,11 +9,14 @@ if set -o | grep -q 'pipefail' 2>/dev/null; then
 	set -o pipefail
 fi
 
+# 保存脚本名以供提示
+SCRIPT_NAME="$0"
+
 # =============================================
 # 2. 日志目录创建与输出重定向
 # =============================================
 # mkdir -p ./logs
-# exec >./logs/apply_custom_settings.log 2>&1
+# exec >./logs/${SCRIPT_NAME%.sh}.log 2>&1
 
 # =============================================
 # 业务逻辑开始
