@@ -35,15 +35,38 @@ is_first_boot || { log "[$SCRIPT_NAME] 已生效，跳过"; exit 0; }
 
 echo "脚本开始执行 - $(date)"
 
-sed -i '/kenzo\|small/d' /etc/apk/repositories.d/distfeeds.list
+DISTFEEDS="/etc/apk/repositories.d/distfeeds.list"
+DISTFEEDS_BAK="/tmp/distfeeds.list.bak"
 
-sed -i 's/mirrors\.vsean\.net/mirrors.pku.edu.cn/g' /etc/apk/repositories.d/distfeeds.list
+# 文件不存在兜底：避免 sed 对不存在文件返回非零
+if [ ! -f "$DISTFEEDS" ]; then
+	log "未找到 $DISTFEEDS，跳过仓库源修补"
+	exit 0
+fi
 
-# 检查关键词是否已删除
-grep -Hn "kenzo\|small" /etc/apk/repositories.d/distfeeds.list || echo "无匹配行（删除成功）"
+# 备份以便失败回滚
+cp "$DISTFEEDS" "$DISTFEEDS_BAK" || { log "备份 $DISTFEEDS 失败"; exit 0; }
 
-# 检查镜像源是否替换完成
-grep "mirrors.pku.edu.cn" /etc/apk/repositories.d/distfeeds.list || echo "镜像源替换失败"
+# 删除 kenzo/small 源（BusyBox sed BRE 下用 ; 分隔更稳）
+sed -i '/kenzo/d; /small/d' "$DISTFEEDS" || {
+	log "删除 kenzo/small 失败，回滚"
+	cp "$DISTFEEDS_BAK" "$DISTFEEDS"
+	exit 0
+}
+
+# 替换镜像源
+sed -i 's/mirrors\.vsean\.net/mirrors.pku.edu.cn/g' "$DISTFEEDS" || {
+	log "镜像源替换失败，回滚"
+	cp "$DISTFEEDS_BAK" "$DISTFEEDS"
+	exit 0
+}
+
+# 验证：旧域名不存在 AND 新域名存在
+if ! grep -q "mirrors.vsean.net" "$DISTFEEDS" && grep -q "mirrors.pku.edu.cn" "$DISTFEEDS"; then
+	log "仓库源修补完成"
+else
+	log "仓库源修补未达预期，详情请检查 $DISTFEEDS"
+fi
 
 echo "设置完成"
 exit 0
