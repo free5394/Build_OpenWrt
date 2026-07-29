@@ -32,11 +32,12 @@ echo "开始克隆OpenWrt仓库..."
 git clone -b $OPENWRT_BRANCH --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git $OPENWRT_DIR
 
 echo "复制文件..."
-cp -r ./$DEVICE_ARCH/* $OPENWRT_DIR/
+cp -r $SCRIPT_DIR/$DEVICE_ARCH/* $OPENWRT_DIR/
 
 echo "设置文件权限..."
-chmod +x $OPENWRT_DIR/files/etc/uci-defaults/*.sh
-chmod +x $OPENWRT_DIR/custom_scripts/*.sh
+cd $OPENWRT_DIR
+chmod +x files/etc/uci-defaults/*.sh
+chmod +x custom_scripts/*.sh
 
 echo "切换到OpenWrt目录..."
 cd $OPENWRT_DIR

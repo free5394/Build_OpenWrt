@@ -7,11 +7,11 @@ export NAME_SUFFIX=full
 
 export OPENWRT_REPO=immortalwrt/immortalwrt
 export OPENWRT_BRANCH=v25.12.1
-export OPENWRT_DIR=openwrt
+export OPENWRT_DIR=$GITHUB_WORKSPACE/openwwrt
 export DEVICE_ARCH=x86-64
 
 export PART_SIZE=1024
-export UPLOAD_DIR=uploads
+export UPLOAD_DIR=$GITHUB_WORKSPACE/uploads
 export IP_ADDRESS=192.168.100.1
 export ROOT_PASSWORD=password
 export PPPPOE_USERNAME=wan
