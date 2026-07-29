@@ -24,9 +24,6 @@ exec >>"$log_file" 2>&1
 # =============================================
 echo "脚本开始执行 - $(date)"
 
-# 示例命令1：正常执行
-echo "当前工作目录: $(pwd)"
-
 log() {
 	echo "[$(date '+%H:%M:%S')] $*"
 }
@@ -36,6 +33,19 @@ die() {
 	echo "错误: $*" >&2
 	exit 1
 }
+
+# 首次启动探针：br-lan device section 存在且 ports 已配置视为已完成
+is_first_boot() {
+	local sec
+	sec=$(uci -q show network | \
+		awk -F'.' '/^network\.@device\[[0-9]+\]\.name=br-lan$/ {print $2; exit}')
+	[ -n "$sec" ] || return 1
+	local ports
+	ports=$(uci -q get "network.$sec.ports" 2>/dev/null)
+	[ -n "$ports" ]
+}
+
+is_first_boot || { log "[$SCRIPT_NAME] 已生效，跳过"; exit 0; }
 
 # ============================================================
 # 1. 检测所有物理网络接口

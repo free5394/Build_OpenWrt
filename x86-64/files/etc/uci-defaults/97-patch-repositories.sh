@@ -19,10 +19,21 @@ exec >>"$log_file" 2>&1
 # =============================================
 # 业务逻辑开始
 # =============================================
-echo "脚本开始执行 - $(date)"
+log() {
+	echo "[$(date '+%H:%M:%S')] $*"
+}
 
-# 示例命令1：正常执行
-echo "当前工作目录: $(pwd)"
+# 首次启动探针：仅当 distfeeds.list 已含 PKU 镜像且不再含旧 vsean 源时视为已完成
+is_first_boot() {
+	local f=/etc/apk/repositories.d/distfeeds.list
+	[ -f "$f" ] || return 1
+	grep -q "mirrors.pku.edu.cn" "$f" || return 1
+	! grep -q "mirrors.vsean.net" "$f"
+}
+
+is_first_boot || { log "[$SCRIPT_NAME] 已生效，跳过"; exit 0; }
+
+echo "脚本开始执行 - $(date)"
 
 sed -i '/kenzo\|small/d' /etc/apk/repositories.d/distfeeds.list
 
