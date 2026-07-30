@@ -30,10 +30,10 @@ SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
 # =============================================
 # 业务逻辑开始
 # =============================================
+CONFIG_FILE="${CONFIG_FILE:-.config}"
 
 # 修补配置文件
 patch_config() {
-	CONFIG_FILE=".config"
 	if [ -z "$PART_SIZE" ]; then
 		log_error "PART_SIZE is empty"
 		return 0
@@ -86,6 +86,30 @@ apply_custom_settings() {
 	sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
 }
 
+# 配置 openclash 核心配置
+preset_openclash_core() {
+	if [ ! -f "$CONFIG_FILE" ]; then
+		log_error "配置文件 $CONFIG_FILE 不存在"
+		return 1
+	fi
+	# 精确判断 .config 中是否选中 luci-app-openclash
+	if ! grep -q '^CONFIG_PACKAGE_luci-app-openclash=y$' "$CONFIG_FILE"; then
+		log_info "未选择 luci-app-openclash，跳过 openclash core 配置"
+		return 0
+	fi
+	_core_ver="${OPENCLASH_CORE_VERSION:-v2}"
+	log_info "✅ 已选择 luci-app-openclash，添加 openclash core"
+	mkdir -p files/etc/openclash/core
+	# 下载 clash_meta 到 files/etc/openclash/core/clash_meta 文件
+	META_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-amd64-$_core_ver.tar.gz"
+	wget -qO- $META_URL | tar xOvz >files/etc/openclash/core/clash_meta
+	chmod +x files/etc/openclash/core/clash_meta
+	# 从 v2ray-rules-dat 仓库下载 GeoIP.dat GeoSite.dat
+	wget -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O files/etc/openclash/GeoIP.dat
+	wget -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -O files/etc/openclash/GeoSite.dat
+	log_info "已添加 openclash 核心配置"
+}
+
 # 主函数
 main() {
 	log_info "$SCRIPT_NAME 脚本开始执行"
@@ -94,6 +118,7 @@ main() {
 	modify_ip_address
 	modify_theme
 	apply_custom_settings
+	preset_openclash_core
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
