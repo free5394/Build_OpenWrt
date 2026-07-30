@@ -78,7 +78,8 @@ modify_theme() {
 
 	# 更改argon主题背景
 	BG_SRC="$GITHUB_WORKSPACE/images/bg1.jpg"
-	BG_DST="feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg"
+	# BG_DST="feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg"
+	BG_DST="feeds/kenzo/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg"
 	if [ ! -f "$BG_SRC" ]; then
 		log_error "背景文件 $BG_SRC 不存在"
 		return 1
