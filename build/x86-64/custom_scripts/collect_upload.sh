@@ -17,19 +17,10 @@ SCRIPT_FULLNAME="${0##*/}"
 # 脚本名（不含后缀）
 SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
 # 日志文件路径
-LOG_FILE="./logs/$SCRIPT_NAME.log"
+# LOG_FILE="./logs/$SCRIPT_NAME.log"
 
 # 引入日志模块（假设 logger.sh 在同目录下）
 . "$SCRIPT_DIR"/logger.sh
-
-# 可选：动态调整日志级别
-LOG_LEVEL=20 # 显示日志，包括INFO、WARN、ERROR
-
-# check logger.sh
-log_debug "目录: $SCRIPT_DIR"
-log_debug "全名: $SCRIPT_FULLNAME"
-log_debug "名称: $SCRIPT_NAME"
-log_debug "日志文件: $LOG_FILE"
 
 # =============================================
 # 2. 统一日志输出重定向（追加模式）
