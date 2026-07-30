@@ -116,6 +116,10 @@ modify_wan_pppoe() {
 	uci -q set network.wan.proto=pppoe
 	uci -q set network.wan.username="$pppoe_username"
 	uci -q set network.wan.password="$pppoe_password"
+	# 禁用 IPv6
+	uci -q set network.wan.ipv6='0'
+	uci -q set network.wan.sourcefilter='0'
+	uci -q set network.wan.delegate='0'
 	uci commit network
 
 	log "WAN口为PPPoE 配置完成"
