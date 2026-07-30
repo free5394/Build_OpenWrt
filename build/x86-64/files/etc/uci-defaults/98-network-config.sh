@@ -51,6 +51,8 @@ modify_wan_pppoe() {
 	uci -q set network.wan.username="$pppoe_username"
 	uci -q set network.wan.password="$pppoe_password"
 	uci commit network
+
+	log "WAN口为PPPoE 配置完成"
 }
 
 # ============================================================

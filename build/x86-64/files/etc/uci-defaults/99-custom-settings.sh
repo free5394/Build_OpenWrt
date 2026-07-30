@@ -36,6 +36,7 @@ uci set system.@system[0].timezone='CST-8'
 uci set system.@system[0].zonename='Asia/Shanghai'
 uci commit system
 EOF
+	log "时区修改完成"
 }
 
 main() {
