@@ -22,6 +22,12 @@ LOG_FILE="/tmp/$SCRIPT_NAME.log"
 # =============================================
 exec >"$LOG_FILE" 2>&1
 
+# =============================================
+# 业务变量
+# =============================================
+# 根密码
+root_password=""
+
 # PPPoE 用户名和密码
 pppoe_username=""
 pppoe_password=""
@@ -35,6 +41,17 @@ log() {
 
 die() {
 	log "错误: $*"
+}
+
+# 修改root 密码
+modify_root_password() {
+	if [ -n "$root_password" ]; then
+		(
+			echo "$root_password"
+			sleep 1
+			echo "$root_password"
+		) | passwd root >/dev/null
+	fi
 }
 
 # 修改系统时区为东八区（上海）
@@ -110,6 +127,7 @@ main() {
 	modify_timezone
 	modify_repositories
 	modify_wan_pppoe
+	modify_root_password
 
 	log "[$SCRIPT_NAME] 执行完成"
 }
