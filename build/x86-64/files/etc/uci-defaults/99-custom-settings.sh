@@ -57,9 +57,9 @@ modify_root_password() {
 # 修改系统时区为东八区（上海）
 modify_timezone() {
 	uci batch <<EOF
-uci set system.@system[0].timezone='CST-8'
-uci set system.@system[0].zonename='Asia/Shanghai'
-uci commit system
+set system.@system[0].timezone='CST-8'
+set system.@system[0].zonename='Asia/Shanghai'
+commit system
 EOF
 	log "时区修改完成"
 }
@@ -103,25 +103,62 @@ modify_repositories() {
 	fi
 }
 
+# 禁用 WAN口 IPv6
+modify_wan_ipv6() {
+	[ -n "$(uci -q get network.wan 2>/dev/null)" ] || {
+		log "未检测到 wan 接口，跳过 wan 接口 IPv6 设置"
+		return 0
+	}
+	uci batch <<EOF
+set network.wan.ipv6='0'
+set network.wan.sourcefilter='0'
+set network.wan.delegate='0'
+set network.wan.multipath='off'
+commit network
+EOF
+	log "WAN口 IPv6 禁用完成"
+}
+
+# 配置wan6口的IPv6参数
+modify_wan6_ipv6() {
+	# 1. 检查 wan 接口是否存在，不存在则跳过后续配置
+	if ! uci -q get network.wan >/dev/null 2>&1; then
+		log "未检测到 wan 接口，跳过 wan6 接口 IPv6 配置"
+		return 1
+	fi
+
+	# 2. 批量写入 wan6 口的 IPv6 配置并提交
+	# 说明：batch 内部直接使用 set 指令，不需要加 uci 前缀和 -q 参数
+	# 若 wan6 节点不存在，set network.wan6=interface 会自动创建
+	uci batch <<EOF
+set network.wan6=interface
+set network.wan6.device='@wan'
+set network.wan6.proto='dhcpv6'
+set network.wan6.reqaddress='try'
+set network.wan6.reqprefix='auto'
+set network.wan6.norelease='1'
+set network.wan6.multipath='off'
+commit network
+EOF
+	log "wan6口IPv6配置修改完成"
+}
+
 # 修改WAN口为PPPoE
 modify_wan_pppoe() {
+	[ -n "$(uci -q get network.wan 2>/dev/null)" ] || {
+		log "未检测到 wan 接口，跳过 PPPoE 配置"
+		return 0
+	}
 	if [ -z "$pppoe_username" ] || [ -z "$pppoe_password" ]; then
 		log "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
 		return 0
 	fi
-	[ -n "$(uci -q get network.wan 2>/dev/null)" ] || {
-		log "未检测到 network.wan，跳过 PPPoE 配置"
-		return 0
-	}
-	uci -q set network.wan.proto=pppoe
-	uci -q set network.wan.username="$pppoe_username"
-	uci -q set network.wan.password="$pppoe_password"
-	# 禁用 IPv6
-	uci -q set network.wan.ipv6='0'
-	uci -q set network.wan.sourcefilter='0'
-	uci -q set network.wan.delegate='0'
-	uci commit network
-
+	uci batch <<EOF
+set network.wan.proto='pppoe'
+set network.wan.username="$pppoe_username"
+set network.wan.password="$pppoe_password"
+commit network
+EOF
 	log "WAN口为PPPoE 配置完成"
 }
 
@@ -131,6 +168,8 @@ main() {
 	modify_timezone
 	modify_repositories
 	modify_wan_pppoe
+	modify_wan_ipv6
+	modify_wan6_ipv6
 	modify_root_password
 
 	log "[$SCRIPT_NAME] 执行完成"
