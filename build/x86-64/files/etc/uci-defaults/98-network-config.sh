@@ -1,7 +1,4 @@
 #!/bin/sh
-# 网络接口自动检测与配置脚本
-# 规则：单网口→LAN（旁路由 DHCP）；多网口→最后一个为WAN，其余为LAN
-
 # =============================================
 # 1. 严格模式：命令失败即退出
 # =============================================
@@ -13,8 +10,6 @@ if (set -o pipefail) 2>/dev/null; then
 	set -o | grep pipefail
 fi
 
-# 脚本所在目录（绝对路径）
-SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
 # 脚本全名（含后缀）
 SCRIPT_FULLNAME="${0##*/}"
 # 脚本名（不含后缀）
@@ -26,11 +21,6 @@ LOG_FILE="/tmp/$SCRIPT_NAME.log"
 # 2. 统一日志输出重定向（追加模式）
 # =============================================
 exec >"$LOG_FILE" 2>&1
-
-echo "目录: $SCRIPT_DIR"
-echo "全名: $SCRIPT_FULLNAME"
-echo "名称: $SCRIPT_NAME"
-echo "日志文件: $LOG_FILE"
 
 # PPPoE 用户名和密码
 pppoe_username=""
