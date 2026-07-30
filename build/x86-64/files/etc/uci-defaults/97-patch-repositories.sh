@@ -29,9 +29,8 @@ log() {
 	echo "[$(date '+%H:%M:%S')] $*"
 }
 
-main() {
-	log "[$SCRIPT_NAME] 开始执行"
-
+# 修补仓库源
+modify_repositories() {
 	DISTFEEDS="/etc/apk/repositories.d/distfeeds.list"
 	DISTFEEDS_BAK="$DISTFEEDS.bak"
 
@@ -67,7 +66,11 @@ main() {
 	else
 		log "仓库源修补未达预期，详情请检查 $DISTFEEDS"
 	fi
+}
 
+main() {
+	log "[$SCRIPT_NAME] 开始执行"
+	modify_repositories
 	log "[$SCRIPT_NAME] 执行完成"
 }
 
