@@ -41,7 +41,6 @@ log_debug "日志文件: $LOG_FILE"
 # =============================================
 
 CUSTOM_SETTINGS="files/etc/uci-defaults/99-custom-settings.sh"
-NETWORK_CONFIG="files/etc/uci-defaults/98-network-config.sh"
 
 # 设置根密码
 set_password() {
@@ -63,15 +62,15 @@ set_pppoe() {
 		log_info "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
 		return 0
 	fi
-	if [ ! -f "$NETWORK_CONFIG" ]; then
-		log_error "网络配置文件 $NETWORK_CONFIG 不存在"
+	if [ ! -f "$CUSTOM_SETTINGS" ]; then
+		log_error "网络配置文件 $CUSTOM_SETTINGS 不存在"
 		return 1
 	fi
 	log_info "设置 PPPoE 配置"
 	sed -i \
 		-e "s|^pppoe_username=.*|pppoe_username=\"${PPPPOE_USERNAME}\"|" \
 		-e "s|^pppoe_password=.*|pppoe_password=\"${PPPPOE_PASSWORD}\"|" \
-		"$NETWORK_CONFIG"
+		"$CUSTOM_SETTINGS"
 }
 
 # 主函数

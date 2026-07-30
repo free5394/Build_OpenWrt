@@ -22,11 +22,19 @@ LOG_FILE="/tmp/$SCRIPT_NAME.log"
 # =============================================
 exec >"$LOG_FILE" 2>&1
 
+# PPPoE 用户名和密码
+pppoe_username=""
+pppoe_password=""
+
 # =============================================
 # 业务逻辑开始
 # =============================================
 log() {
 	echo "[$(date '+%H:%M:%S')] $*"
+}
+
+die() {
+	log "错误: $*"
 }
 
 # 修改系统时区为东八区（上海）
@@ -78,11 +86,30 @@ modify_repositories() {
 	fi
 }
 
+# 修改WAN口为PPPoE
+modify_wan_pppoe() {
+	if [ -z "$pppoe_username" ] || [ -z "$pppoe_password" ]; then
+		log "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
+		return 0
+	fi
+	[ -n "$(uci -q get network.wan 2>/dev/null)" ] || {
+		log "未检测到 network.wan，跳过 PPPoE 配置"
+		return 0
+	}
+	uci -q set network.wan.proto=pppoe
+	uci -q set network.wan.username="$pppoe_username"
+	uci -q set network.wan.password="$pppoe_password"
+	uci commit network
+
+	log "WAN口为PPPoE 配置完成"
+}
+
 main() {
 	log "[$SCRIPT_NAME] 开始执行"
 
 	modify_timezone
 	modify_repositories
+	modify_wan_pppoe
 
 	log "[$SCRIPT_NAME] 执行完成"
 }
