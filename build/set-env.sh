@@ -23,6 +23,9 @@ export UPLOAD_RELEASE=true
 export USE_CCACHE=1
 export CCACHE_DIR=${CCACHE_DIR:-/tmp/ccache}
 
+# 自定义配置文件
+export CUSTOM_CONFIG=standard.config
+
 echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
 echo "OPENWRT_DIR: $OPENWRT_DIR"
 echo "UPLOAD_DIR: $UPLOAD_DIR"

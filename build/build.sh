@@ -59,13 +59,13 @@ echo "更新feeds并安装..."
 
 # echo "生成配置文件..."
 # make menuconfig
-# ./scripts/diffconfig.sh >default.config
+# ./scripts/diffconfig.sh >$CUSTOM_CONFIG
 
 echo "清理构建缓存..."
 rm -rf scripts/config/conf scripts/config/*.o tmp/
 
 echo "配置文件..."
-cp -f custom_config/full.config .config && make defconfig V=s
+cp -f custom_config/$CUSTOM_CONFIG .config && make defconfig V=s
 
 echo "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh
