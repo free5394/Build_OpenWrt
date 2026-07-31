@@ -24,10 +24,13 @@ export NAME_SUFFIX=$_config_name
 # 自定义配置文件
 export CUSTOM_CONFIG=$_config_name.config
 
-printf '========= %s 脚本开始加载 ============\n' "set-env.sh"
-printf 'GITHUB_WORKSPACE: %s\n' "$GITHUB_WORKSPACE"
-printf 'OPENWRT_DIR: %s\n' "$OPENWRT_DIR"
-printf 'UPLOAD_DIR: %s\n' "$UPLOAD_DIR"
-printf 'OPENWRT_REPO: %s\n' "$OPENWRT_REPO"
-printf 'OPENWRT_BRANCH: %s\n' "$OPENWRT_BRANCH"
-printf '========= %s 脚本结束加载 ============\n' "set-env.sh"
+# 加载日志：设置 LOG_SILENT=1 可抑制（CI 环境推荐启用以减少噪声）
+if [ -z "${LOG_SILENT:-}" ]; then
+	printf '========= %s 脚本开始加载 ============\n' "set-env.sh"
+	printf 'GITHUB_WORKSPACE: %s\n' "$GITHUB_WORKSPACE"
+	printf 'OPENWRT_DIR: %s\n' "$OPENWRT_DIR"
+	printf 'UPLOAD_DIR: %s\n' "$UPLOAD_DIR"
+	printf 'OPENWRT_REPO: %s\n' "$OPENWRT_REPO"
+	printf 'OPENWRT_BRANCH: %s\n' "$OPENWRT_BRANCH"
+	printf '========= %s 脚本结束加载 ============\n' "set-env.sh"
+fi

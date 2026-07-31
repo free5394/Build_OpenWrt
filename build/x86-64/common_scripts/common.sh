@@ -61,9 +61,12 @@ esac
 # mkdir -p "$(dirname -- "$LOG_FILE")"
 # exec >>"$LOG_FILE" 2>&1
 
-printf '========= %s 脚本开始加载 ============\n' "$SCRIPT_FULLNAME"
-printf '父目录: %s\n' "$SCRIPT_PARENT_DIR"
-printf '全名: %s\n' "$SCRIPT_FULLNAME"
-printf '名称: %s\n' "$SCRIPT_NAME"
-printf '日志文件: %s\n' "$LOG_FILE"
-printf '========= %s 脚本结束加载 ============\n' "$SCRIPT_FULLNAME"
+# 加载日志：设置 LOG_SILENT=1 可抑制（CI 环境推荐启用以减少噪声）
+if [ -z "${LOG_SILENT:-}" ]; then
+	printf '========= %s 脚本开始加载 ============\n' "$SCRIPT_FULLNAME"
+	printf '父目录: %s\n' "$SCRIPT_PARENT_DIR"
+	printf '全名: %s\n' "$SCRIPT_FULLNAME"
+	printf '名称: %s\n' "$SCRIPT_NAME"
+	printf '日志文件: %s\n' "$LOG_FILE"
+	printf '========= %s 脚本结束加载 ============\n' "$SCRIPT_FULLNAME"
+fi
