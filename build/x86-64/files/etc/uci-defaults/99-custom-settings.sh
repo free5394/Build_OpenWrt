@@ -114,7 +114,6 @@ modify_wan_ipv6() {
 set network.wan.ipv6='0'
 set network.wan.sourcefilter='0'
 set network.wan.delegate='0'
-set network.wan.multipath='off'
 commit network
 EOF
 	log "WAN口 IPv6 禁用完成"
