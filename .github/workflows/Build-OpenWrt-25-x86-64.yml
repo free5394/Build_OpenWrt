@@ -77,6 +77,8 @@ jobs:
     steps:
       - name: 克隆仓库
         uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - name: 当前环境信息
         run: |
