@@ -44,10 +44,10 @@ esac
 
 # 父目录：截取最后一级路径之前的内容，覆盖绝对/相对/根目录等边界
 case "$SCRIPT_DIR" in
-/*/*) SCRIPT_PARENT_DIR=${SCRIPT_DIR%/*} ;;
-/*) SCRIPT_PARENT_DIR=/ ;;
-*/*) SCRIPT_PARENT_DIR=${SCRIPT_DIR%/*} ;;
-*) SCRIPT_PARENT_DIR=. ;;
+/*/*) SCRIPT_PARENT_DIR=${SCRIPT_DIR%/*} ;; # 绝对路径且有父目录（如 /a/b → /a）
+/*) SCRIPT_PARENT_DIR=/ ;;                  # 绝对路径在根目录下（如 /a → /）
+*/*) SCRIPT_PARENT_DIR=${SCRIPT_DIR%/*} ;;  # 相对路径含斜杠（如 a/b → a）
+*) SCRIPT_PARENT_DIR=. ;;                   # 相对路径无斜杠（如 a → .）
 esac
 
 # =============================================
