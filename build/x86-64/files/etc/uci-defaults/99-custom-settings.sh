@@ -26,7 +26,7 @@ exec >"$LOG_FILE" 2>&1
 # 业务变量
 # =============================================
 # 根密码
-root_password=""
+root_password="password"
 
 # PPPoE 用户名和密码
 pppoe_username=""

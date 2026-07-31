@@ -13,9 +13,6 @@ export DEVICE_ARCH=x86-64
 export PART_SIZE=1024
 export UPLOAD_DIR=upload
 export IP_ADDRESS=192.168.100.1
-export ROOT_PASSWORD=password
-export PPPOE_USERNAME=
-export PPPOE_PASSWORD=
 export UPLOAD_ARTIFACT=true
 export UPLOAD_RELEASE=true
 

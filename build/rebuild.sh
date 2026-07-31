@@ -55,7 +55,6 @@ cp -f custom_config/$CUSTOM_CONFIG .config && make defconfig V=s
 
 echo "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh
-./custom_scripts/patch_custom_settings.sh
 
 echo "开始下载依赖..."
 make download -j $(($(nproc) + 1)) V=s || make download -j1 V=s

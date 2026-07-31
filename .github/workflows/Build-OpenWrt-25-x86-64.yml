@@ -28,24 +28,6 @@ on:
         default: "192.168.10.1"
         type: string
 
-      root_password:
-        description: "设置默认root密码"
-        required: false
-        default: "password"
-        type: string
-
-      pppoe_username:
-        description: "设置默认PPPoE用户名"
-        required: false
-        default: ""
-        type: string
-
-      pppoe_password:
-        description: "设置默认PPPoE密码"
-        required: false
-        default: ""
-        type: string
-
       upload_artifact:
         description: "上传固件到Artifact"
         required: false
@@ -76,9 +58,6 @@ jobs:
       OPENWRT_BRANCH: ${{inputs.repo_branch}}
       PART_SIZE: ${{inputs.part_size}}
       IP_ADDRESS: ${{inputs.ip_address}}
-      ROOT_PASSWORD: ${{inputs.root_password}}
-      PPPOE_USERNAME: ${{inputs.pppoe_username}}
-      PPPOE_PASSWORD: ${{inputs.pppoe_password}}
       UPLOAD_ARTIFACT: ${{inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{inputs.upload_release}}
 
@@ -152,7 +131,6 @@ jobs:
         run: |
           cd ${{env.OPENWRT_DIR}}
           ./custom_scripts/apply_custom_settings.sh > logs/apply_custom_settings.log 2>&1
-          ./custom_scripts/patch_custom_settings.sh > logs/patch_custom_settings.log 2>&1
 
       - name: 下载依赖包
         id: download
@@ -206,7 +184,7 @@ jobs:
             - 💝 源码分支: ${{env.OPENWRT_BRANCH}}
             - 🚀 内核版本: ${{env.KERNEL_VERSION}}
             - 🌐 默认地址: ${{env.IP_ADDRESS}}
-            - 🔑 默认密码: ${{env.ROOT_PASSWORD}}
+            - 🔑 默认密码: password
 
   Delete_Workflow:
     needs: [Build_OpenWrt]
