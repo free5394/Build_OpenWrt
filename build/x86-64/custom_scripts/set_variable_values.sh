@@ -27,10 +27,7 @@ main() {
 
 	# 源仓库与分支
 	SOURCE_REPO=$(basename "$OPENWRT_REPO")
-	{
-		echo "SOURCE_REPO=$SOURCE_REPO"
-		echo "LITE_BRANCH=${OPENWRT_BRANCH#*-}"
-	} >>"$GITHUB_ENV"
+	echo "SOURCE_REPO=$SOURCE_REPO" >>"$GITHUB_ENV"
 
 	# 平台架构（使用 sed -nE 替代 grep -oP，避免依赖 PCRE，提升可移植性）
 	TARGET_NAME=$(sed -nE 's/^CONFIG_TARGET_([a-z0-9]+)=y$/\1/p' .config | head -n1)
