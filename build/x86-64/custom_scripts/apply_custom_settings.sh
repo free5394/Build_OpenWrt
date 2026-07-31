@@ -78,7 +78,7 @@ apply_custom_settings() {
 	# sed -i 's/\/bin\/ash/\/usr\/bin\/zsh/g' package/base-files/files/etc/passwd
 
 	# ttyd 免登录（默认开启，设置 TTYD_AUTOLOGIN=0 关闭；免登录有安全风险，禁止在公网暴露 ttyd）
-	if [ "${TTYD_AUTOLOGIN:-1}" = "1" ]; then
+	if [ "${TTYD_AUTOLOGIN:-0}" = "1" ]; then
 		sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
 		log_info "已启用 ttyd root 免登录"
 	else
