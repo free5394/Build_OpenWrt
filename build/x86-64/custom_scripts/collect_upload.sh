@@ -35,8 +35,8 @@ cp_img() {
 	log_info "cp_img 开始执行"
 	# 参数校验
 	if [ $# -ne 2 ] && [ $# -ne 3 ]; then
-		log_error "错误：参数数量只能为 2 或 3，当前为 %d\n" "$#"
-		log_info "用法：%s <基准目录> <目标目录> <名称后缀>\n" "cp_img"
+		log_error "错误：参数数量只能为 2 或 3，当前为 $#"
+		log_info "用法：cp_img <基准目录> <目标目录> <名称后缀>"
 		return 1
 	fi
 
@@ -90,8 +90,8 @@ compress_logs() {
 	log_info "compress_logs 开始执行"
 	# 参数校验
 	if [ $# -ne 1 ] && [ $# -ne 2 ]; then
-		log_error "错误：参数数量只能为 1 或 2，当前为 %d\n" "$#"
-		log_info "用法：%s <目标目录> <名称后缀（可选）>\n" "compress_logs"
+		log_error "错误：参数数量只能为 1 或 2，当前为 $#"
+		log_info "用法：compress_logs <目标目录> <名称后缀（可选）>"
 		return 1
 	fi
 	dest_dir="$1"
