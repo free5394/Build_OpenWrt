@@ -57,12 +57,12 @@ jobs:
     timeout-minutes: 180
 
     env:
-      OPENWRT_REPO: ${{inputs.repo_name}}
-      OPENWRT_BRANCH: ${{inputs.repo_branch}}
-      PART_SIZE: ${{inputs.part_size}}
-      IP_ADDRESS: ${{inputs.ip_address}}
-      UPLOAD_ARTIFACT: ${{inputs.upload_artifact}}
-      UPLOAD_RELEASE: ${{inputs.upload_release}}
+      OPENWRT_REPO: ${{ inputs.repo_name || 'immortalwrt/immortalwrt' }}
+      OPENWRT_BRANCH: ${{ inputs.repo_branch || 'v25.12.1' }}
+      PART_SIZE: ${{ inputs.part_size || 1024 }}
+      IP_ADDRESS: ${{ inputs.ip_address || '192.168.10.1' }}
+      UPLOAD_ARTIFACT: ${{ inputs.upload_artifact || true }}
+      UPLOAD_RELEASE: ${{ inputs.upload_release || true }}
       CCACHE_DIR: /home/runner/.ccache
 
     strategy:
