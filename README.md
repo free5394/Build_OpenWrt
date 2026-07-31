@@ -157,13 +157,13 @@ sudo bash scripts/init-env.sh
 | 项            | 本地默认（set-env.sh） | CI 默认（工作流） |
 | ------------- | ---------------------- | ----------------- |
 | LAN IP        | `192.168.100.1`        | `192.168.10.1`    |
-| PPPoE 用户名  | `a123`                 | _空_（不启用）    |
-| PPPoE 密码    | `p456`                 | _空_（不启用）    |
-| 种子配置      | `standard.config`      | `full.config`     |
+| PPPoE 用户名  | _空_（不启用）         | _空_（不启用）    |
+| PPPoE 密码    | _空_（不启用）         | _空_（不启用）    |
+| 种子配置      | `full.config`          | `full.config`     |
 | `NAME_SUFFIX` | `full`                 | matrix 配置名     |
 | 上传目录      | `upload/`              | `upload/`         |
 
-如需修改，直接编辑 [build/set-env.sh](./build/set-env.sh) 中对应的环境变量即可。
+本地构建的配置名通过 `set-env.sh` 中 `_config_name` 变量统一管理，修改该变量可同时切换 `NAME_SUFFIX` 与 `CUSTOM_CONFIG`。其他环境变量也可直接编辑 [build/set-env.sh](./build/set-env.sh) 调整。
 
 ### 与 CI 的差异
 
