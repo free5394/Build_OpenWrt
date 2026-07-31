@@ -21,13 +21,6 @@
 # 业务逻辑开始
 # =============================================
 
-# 查找目录
-find_dir() {
-	dir="$1"
-	name="$2"
-	find "$dir" -maxdepth 3 -type d -name "$name" -print -quit 2>/dev/null
-}
-
 # 插入自定义Feeds
 add_feed() {
 	feed_line="$1"
