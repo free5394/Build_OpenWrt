@@ -92,14 +92,14 @@ jobs:
 
     steps:
       - name: 克隆仓库
-        uses: actions/checkout@main
+        uses: actions/checkout@v7.0.1
 
       - name: 当前环境信息
         run: |
           chmod +x scripts/check.sh && ./scripts/check.sh
 
       - name: 清理磁盘空间
-        uses: jlumbroso/free-disk-space@main
+        uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: false
           android: true
@@ -184,7 +184,7 @@ jobs:
 
       - name: 上传固件到Artifacts
         if: env.UPLOAD_ARTIFACT == 'true' && !cancelled()
-        uses: actions/upload-artifact@main
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{env.OPENWRT_BRANCH}}-${{env.COMPILE_DATE}}
           path: ${{env.UPLOAD_DIR}}/
