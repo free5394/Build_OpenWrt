@@ -72,7 +72,7 @@ Build_OpenWrt/
 
 ### 2. 矩阵配置
 
-工作流 `strategy.matrix.config_name` 当前启用 **`full`**（`minimal` 与 `standard` 已在 [.github/workflows/build-25.12-x86-64.yml](.github/workflows/Build-OpenWrt-25-x86-64.yml) 中注释）。
+工作流 `strategy.matrix.config_name` 当前启用 **`full`**（`minimal` 与 `standard` 已在 [.github/workflows/Build-OpenWrt-25-x86-64.yml](.github/workflows/Build-OpenWrt-25-x86-64.yml) 中注释）。
 
 | 配置       | 说明                                                                                      |
 | ---------- | ----------------------------------------------------------------------------------------- |
