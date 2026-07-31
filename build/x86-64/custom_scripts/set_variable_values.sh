@@ -25,6 +25,12 @@
 main() {
 	log_info "$SCRIPT_NAME 脚本开始执行"
 
+	# GITHUB_ENV 仅在 GitHub Actions 环境可用；本地执行时跳过写入
+	if [ -z "${GITHUB_ENV:-}" ]; then
+		log_warn "GITHUB_ENV 未设置，跳过环境变量写入（本地执行可忽略）"
+		return 0
+	fi
+
 	# 源仓库与分支
 	SOURCE_REPO=$(basename "$OPENWRT_REPO")
 	echo "SOURCE_REPO=$SOURCE_REPO" >>"$GITHUB_ENV"
@@ -33,11 +39,11 @@ main() {
 	TARGET_NAME=$(sed -nE 's/^CONFIG_TARGET_([a-z0-9]+)=y$/\1/p' .config | head -n1)
 	SUBTARGET_NAME=$(sed -nE "s/^CONFIG_TARGET_${TARGET_NAME}_([a-z0-9]+)=y\$/\1/p" .config | head -n1)
 	DEVICE_TARGET="$TARGET_NAME-$SUBTARGET_NAME"
-	{
-		echo "TARGET_NAME=$TARGET_NAME"
-		echo "SUBTARGET_NAME=$SUBTARGET_NAME"
-		echo "DEVICE_TARGET=$DEVICE_TARGET"
-	} >>"$GITHUB_ENV"
+	cat >>"$GITHUB_ENV" <<EOF
+TARGET_NAME=$TARGET_NAME
+SUBTARGET_NAME=$SUBTARGET_NAME
+DEVICE_TARGET=$DEVICE_TARGET
+EOF
 
 	# 内核版本
 	KERNEL=$(sed -nE 's/^KERNEL_PATCHVER:=([0-9.]+)$/\1/p' "target/linux/$TARGET_NAME/Makefile" | head -n1)
@@ -46,13 +52,13 @@ main() {
 	KERNEL_VERSION=$(sed -nE 's/^LINUX_KERNEL_HASH-([0-9.]+)$/\1/p' "$KERNEL_FILE" | head -n1)
 	echo "KERNEL_VERSION=$KERNEL_VERSION" >>"$GITHUB_ENV"
 
-	# 源码更新信息
-	{
-		echo "COMMIT_AUTHOR=$(git show -s --date=short --format="作者: %an")"
-		echo "COMMIT_DATE=$(git show -s --date=short --format="时间: %ci")"
-		echo "COMMIT_MESSAGE=$(git show -s --date=short --format="内容: %s")"
-		echo "COMMIT_HASH=$(git show -s --date=short --format="hash: %H")"
-	} >>"$GITHUB_ENV"
+	# 源码更新信息（使用 heredoc 写入多行环境变量，符合 GitHub 推荐格式）
+	cat >>"$GITHUB_ENV" <<EOF
+COMMIT_AUTHOR=$(git show -s --date=short --format='作者: %an')
+COMMIT_DATE=$(git show -s --date=short --format='时间: %ci')
+COMMIT_MESSAGE=$(git show -s --date=short --format='内容: %s')
+COMMIT_HASH=$(git show -s --date=short --format='hash: %H')
+EOF
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
