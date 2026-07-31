@@ -12,18 +12,27 @@ fi
 
 # 脚本所在目录（绝对路径）
 SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
+# 防御性处理：移除 SCRIPT_DIR 末尾可能存在的斜杠（尽管 pwd -P 通常不带，但作为防御）
+SCRIPT_DIR="${SCRIPT_DIR%/}"
 # 脚本全名（含后缀）
 SCRIPT_FULLNAME="${0##*/}"
 # 脚本名（不含后缀）
 SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
+# 使用参数扩展截取最后一个 '/' 之前的内容
+SCRIPT_PARENT_DIR="${SCRIPT_DIR%/*}"
+# 边界异常处理：如果截取结果为空，说明 SCRIPT_DIR 是根目录 '/' 或单层 '/usr'
+if [ -z "$SCRIPT_PARENT_DIR" ]; then
+	SCRIPT_PARENT_DIR="/"
+fi
+
 # 日志文件路径
 # LOG_FILE="./logs/$SCRIPT_NAME.log"
 
-# 引入日志模块（假设 logger.sh 在同目录下）
-. "$SCRIPT_DIR"/logger.sh
+# 引入日志模块（假设 logger.sh 在../common_scripts/目录下）
+. "$SCRIPT_PARENT_DIR"/common_scripts/logger.sh
 
 # =============================================
-# 2. 统一日志输出重定向（追加模式）
+# 统一日志输出重定向（追加模式）
 # =============================================
 # exec >"$LOG_FILE" 2>&1
 
