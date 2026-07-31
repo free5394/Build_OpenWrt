@@ -154,12 +154,10 @@ modify_wan_pppoe() {
 		log "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
 		return 0
 	fi
-	uci batch <<EOF
-set network.wan.proto='pppoe'
-set network.wan.username="$pppoe_username"
-set network.wan.password="$pppoe_password"
-commit network
-EOF
+	uci set network.wan.proto='pppoe'
+	uci set network.wan.username="$pppoe_username"
+	uci set network.wan.password="$pppoe_password"
+	uci commit network
 	log "WAN口为PPPoE 配置完成"
 }
 
