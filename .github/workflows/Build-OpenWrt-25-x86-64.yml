@@ -47,7 +47,6 @@ env:
 
 permissions:
   contents: write
-  actions: write
 
 concurrency:
   group: build-openwrt-${{ github.ref }}
@@ -205,6 +204,8 @@ jobs:
   Delete_Workflow:
     needs: [Build_OpenWrt]
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
 
     steps:
       - name: 删除旧的工作流运行记录
