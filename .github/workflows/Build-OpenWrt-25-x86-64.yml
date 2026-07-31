@@ -7,8 +7,7 @@ on:
         description: "选择要编译的源码"
         required: true
         default: "immortalwrt/immortalwrt"
-        type: choice
-        options: ["immortalwrt/immortalwrt"]
+        type: string
 
       repo_branch:
         description: "选择要编译的分支"
