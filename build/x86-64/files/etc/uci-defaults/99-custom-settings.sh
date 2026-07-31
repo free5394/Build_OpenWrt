@@ -7,7 +7,6 @@ set -e
 # 安全地尝试开启 pipefail
 if (set -o pipefail) 2>/dev/null; then
 	set -o pipefail
-	set -o | grep pipefail
 fi
 
 # 脚本全名（含后缀）
