@@ -166,7 +166,7 @@ jobs:
           ./custom_scripts/collect_upload.sh
 
       - name: 上传固件到Artifacts
-        if: env.UPLOAD_ARTIFACT == 'true' && !cancelled()
+        if: steps.compile.outputs.status == 'success' && env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{env.OPENWRT_BRANCH}}-${{env.COMPILE_DATE}}
