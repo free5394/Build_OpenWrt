@@ -49,7 +49,7 @@ modify_ip_address() {
 		log_error "配置生成文件 $CONFIG_GENERATE 不存在"
 		return 1
 	fi
-	sed -i '/lan) ipad/s/".*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
+	sed -i '/lan) ipad/s/"[0-9.]*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
 	# 校验 IP 是否成功写入，防止上游 config_generate 格式变更导致静默失败
 	if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
 		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
