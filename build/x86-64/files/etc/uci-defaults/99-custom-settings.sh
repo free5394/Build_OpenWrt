@@ -41,6 +41,7 @@ log() {
 
 die() {
 	log "错误: $*"
+	exit 1
 }
 
 # 修改root 密码
