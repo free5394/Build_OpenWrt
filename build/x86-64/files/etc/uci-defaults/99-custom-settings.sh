@@ -125,7 +125,7 @@ modify_wan6_ipv6() {
 	# 1. 检查 wan 接口是否存在，不存在则跳过后续配置
 	if ! uci -q get network.wan >/dev/null 2>&1; then
 		log "未检测到 wan 接口，跳过 wan6 接口 IPv6 配置"
-		return 1
+		return 0
 	fi
 
 	# 2. 批量写入 wan6 口的 IPv6 配置并提交
