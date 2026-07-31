@@ -134,6 +134,23 @@ verify_params() {
 	fi
 }
 
+# 为上传目录中的所有文件生成 sha256sums 校验文件
+generate_checksums() {
+	dest_dir="$1"
+	if [ -z "$dest_dir" ] || [ ! -d "$dest_dir" ]; then
+		log_warn "目标目录不存在，跳过 sha256sums 生成"
+		return 0
+	fi
+	checksum_file="$dest_dir/sha256sums"
+	# 在目标目录内执行，使校验文件中只含文件名（不含路径），便于用户验证
+	(
+		cd "$dest_dir" || exit 1
+		# 对除 sha256sums 自身外的所有文件计算校验值
+		find . -type f ! -name "sha256sums" -print0 | sort -z | xargs -0 sha256sum
+	) >"$checksum_file"
+	log_info "已生成 sha256sums 校验文件: $checksum_file"
+}
+
 # 主函数
 main() {
 	log_info "$SCRIPT_NAME 脚本开始执行"
@@ -149,6 +166,8 @@ main() {
 	cp_img "$src_dir" "$dest_dir" "$NAME_SUFFIX"
 
 	compress_logs "$dest_dir" "$NAME_SUFFIX"
+
+	generate_checksums "$dest_dir"
 
 	# 全部步骤成功完成，取消清理 trap 避免误删产物
 	trap - EXIT

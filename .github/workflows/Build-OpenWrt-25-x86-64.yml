@@ -204,6 +204,7 @@ jobs:
           working_directory: ${{env.UPLOAD_DIR}}
           files: |
             *.img.gz
+            sha256sums
           body: |
             ## 📒 固件信息
             - ⚽ 固件源码: https://github.com/${{env.OPENWRT_REPO}}
