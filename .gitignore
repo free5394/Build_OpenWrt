@@ -4,6 +4,11 @@
 
 # claude
 .claude/settings.local.json
+.claude/worktree/
+
+
+# 锁文件
+*.lock
 
 # trae
 .trae/
@@ -13,3 +18,9 @@ tmp/
 
 # 日志
 logs/
+
+# OpenWrt 源码（本地构建克隆的上游源码树）
+openwrt/
+
+# 构建产物目录
+upload/
