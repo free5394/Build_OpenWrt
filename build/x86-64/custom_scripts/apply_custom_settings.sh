@@ -60,7 +60,12 @@ modify_ip_address() {
 		return 1
 	fi
 	sed -i '/lan) ipad/s/".*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
-	log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
+	# 校验 IP 是否成功写入，防止上游 config_generate 格式变更导致静默失败
+	if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
+		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
+	else
+		log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
+	fi
 }
 
 modify_theme() {
