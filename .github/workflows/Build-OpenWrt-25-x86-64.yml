@@ -64,6 +64,7 @@ jobs:
       IP_ADDRESS: ${{inputs.ip_address}}
       UPLOAD_ARTIFACT: ${{inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{inputs.upload_release}}
+      CCACHE_DIR: /home/runner/.ccache
 
     strategy:
       fail-fast: false
@@ -102,6 +103,14 @@ jobs:
       - name: 初始化环境
         run: |
           chmod +x scripts/init-env.sh && ./scripts/init-env.sh
+
+      - name: 恢复 ccache 缓存
+        uses: actions/cache@v6.1.0
+        with:
+          path: /home/runner/.ccache
+          key: ccache-${{ matrix.config_name }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.config_name }}-
 
       - name: 克隆OpenWrt源码
         run: |
