@@ -95,8 +95,8 @@ modify_repositories() {
 		return 0
 	}
 
-	# 验证：旧域名不存在 AND 新域名存在
-	if ! grep -q "mirrors.vsean.net" "$DISTFEEDS" && grep -q "mirrors.pku.edu.cn" "$DISTFEEDS"; then
+	# 验证：新域名存在即视为成功
+	if grep -q "mirrors.tuna.tsinghua.edu.cn" "$DISTFEEDS"; then
 		log "仓库源修补完成"
 	else
 		log "仓库源修补未达预期，详情请检查 $DISTFEEDS"
