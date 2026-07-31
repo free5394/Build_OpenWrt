@@ -95,11 +95,12 @@ modify_repositories() {
 		return 0
 	}
 
-	# 验证：新域名存在即视为成功
-	if grep -q "mirrors.tuna.tsinghua.edu.cn" "$DISTFEEDS"; then
-		log "仓库源修补完成"
+	# 验证：统计仍含 https:// 但未替换为清华镜像的行数，确认全部替换
+	UNREPLACED=$(grep 'https://' "$DISTFEEDS" | grep -cv 'mirrors.tuna.tsinghua.edu.cn' || true)
+	if [ "$UNREPLACED" -eq 0 ]; then
+		log "仓库源修补完成（全部已替换）"
 	else
-		log "仓库源修补未达预期，详情请检查 $DISTFEEDS"
+		log "仓库源修补未达预期，剩余 $UNREPLACED 行未替换，详情请检查 $DISTFEEDS"
 	fi
 }
 
