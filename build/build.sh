@@ -73,7 +73,7 @@ make download -j $(($(nproc) + 1)) V=s || make download -j1 V=s
 
 echo "开始编译OpenWrt..."
 echo "$(date '+%Y-%m-%d %H:%M:%S start')" >build.txt
-make -j $(($(nproc) + 1)) V=s || make -j1 V=s
+make -j $(($(nproc) + 1)) V=sc || make -j1 V=s
 echo "$(date '+%Y-%m-%d %H:%M:%S end')" >>build.txt
 
 echo "开始上传..."
