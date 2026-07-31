@@ -56,6 +56,7 @@ concurrency:
 jobs:
   Build_OpenWrt:
     runs-on: ubuntu-latest
+    timeout-minutes: 180
 
     env:
       OPENWRT_REPO: ${{inputs.repo_name}}
