@@ -102,9 +102,9 @@ compress_logs() {
 	if [ -n "$name_suffix" ]; then
 		log_file="$dest_dir/logs-$name_suffix.tar.gz"
 	fi
-	# 压缩日志目录
+	# 压缩日志目录（不用 -v 避免CI日志冗长；V=sc 已在 build_common.sh 中配置）
 	log_info "压缩日志目录 $logs_dir"
-	tar -czvf "$log_file" "$logs_dir"
+	tar -czf "$log_file" "$logs_dir"
 	log_info "compress_logs 执行完成"
 }
 
