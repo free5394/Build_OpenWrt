@@ -21,6 +21,20 @@
 # 业务逻辑开始
 # =============================================
 
+# 全局变量：上传目录路径（由 main 设置，供 trap 清理使用）
+_CLEANUP_DEST_DIR=""
+
+# 清理函数：脚本异常退出时删除未完成的上传目录，避免残留半成品产物
+_cleanup_on_exit() {
+	_exit_code=$?
+	# 仅在异常退出且上传目录已设置时清理
+	if [ "$_exit_code" -ne 0 ] && [ -n "$_CLEANUP_DEST_DIR" ] && [ -d "$_CLEANUP_DEST_DIR" ]; then
+		log_warn "脚本异常退出（code=$_exit_code），清理未完成的上传目录: $_CLEANUP_DEST_DIR"
+		rm -rf "$_CLEANUP_DEST_DIR" || true
+	fi
+}
+trap _cleanup_on_exit EXIT
+
 cp_img() {
 	log_info "cp_img 开始执行"
 	# 参数校验
@@ -129,11 +143,15 @@ main() {
 	# 定义路径
 	src_dir="./bin/targets"
 	dest_dir="$GITHUB_WORKSPACE/$UPLOAD_DIR"
+	# 设置清理目标，供 EXIT trap 在异常退出时使用
+	_CLEANUP_DEST_DIR="$dest_dir"
 
 	cp_img "$src_dir" "$dest_dir" "$NAME_SUFFIX"
 
 	compress_logs "$dest_dir" "$NAME_SUFFIX"
 
+	# 全部步骤成功完成，取消清理 trap 避免误删产物
+	trap - EXIT
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
 
