@@ -28,7 +28,7 @@ LOG_LEVEL_ERROR=40
 : "${LOG_LEVEL:=20}" # 默认 INFO
 
 # 脚本名（纯 shell 参数扩展，高效）
-SCRIPT_NAME="${0##*/}"
+_LOGGER_SCRIPT_NAME="${0##*/}"
 
 #----- 内部核心函数 ------------------------------------
 _log() {
@@ -49,7 +49,7 @@ _log() {
 	printf "%s[%s] [%s] [%-5s] %s%s\n" \
 		"$_color" \
 		"$_timestamp" \
-		"$SCRIPT_NAME" \
+		"$_LOGGER_SCRIPT_NAME" \
 		"$_lvl_name" \
 		"$*" \
 		"$COLOR_RESET"
