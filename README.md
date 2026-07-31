@@ -105,7 +105,7 @@ Build_OpenWrt/
 | Root 密码   | `password`（`ROOT_PASSWORD`，首次登录后必须修改）        |
 | 时区        | `Asia/Shanghai` (`CST-8`)                                |
 | LuCI 主题   | Argon（自定义背景图 [images/bg1.jpg](./images/bg1.jpg)） |
-| ttyd        | root 免登录（`/bin/login -f root`）                      |
+| ttyd        | 默认不启用免登录（`TTYD_AUTOLOGIN=1` 可开启）            |
 
 > [build/x86-64/custom_config/full.config](./build/x86-64/custom_config/full.config) 是工作流矩阵实际加载的种子配置；[standard.config](./build/x86-64/custom_config/standard.config) 为基础配置，可按需切换。
 
@@ -122,7 +122,7 @@ Build_OpenWrt/
 ## 安全提醒
 
 - 默认 **root 密码** `password` 是公开配置，**首次登录后必须立即修改**
-- **ttyd** 默认配置为 root 免登录，**禁止在不可信网络或公网中暴露 ttyd 服务**；如需关闭，在构建前设置环境变量 `TTYD_AUTOLOGIN=0`
+- **ttyd** 默认不启用免登录；如需启用免登录，在构建前设置环境变量 `TTYD_AUTOLOGIN=1`（**禁止在不可信网络或公网中暴露免登录 ttyd 服务**）
 - 部署到生产环境前，请审计 [99-custom-settings.sh](./build/x86-64/files/etc/uci-defaults/99-custom-settings.sh) 中的所有占位项
 
 ## 本地构建（Ubuntu / WSL）
