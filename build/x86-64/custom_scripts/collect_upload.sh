@@ -42,7 +42,7 @@ cp_img() {
 
 	src_dir="$1"
 	dest_dir="$2"
-	name_suffix="$3"
+	name_suffix="${3:-}"
 	if [ -z "$src_dir" ] || [ -z "$dest_dir" ]; then
 		log_error "缺少必要参数: cp_img <基准目录> <目标目录> <名称后缀（可选）>"
 		return 1
@@ -89,12 +89,13 @@ cp_img() {
 compress_logs() {
 	log_info "compress_logs 开始执行"
 	# 参数校验
-	if [ $# -ne 1 ]; then
-		log_error "错误：参数数量只能为 1，当前为 %d\n" "$#"
-		log_info "用法：%s <目标目录>\n" "compress_logs"
+	if [ $# -ne 1 ] && [ $# -ne 2 ]; then
+		log_error "错误：参数数量只能为 1 或 2，当前为 %d\n" "$#"
+		log_info "用法：%s <目标目录> <名称后缀（可选）>\n" "compress_logs"
 		return 1
 	fi
 	dest_dir="$1"
+	name_suffix="${2:-}"
 	if [ -z "$dest_dir" ]; then
 		log_error "缺少必要参数: compress_logs <目标目录>"
 		return 1
@@ -105,12 +106,15 @@ compress_logs() {
 		log_warn "日志目录 $logs_dir 不存在，无文件可处理。"
 		return 0
 	fi
-
 	# 创建目标目录（若不存在）
 	mkdir -p "$dest_dir"
-
+	log_file="$dest_dir/logs.tar.gz"
+	if [ -n "$name_suffix" ]; then
+		log_file="$dest_dir/logs-$name_suffix.tar.gz"
+	fi
+	# 压缩日志目录
 	log_info "压缩日志目录 $logs_dir"
-	tar -czvf "$dest_dir/logs.tar.gz" "$logs_dir"
+	tar -czvf "$log_file" "$logs_dir"
 	log_info "compress_logs 执行完成"
 }
 
@@ -138,7 +142,7 @@ main() {
 
 	cp_img "$src_dir" "$dest_dir" "$NAME_SUFFIX"
 
-	compress_logs "$dest_dir"
+	compress_logs "$dest_dir" "$NAME_SUFFIX"
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
