@@ -106,11 +106,21 @@ preset_openclash_core() {
 		log_error "OpenClash 核心下载失败: $META_URL"
 		return 1
 	fi
-	tar xOvzf /tmp/clash_meta.tar.gz > files/etc/openclash/core/clash_meta || {
+	# 先解压到临时目录再 mv，避免 tar 路径遍历风险
+	_tmp_dir=$(mktemp -d)
+	tar xzf /tmp/clash_meta.tar.gz -C "$_tmp_dir" || {
 		log_error "OpenClash 核心解压失败"
-		rm -f /tmp/clash_meta.tar.gz
+		rm -rf "$_tmp_dir" /tmp/clash_meta.tar.gz
 		return 1
 	}
+	_core_bin=$(find "$_tmp_dir" -type f -name "clash*" | head -1)
+	if [ -z "$_core_bin" ]; then
+		log_error "解压后未找到 clash_meta 二进制文件"
+		rm -rf "$_tmp_dir" /tmp/clash_meta.tar.gz
+		return 1
+	fi
+	mv -f "$_core_bin" files/etc/openclash/core/clash_meta
+	rm -rf "$_tmp_dir"
 	rm -f /tmp/clash_meta.tar.gz
 	chmod +x files/etc/openclash/core/clash_meta
 	# 下载 GeoIP / GeoSite 数据（带重试）
