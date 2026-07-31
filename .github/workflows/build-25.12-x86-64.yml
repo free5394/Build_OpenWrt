@@ -206,7 +206,7 @@ jobs:
             - 💝 源码分支: ${{env.OPENWRT_BRANCH}}
             - 🚀 内核版本: ${{env.KERNEL_VERSION}}
             - 🌐 默认地址: ${{env.IP_ADDRESS}}
-            - 🔑 默认密码: ${{env.PASSWORD}}
+            - 🔑 默认密码: ${{env.ROOT_PASSWORD}}
 
   Delete_Workflow:
     needs: [Build_OpenWrt]
