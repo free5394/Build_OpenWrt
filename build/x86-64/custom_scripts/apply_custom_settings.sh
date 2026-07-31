@@ -102,7 +102,7 @@ preset_openclash_core() {
 	mkdir -p files/etc/openclash/core
 	# 下载 clash_meta 核心（带重试与失败检查）
 	META_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-amd64-$_core_ver.tar.gz"
-	if ! wget --tries=3 --timeout=30 -qO /tmp/clash_meta.tar.gz "$META_URL"; then
+	if ! wget --tries=3 --timeout=30 --max-redirect=3 -qO /tmp/clash_meta.tar.gz "$META_URL"; then
 		log_error "OpenClash 核心下载失败: $META_URL"
 		return 1
 	fi
@@ -114,10 +114,10 @@ preset_openclash_core() {
 	rm -f /tmp/clash_meta.tar.gz
 	chmod +x files/etc/openclash/core/clash_meta
 	# 下载 GeoIP / GeoSite 数据（带重试）
-	wget --tries=3 --timeout=30 -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O files/etc/openclash/GeoIP.dat || {
+	wget --tries=3 --timeout=30 --max-redirect=3 -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O files/etc/openclash/GeoIP.dat || {
 		log_warn "GeoIP.dat 下载失败，OpenClash 可运行但 GeoIP 规则不可用"
 	}
-	wget --tries=3 --timeout=30 -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -O files/etc/openclash/GeoSite.dat || {
+	wget --tries=3 --timeout=30 --max-redirect=3 -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -O files/etc/openclash/GeoSite.dat || {
 		log_warn "GeoSite.dat 下载失败，OpenClash 可运行但 GeoSite 规则不可用"
 	}
 	log_info "已添加 openclash 核心配置"
