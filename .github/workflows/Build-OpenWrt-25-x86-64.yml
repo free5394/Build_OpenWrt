@@ -49,6 +49,10 @@ permissions:
   contents: write
   actions: write
 
+concurrency:
+  group: build-openwrt-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   Build_OpenWrt:
     runs-on: ubuntu-latest
