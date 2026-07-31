@@ -26,8 +26,10 @@ export CCACHE_DIR=${CCACHE_DIR:-/tmp/ccache}
 # 自定义配置文件
 export CUSTOM_CONFIG=standard.config
 
-echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-echo "OPENWRT_DIR: $OPENWRT_DIR"
-echo "UPLOAD_DIR: $UPLOAD_DIR"
-
-echo "环境变量设置完成"
+printf '========= %s 脚本开始加载 ============\n' "set-env.sh"
+printf 'GITHUB_WORKSPACE: %s\n' "$GITHUB_WORKSPACE"
+printf 'OPENWRT_DIR: %s\n' "$OPENWRT_DIR"
+printf 'UPLOAD_DIR: %s\n' "$UPLOAD_DIR"
+printf 'OPENWRT_REPO: %s\n' "$OPENWRT_REPO"
+printf 'OPENWRT_BRANCH: %s\n' "$OPENWRT_BRANCH"
+printf '========= %s 脚本结束加载 ============\n' "set-env.sh"
