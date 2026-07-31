@@ -35,13 +35,18 @@ set -e
 }
 
 # =============================================
-# 业务逻辑开始
+# 引入构建公共函数模块
 # =============================================
-log_info "切换到工作目录..."
-cd "$GITHUB_WORKSPACE" || {
-	log_error "无法切换到工作目录 '$GITHUB_WORKSPACE'"
+# shellcheck source=/dev/null
+. "$(dirname -- "$0")/x86-64/common_scripts/build_common.sh" || {
+	printf '错误: 无法加载构建公共函数模块 build_common.sh\n' >&2
 	exit 1
 }
+
+# =============================================
+# 业务逻辑开始（重新构建：清理 → 重新配置 → 编译 → 上传）
+# =============================================
+build_enter_workspace
 
 if [ ! -d "$OPENWRT_DIR" ]; then
 	log_error "OpenWrt 目录 '$OPENWRT_DIR' 不存在"
@@ -51,37 +56,22 @@ fi
 log_info "删除上传文件夹..."
 rm -rf "$UPLOAD_DIR"
 
-log_info "切换到OpenWrt目录..."
-cd "$OPENWRT_DIR" || {
-	log_error "无法切换到 OpenWrt 目录 '$OPENWRT_DIR'"
-	exit 1
-}
+build_enter_openwrt_dir
 
 log_info "清理旧构建..."
 make clean # 清理编译产物
 # make dirclean                 # 清理更彻底（包括工具链）
 # make distclean                # 完全清理（需重新配置）
 
-log_info "更新feeds并安装..."
-./custom_scripts/apply_custom_feeds.sh
+build_apply_feeds_and_settings
 
 log_info "生成配置文件..."
 rm -rf .config
 make menuconfig
 ./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
 
-log_info "应用自定义设置..."
-./custom_scripts/apply_custom_settings.sh
-
-log_info "开始下载依赖..."
-make download -j $(($(nproc) + 1)) V=s || make download -j1 V=s
-
-log_info "开始编译OpenWrt..."
-echo "$(date '+%Y-%m-%d %H:%M:%S start')" >build.txt
-make -j $(($(nproc) + 1)) V=sc || make -j1 V=s
-echo "$(date '+%Y-%m-%d %H:%M:%S end')" >>build.txt
-
-log_info "开始上传..."
-./custom_scripts/collect_upload.sh
+build_download
+build_compile
+build_upload
 
 log_info "全部完成"
