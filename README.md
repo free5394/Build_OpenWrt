@@ -26,7 +26,7 @@
 ```text
 Build_OpenWrt/
 ├── .github/workflows/
-│   └── build-25.12-x86-64.yml      # CI 工作流定义
+│   └── Build-OpenWrt-25-x86-64.yml  # CI 工作流定义
 ├── build/
 │   ├── build.sh                     # 本地从零构建入口
 │   ├── rebuild.sh                   # 本地增量构建入口
