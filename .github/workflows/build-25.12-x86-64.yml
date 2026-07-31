@@ -197,8 +197,9 @@ jobs:
           tag_name: ${{env.OPENWRT_BRANCH}}-${{env.COMPILE_DATE}}
           token: ${{secrets.GITHUB_TOKEN}}
           make_latest: true
+          working_directory: ${{env.UPLOAD_DIR}}
           files: |
-            ${{env.UPLOAD_DIR}}/*
+            *.img.gz
           body: |
             ## 📒 固件信息
             - ⚽ 固件源码: https://github.com/${{env.OPENWRT_REPO}}
