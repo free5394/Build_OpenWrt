@@ -1,36 +1,24 @@
 #!/bin/sh
-# =============================================
-# 1. 严格模式：命令失败即退出
-# =============================================
-set -e
-
-# 安全地尝试开启 pipefail
-if (set -o pipefail) 2>/dev/null; then
-	set -o pipefail
-	set -o | grep pipefail
-fi
-
-# 脚本所在目录（绝对路径）
-SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" && pwd -P) 2>/dev/null || SCRIPT_DIR=$(dirname -- "$0")
-# 脚本全名（含后缀）
-SCRIPT_FULLNAME="${0##*/}"
-# 脚本名（不含后缀）
-SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
-# 日志文件路径
-LOG_FILE="./logs/$SCRIPT_NAME.log"
-
-echo "目录: $SCRIPT_DIR"
-echo "全名: $SCRIPT_FULLNAME"
-echo "名称: $SCRIPT_NAME"
-echo "日志文件: $LOG_FILE"
-
-# 引入环境变量设置脚本
-. "$SCRIPT_DIR"/set-env.sh
 
 # =============================================
-# 统一日志输出重定向（追加模式）
+# 引入公共模块（强制依赖，最佳实践）
 # =============================================
-# exec >"$LOG_FILE" 2>&1
+# shellcheck source=/dev/null
+# 使用 eval 确保路径解析正确，利用 || exit 1 确保加载失败即终止
+# 注意：使用 -- 防止文件名以 - 开头被误认为参数
+. "$(dirname -- "$0")/x86-64/common_scripts/common.sh" || {
+	printf '错误: 无法加载公共模块 common.sh\n' >&2
+	exit 1
+}
+
+# =============================================
+# 引入环境变量模块
+# =============================================
+# shellcheck source=/dev/null
+. "$(dirname -- "$0")/set-env.sh" || {
+	printf '错误: 无法加载环境变量模块 set-env.sh\n' >&2
+	exit 1
+}
 
 # =============================================
 # 业务逻辑开始
