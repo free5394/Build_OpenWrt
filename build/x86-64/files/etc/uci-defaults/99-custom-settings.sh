@@ -106,10 +106,10 @@ modify_repositories() {
 
 # 禁用 WAN口 IPv6
 modify_wan_ipv6() {
-	[ -n "$(uci -q get network.wan 2>/dev/null)" ] || {
+	if ! uci -q get network.wan >/dev/null 2>&1; then
 		log "未检测到 wan 接口，跳过 wan 接口 IPv6 设置"
 		return 0
-	}
+	fi
 	uci batch <<EOF
 set network.wan.ipv6='0'
 set network.wan.sourcefilter='0'
@@ -146,10 +146,10 @@ EOF
 
 # 修改WAN口为PPPoE
 modify_wan_pppoe() {
-	[ -n "$(uci -q get network.wan 2>/dev/null)" ] || {
+	if ! uci -q get network.wan >/dev/null 2>&1; then
 		log "未检测到 wan 接口，跳过 PPPoE 配置"
 		return 0
-	}
+	fi
 	if [ -z "$pppoe_username" ] || [ -z "$pppoe_password" ]; then
 		log "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
 		return 0
