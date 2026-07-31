@@ -32,9 +32,7 @@ install_dependencies() {
 # 设置ccache
 setup_ccache() {
 	append_env "export USE_CCACHE=1"
-	append_env "export CCACHE_DIR=~/ccache"
-	# shellcheck source=/dev/null
-	. ~/.bashrc
+	append_env "export CCACHE_DIR=\$HOME/ccache"
 }
 
 # 清理环境
