@@ -17,6 +17,15 @@ set -e
 }
 
 # =============================================
+# 引入日志模块
+# =============================================
+# shellcheck source=/dev/null
+. "$(dirname -- "$0")/x86-64/common_scripts/logger.sh" || {
+	printf '错误: 无法加载日志模块 logger.sh\n' >&2
+	exit 1
+}
+
+# =============================================
 # 引入环境变量模块
 # =============================================
 # shellcheck source=/dev/null
@@ -28,55 +37,55 @@ set -e
 # =============================================
 # 业务逻辑开始
 # =============================================
-echo "切换到工作目录..."
+log_info "切换到工作目录..."
 cd "$GITHUB_WORKSPACE" || {
-	printf "错误: 无法切换到工作目录 '$GITHUB_WORKSPACE'\n" >&2
+	log_error "无法切换到工作目录 '$GITHUB_WORKSPACE'"
 	exit 1
 }
 
 if [ -d "$OPENWRT_DIR" ]; then
-	echo "OpenWrt 目录 '$OPENWRT_DIR' 已经存在"
+	log_error "OpenWrt 目录 '$OPENWRT_DIR' 已经存在"
 	exit 1
 fi
 
-echo "开始克隆OpenWrt仓库..."
+log_info "开始克隆OpenWrt仓库..."
 git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$OPENWRT_DIR"
 
-echo "复制文件..."
+log_info "复制文件..."
 cp -rf "$SCRIPT_DIR/$DEVICE_ARCH"/* "$OPENWRT_DIR/"
 
-echo "切换到OpenWrt目录..."
+log_info "切换到OpenWrt目录..."
 cd "$OPENWRT_DIR" || {
-	printf "错误: 无法切换到 OpenWrt 目录 '$OPENWRT_DIR'\n" >&2
+	log_error "无法切换到 OpenWrt 目录 '$OPENWRT_DIR'"
 	exit 1
 }
 
-echo "设置文件权限..."
+log_info "设置文件权限..."
 chmod +x files/etc/uci-defaults/*.sh
 chmod +x custom_scripts/*.sh
 
-echo "更新feeds并安装..."
+log_info "更新feeds并安装..."
 ./custom_scripts/apply_custom_feeds.sh
 
-# echo "生成配置文件..."
+# log_info "生成配置文件..."
 # make menuconfig
-# ./scripts/diffconfig.sh >$CUSTOM_CONFIG
+# ./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
 
-echo "配置文件..."
+log_info "配置文件..."
 cp -f "custom_config/$CUSTOM_CONFIG" .config && make defconfig V=s
 
-echo "应用自定义设置..."
+log_info "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh
 
-echo "开始下载依赖..."
+log_info "开始下载依赖..."
 make download -j $(($(nproc) + 1)) V=s || make download -j1 V=s
 
-echo "开始编译OpenWrt..."
+log_info "开始编译OpenWrt..."
 echo "$(date '+%Y-%m-%d %H:%M:%S start')" >build.txt
 make -j $(($(nproc) + 1)) V=sc || make -j1 V=s
 echo "$(date '+%Y-%m-%d %H:%M:%S end')" >>build.txt
 
-echo "开始上传..."
+log_info "开始上传..."
 ./custom_scripts/collect_upload.sh
 
-echo "全部完成"
+log_info "全部完成"
