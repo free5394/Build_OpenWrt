@@ -40,10 +40,10 @@ if [ -d "$OPENWRT_DIR" ]; then
 fi
 
 echo "开始克隆OpenWrt仓库..."
-git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git "$OPENWRT_DIR"
+git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$OPENWRT_DIR"
 
 echo "复制文件..."
-cp -rf $SCRIPT_DIR/$DEVICE_ARCH/* $OPENWRT_DIR/
+cp -rf "$SCRIPT_DIR/$DEVICE_ARCH"/* "$OPENWRT_DIR/"
 
 echo "切换到OpenWrt目录..."
 cd "$OPENWRT_DIR" || {
@@ -63,7 +63,7 @@ echo "更新feeds并安装..."
 # ./scripts/diffconfig.sh >$CUSTOM_CONFIG
 
 echo "配置文件..."
-cp -f custom_config/$CUSTOM_CONFIG .config && make defconfig V=s
+cp -f "custom_config/$CUSTOM_CONFIG" .config && make defconfig V=s
 
 echo "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh

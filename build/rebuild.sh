@@ -59,7 +59,7 @@ echo "更新feeds并安装..."
 echo "生成配置文件..."
 rm -rf .config
 make menuconfig
-./scripts/diffconfig.sh >$CUSTOM_CONFIG
+./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
 
 echo "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh
