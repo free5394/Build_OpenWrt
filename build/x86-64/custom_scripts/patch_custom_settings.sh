@@ -34,7 +34,10 @@ set_password() {
 		return 1
 	fi
 	log_info "设置根密码"
-	sed -i "s|^root_password=.*|root_password=\"${ROOT_PASSWORD}\"|" "$CUSTOM_SETTINGS"
+	awk -v pwd="$ROOT_PASSWORD" '
+		/^root_password=/ { printf "root_password=\"%s\"\n", pwd; next }
+		{ print }
+	' "$CUSTOM_SETTINGS" > "$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS"
 }
 
 # 设置 PPPoE 配置
@@ -48,10 +51,11 @@ set_pppoe() {
 		return 1
 	fi
 	log_info "设置 PPPoE 配置"
-	sed -i \
-		-e "s|^pppoe_username=.*|pppoe_username=\"${PPPOE_USERNAME}\"|" \
-		-e "s|^pppoe_password=.*|pppoe_password=\"${PPPOE_PASSWORD}\"|" \
-		"$CUSTOM_SETTINGS"
+	awk -v user="$PPPOE_USERNAME" -v pass="$PPPOE_PASSWORD" '
+		/^pppoe_username=/ { printf "pppoe_username=\"%s\"\n", user; next }
+		/^pppoe_password=/ { printf "pppoe_password=\"%s\"\n", pass; next }
+		{ print }
+	' "$CUSTOM_SETTINGS" > "$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS"
 }
 
 # 主函数
