@@ -171,47 +171,7 @@ sudo bash scripts/init-env.sh
 
 ## 贡献指南
 
-欢迎通过 Issue 和 Pull Request 参与本项目。
-
-### 报告问题
-
-提交 [Issue](https://github.com/walk6834/Build_OpenWrt/issues) 时请包含：
-
-- 复现步骤（触发方式、参数配置）
-- 预期行为与实际行为
-- 运行环境（CI / 本地、系统版本）
-- 相关日志（构建日志位于 `openwrt/logs/` 下）
-
-### 提交改进
-
-1. Fork 本仓库
-2. 创建功能分支：`git checkout -b feat/your-feature`
-3. 提交更改，遵循下方提交信息规范
-4. 提交 Pull Request 并描述变更目的
-
-### 提交信息规范
-
-提交信息使用**中文**编写，遵循 `<类型>(<范围>): <描述>` 格式：
-
-| 类型     | 说明           | 示例                             |
-| -------- | -------------- | -------------------------------- |
-| feat     | 新功能         | `feat(脚本): 增加 minimal 配置`  |
-| fix      | 修复 bug       | `fix(工作流): 修复 Release 权限` |
-| refactor | 重构（非功能） | `refactor(构建): 抽取公共函数`   |
-| docs     | 文档           | `docs: 更新 README`              |
-| chore    | 构建/工具      | `chore: 升级上游分支版本`        |
-
-要求：
-
-- 第一行不超过 72 个字符
-- 描述简洁明了，如需补充说明在空行后写详细描述
-
-### 代码风格
-
-- Shell 脚本遵循 POSIX 兼容写法（兼容 `sh` / `dash` / `ash`）
-- 源码文件名、变量名、函数名使用英文
-- 注释、错误提示信息使用中文
-- 新增脚本建议引入 `common_scripts/common.sh` 与 `logger.sh`，使用 `log_info` / `log_error` 输出日志
+欢迎通过 Issue 和 Pull Request 参与本项目。详细的贡献规范、提交信息格式与代码风格请参阅 [CONTRIBUTING.md](./CONTRIBUTING.md)。
 
 ## 许可证
 
