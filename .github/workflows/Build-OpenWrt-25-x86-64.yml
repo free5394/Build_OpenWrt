@@ -221,5 +221,5 @@ jobs:
         uses: Mattraks/delete-workflow-runs@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          retain_days: 0
+          retain_days: 7
           keep_minimum_runs: 2
