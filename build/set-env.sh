@@ -21,7 +21,7 @@ export UPLOAD_RELEASE=true
 
 # 编译缓存
 export USE_CCACHE=1
-export CCACHE_DIR=${CCACHE_DIR:-/tmp/ccache}
+export CCACHE_DIR=${CCACHE_DIR:-~/ccache}
 
 export NAME_SUFFIX=$_config_name
 # 自定义配置文件
