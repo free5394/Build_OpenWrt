@@ -275,7 +275,9 @@ add_custom_feeds() {
 	./scripts/feeds update -a
 
 	log_info "删除出错插件"
+	# luci-app-fchomo: small feed 中此插件编译报错，等待上游修复后可移除此行
 	rm -rf feeds/small/luci-app-fchomo
+	# luci-app-eqos: kenzo feed 中此插件与官方 luci-app-eqos 冲突导致编译报错，等待上游修复后可移除此行
 	rm -rf feeds/kenzo/luci-app-eqos
 
 	# echo "删除冲突的插件..."
