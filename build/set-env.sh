@@ -3,7 +3,7 @@
 echo "设置环境变量..."
 
 export GITHUB_WORKSPACE="$(pwd)"
-export NAME_SUFFIX=full
+_config_name=full
 
 export OPENWRT_REPO=immortalwrt/immortalwrt
 export OPENWRT_BRANCH=v25.12.1
@@ -14,8 +14,8 @@ export PART_SIZE=1024
 export UPLOAD_DIR=upload
 export IP_ADDRESS=192.168.100.1
 export ROOT_PASSWORD=password
-export PPPOE_USERNAME=a123
-export PPPOE_PASSWORD=p456
+export PPPOE_USERNAME=
+export PPPOE_PASSWORD=
 export UPLOAD_ARTIFACT=true
 export UPLOAD_RELEASE=true
 
@@ -23,8 +23,9 @@ export UPLOAD_RELEASE=true
 export USE_CCACHE=1
 export CCACHE_DIR=${CCACHE_DIR:-/tmp/ccache}
 
+export NAME_SUFFIX=$_config_name
 # 自定义配置文件
-export CUSTOM_CONFIG=standard.config
+export CUSTOM_CONFIG=$_config_name.config
 
 printf '========= %s 脚本开始加载 ============\n' "set-env.sh"
 printf 'GITHUB_WORKSPACE: %s\n' "$GITHUB_WORKSPACE"
