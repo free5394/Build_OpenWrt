@@ -13,7 +13,7 @@
 ## 核心功能
 
 - **一键构建**：通过 GitHub Actions 手动触发（`workflow_dispatch`），无需本地环境
-- **参数可配置**：构建时自定义 LAN IP、root 密码、PPPoE 凭据、rootfs 分区大小等
+- **参数可配置**：构建时自定义 LAN IP、rootfs 分区大小等
 - **预置代理组件**：集成 PassWall、MoMo、nikki、SingBox、Xray、Shadowsocks 等（`full` 配置额外含 OpenClash 及预置核心）
 - **网络助手**：内置 AdGuard Home、UPnP、SQM、ttyd 等 LuCI 应用
 - **主题美化**：默认 Argon 主题，自定义背景图
@@ -67,9 +67,6 @@ Build_OpenWrt/
 | `repo_branch`     | string  | ✅   | `v25.12.1`                | 上游源码分支                             |
 | `part_size`       | number  |      | 1024                      | rootfs 分区大小（MB）                    |
 | `ip_address`      | string  |      | `192.168.10.1`            | 默认 LAN 口 IP                           |
-| `root_password`   | string  |      | `password`                | 默认 root 密码（注入到 `ROOT_PASSWORD`） |
-| `pppoe_username`  | string  |      | _空_                      | PPPoE 用户名（同时填写密码才生效）       |
-| `pppoe_password`  | string  |      | _空_                      | PPPoE 密码                               |
 | `upload_artifact` | boolean |      | `true`                    | 是否上传 GitHub Actions Artifact         |
 | `upload_release`  | boolean |      | `true`                    | 是否发布 GitHub Release                  |
 
@@ -117,7 +114,7 @@ Build_OpenWrt/
 2. **修补仓库源**：清理 apk distfeeds 中的 kenzo / small 源，将镜像源替换为 `mirrors.pku.edu.cn`
 3. **配置 PPPoE**：若构建时提供了 PPPoE 凭据，将 WAN 口切换为 PPPoE 拨号
 4. **禁用 WAN IPv6**：关闭 WAN 口 IPv6 委派与源过滤，并配置 wan6 口（DHCPv6）
-5. **修改 root 密码**：写入构建时指定的 `ROOT_PASSWORD`
+5. **修改 root 密码**：写入默认 root 密码（`password`，首次登录后必须修改）
 
 ## 安全提醒
 
