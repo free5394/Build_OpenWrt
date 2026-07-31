@@ -89,7 +89,7 @@ modify_repositories() {
 	}
 
 	# 替换镜像源
-	sed -i 's|.*openwrt/releases/|https://mirrors.tuna.tsinghua.edu.cn/openwrt/releases/|g' "$DISTFEEDS" || {
+	sed -i 's|https://.*/releases/|https://mirrors.pku.edu.cn/openwrt/releases/|g' "$DISTFEEDS" || {
 		log "镜像源替换失败，回滚"
 		cp "$DISTFEEDS_BAK" "$DISTFEEDS"
 		return 0
