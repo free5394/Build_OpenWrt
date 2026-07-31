@@ -42,9 +42,9 @@ main() {
 		echo "LITE_BRANCH=${OPENWRT_BRANCH#*-}"
 	} >>"$GITHUB_ENV"
 
-	# 平台架构
-	TARGET_NAME=$(grep -oP "^CONFIG_TARGET_\K[a-z0-9]+(?==y)" .config)
-	SUBTARGET_NAME=$(grep -oP "^CONFIG_TARGET_${TARGET_NAME}_\K[a-z0-9]+(?==y)" .config)
+	# 平台架构（使用 sed -nE 替代 grep -oP，避免依赖 PCRE，提升可移植性）
+	TARGET_NAME=$(sed -nE 's/^CONFIG_TARGET_([a-z0-9]+)=y$/\1/p' .config | head -n1)
+	SUBTARGET_NAME=$(sed -nE "s/^CONFIG_TARGET_${TARGET_NAME}_([a-z0-9]+)=y\$/\1/p" .config | head -n1)
 	DEVICE_TARGET="$TARGET_NAME-$SUBTARGET_NAME"
 	{
 		echo "TARGET_NAME=$TARGET_NAME"
@@ -53,10 +53,10 @@ main() {
 	} >>"$GITHUB_ENV"
 
 	# 内核版本
-	KERNEL=$(grep -oP 'KERNEL_PATCHVER:=\K[\d\.]+' "target/linux/$TARGET_NAME/Makefile")
+	KERNEL=$(sed -nE 's/^KERNEL_PATCHVER:=([0-9.]+)$/\1/p' "target/linux/$TARGET_NAME/Makefile" | head -n1)
 	KERNEL_FILE="include/kernel-$KERNEL"
 	[ -e "$KERNEL_FILE" ] || KERNEL_FILE="target/linux/generic/kernel-$KERNEL"
-	KERNEL_VERSION=$(grep -oP 'LINUX_KERNEL_HASH-\K[\d\.]+' "$KERNEL_FILE")
+	KERNEL_VERSION=$(sed -nE 's/^LINUX_KERNEL_HASH-([0-9.]+)$/\1/p' "$KERNEL_FILE" | head -n1)
 	echo "KERNEL_VERSION=$KERNEL_VERSION" >>"$GITHUB_ENV"
 
 	# 源码更新信息
