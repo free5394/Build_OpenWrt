@@ -49,7 +49,7 @@ set_password() {
 
 # 设置 PPPoE 配置
 set_pppoe() {
-	if [ -z "$PPPPOE_USERNAME" ] || [ -z "$PPPPOE_PASSWORD" ]; then
+	if [ -z "$PPPOE_USERNAME" ] || [ -z "$PPPOE_PASSWORD" ]; then
 		log_info "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
 		return 0
 	fi
@@ -59,8 +59,8 @@ set_pppoe() {
 	fi
 	log_info "设置 PPPoE 配置"
 	sed -i \
-		-e "s|^pppoe_username=.*|pppoe_username=\"${PPPPOE_USERNAME}\"|" \
-		-e "s|^pppoe_password=.*|pppoe_password=\"${PPPPOE_PASSWORD}\"|" \
+		-e "s|^pppoe_username=.*|pppoe_username=\"${PPPOE_USERNAME}\"|" \
+		-e "s|^pppoe_password=.*|pppoe_password=\"${PPPOE_PASSWORD}\"|" \
 		"$CUSTOM_SETTINGS"
 }
 

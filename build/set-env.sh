@@ -14,8 +14,8 @@ export PART_SIZE=1024
 export UPLOAD_DIR=uploads
 export IP_ADDRESS=192.168.100.1
 export ROOT_PASSWORD=password
-export PPPPOE_USERNAME=wan
-export PPPPOE_PASSWORD=wanpassword
+export PPPOE_USERNAME=a123
+export PPPOE_PASSWORD=p456
 export UPLOAD_ARTIFACT=true
 export UPLOAD_RELEASE=true
 

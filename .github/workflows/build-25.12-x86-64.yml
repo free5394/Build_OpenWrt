@@ -77,8 +77,8 @@ jobs:
       PART_SIZE: ${{inputs.part_size}}
       IP_ADDRESS: ${{inputs.ip_address}}
       ROOT_PASSWORD: ${{inputs.root_password}}
-      PPPPOE_USERNAME: ${{inputs.pppoe_username}}
-      PPPPOE_PASSWORD: ${{inputs.pppoe_password}}
+      PPPOE_USERNAME: ${{inputs.pppoe_username}}
+      PPPOE_PASSWORD: ${{inputs.pppoe_password}}
       UPLOAD_ARTIFACT: ${{inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{inputs.upload_release}}
 
