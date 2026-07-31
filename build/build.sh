@@ -38,6 +38,11 @@ echo "日志文件: $LOG_FILE"
 echo "切换到工作目录..."
 cd "$GITHUB_WORKSPACE"
 
+if [ -d "$OPENWRT_DIR" ]; then
+	echo "OpenWrt 目录 '$OPENWRT_DIR' 已经存在"
+	exit 1
+fi
+
 echo "开始克隆OpenWrt仓库..."
 git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 https://github.com/$OPENWRT_REPO.git "$OPENWRT_DIR"
 
