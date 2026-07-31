@@ -1,4 +1,4 @@
-name: Build OpenWrt 25.12
+name: Build-OpenWrt-25-x86-64
 
 on:
   workflow_dispatch:

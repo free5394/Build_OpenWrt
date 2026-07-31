@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/github/license/walk6834/Build_OpenWrt?style=flat-square)](./LICENSE)
 [![ImmortalWrt](https://img.shields.io/badge/ImmortalWrt-25.12-orange?style=flat-square&logo=openwrt)](https://github.com/immortalwrt/immortalwrt)
-[![Build](https://img.shields.io/badge/build-Manual%20workflow-lightgrey?style=flat-square&logo=github-actions)](./.github/workflows/build-25.12-x86-64.yml)
+[![Build](https://img.shields.io/badge/build-Manual%20workflow-lightgrey?style=flat-square&logo=github-actions)](.github/workflows/Build-OpenWrt-25-x86-64.yml)
 [![Latest Release](https://img.shields.io/github/v/release/walk6834/Build_OpenWrt?style=flat-square)](https://github.com/walk6834/Build_OpenWrt/releases)
 ![Stars](https://img.shields.io/github/stars/walk6834/Build_OpenWrt?style=flat-square)
 
@@ -75,7 +75,7 @@ Build_OpenWrt/
 
 ### 2. 矩阵配置
 
-工作流 `strategy.matrix.config_name` 当前启用 **`full`**（`minimal` 与 `standard` 已在 [.github/workflows/build-25.12-x86-64.yml](./.github/workflows/build-25.12-x86-64.yml) 中注释）。
+工作流 `strategy.matrix.config_name` 当前启用 **`full`**（`minimal` 与 `standard` 已在 [.github/workflows/build-25.12-x86-64.yml](.github/workflows/Build-OpenWrt-25-x86-64.yml) 中注释）。
 
 | 配置       | 说明                                                                                      |
 | ---------- | ----------------------------------------------------------------------------------------- |
