@@ -24,34 +24,37 @@
 # 业务逻辑开始
 # =============================================
 echo "切换到工作目录..."
-cd "$GITHUB_WORKSPACE"
+cd "$GITHUB_WORKSPACE" || {
+	printf "错误: 无法切换到工作目录 '$GITHUB_WORKSPACE'\n" >&2
+	exit 1
+}
 
 if [ ! -d "$OPENWRT_DIR" ]; then
 	echo "OpenWrt 目录 '$OPENWRT_DIR' 不存在"
 	exit 1
 fi
 
-echo "切换到OpenWrt目录..."
-cd "$OPENWRT_DIR"
+echo "删除上传文件夹..."
+rm -rf "$UPLOAD_DIR"
 
-echo "创建日志目录..."
-mkdir -p logs
+echo "切换到OpenWrt目录..."
+cd "$OPENWRT_DIR" || {
+	printf "错误: 无法切换到 OpenWrt 目录 '$OPENWRT_DIR'\n" >&2
+	exit 1
+}
 
 echo "清理旧构建..."
 make clean # 清理编译产物
 # make dirclean                 # 清理更彻底（包括工具链）
 # make distclean                # 完全清理（需重新配置）
-rm -rf "$UPLOAD_DIR"
 
 echo "更新feeds并安装..."
 ./custom_scripts/apply_custom_feeds.sh
 
-# echo "生成配置文件..."
-# make menuconfig
-# ./scripts/diffconfig.sh >$CUSTOM_CONFIG
-
-echo "配置文件..."
-cp -f custom_config/$CUSTOM_CONFIG .config && make defconfig V=s
+echo "生成配置文件..."
+rm -rf .config
+make menuconfig
+./scripts/diffconfig.sh >$CUSTOM_CONFIG
 
 echo "应用自定义设置..."
 ./custom_scripts/apply_custom_settings.sh

@@ -24,7 +24,10 @@
 # 业务逻辑开始
 # =============================================
 echo "切换到工作目录..."
-cd "$GITHUB_WORKSPACE"
+cd "$GITHUB_WORKSPACE" || {
+	printf "错误: 无法切换到工作目录 '$GITHUB_WORKSPACE'\n" >&2
+	exit 1
+}
 
 if [ -d "$OPENWRT_DIR" ]; then
 	echo "OpenWrt 目录 '$OPENWRT_DIR' 已经存在"
@@ -38,10 +41,10 @@ echo "复制文件..."
 cp -rf $SCRIPT_DIR/$DEVICE_ARCH/* $OPENWRT_DIR/
 
 echo "切换到OpenWrt目录..."
-cd "$OPENWRT_DIR"
-
-echo "创建日志目录..."
-mkdir -p logs
+cd "$OPENWRT_DIR" || {
+	printf "错误: 无法切换到 OpenWrt 目录 '$OPENWRT_DIR'\n" >&2
+	exit 1
+}
 
 echo "设置文件权限..."
 chmod +x files/etc/uci-defaults/*.sh
