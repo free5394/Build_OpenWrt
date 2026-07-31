@@ -10,7 +10,7 @@ append_env() {
 		return
 	fi
 
-	sed -i "\$a $env_line" ~/.bashrc
+	printf '%s\n' "$env_line" >> ~/.bashrc
 	echo "[新增] $env_line"
 }
 
