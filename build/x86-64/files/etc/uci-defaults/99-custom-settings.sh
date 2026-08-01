@@ -24,8 +24,8 @@ exec >"$LOG_FILE" 2>&1
 # =============================================
 # 业务变量
 # =============================================
-# 根密码
-root_password="password"
+# 根密码 （已加密）
+root_password='$6$eAx0vGeWLH768Ag.$4jKvsP1IeRyDhVnGnLD87XtGL.yTtf9chz3OAvXOMNSi.cFEGvywcrlL5vmC3URhyGUcKboWHpcUJK.o.cYP0.'
 
 # PPPoE 用户名和密码
 pppoe_username=""
@@ -45,13 +45,12 @@ die() {
 
 # 修改root 密码
 modify_root_password() {
-	if [ -n "$root_password" ]; then
-		(
-			echo "$root_password"
-			sleep 1
-			echo "$root_password"
-		) | passwd root >/dev/null
+	if [ -z "$root_password" ]; then
+		log "未配置 root 密码，跳过 root 密码修改"
+		return 0
 	fi
+	sed -i "s|^root:[^:]*:|root:${root_password}:|" /etc/shadow
+	log "root 密码修改完成"
 }
 
 # 修改系统时区为东八区（上海）
