@@ -195,7 +195,7 @@ jobs:
           overwrite: true
 
       - name: 上传固件到Releases
-        if: steps.compile.outputs.status == 'success' && !cancelled() && env.UPLOAD_RELEASE == 'true'
+        if: steps.compile.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v3.0.2
         with:
           tag_name: ${{env.OPENWRT_BRANCH}}-${{env.COMPILE_DATE}}-${{github.run_number}}
