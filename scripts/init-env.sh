@@ -10,7 +10,7 @@ append_env() {
 		return 0
 	fi
 
-	printf '%s\n' "$env_line" >> ~/.bashrc
+	printf '%s\n' "$env_line" >>$HOME/.bashrc
 	echo "[新增] $env_line"
 	return 0
 }
@@ -35,6 +35,11 @@ install_dependencies() {
 setup_ccache() {
 	append_env "export USE_CCACHE=1"
 	append_env "export CCACHE_DIR=\$HOME/ccache"
+	# 忽略目录路径变更带来的 Hash 变化（提高缓存命中率）
+	append_env "export CCACHE_NOHASHDIR=true"
+	# 禁用 ccache 内部压缩以提升 CPU 换缓存的效率（若 SSD/内存空间充足）
+	append_env "export CCACHE_NOCOMPRESS=true"
+	ccache -M 50G
 	return 0
 }
 
