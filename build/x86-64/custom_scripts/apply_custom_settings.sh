@@ -61,14 +61,20 @@ modify_ip_address() {
 modify_theme() {
 	# 替换默认主题为 luci-theme-argon
 	sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+}
 
-	# 更改argon主题背景
+# 替换argon主题背景
+cp_background_img() {
 	BG_SRC="$GITHUB_WORKSPACE/images/bg1.jpg"
-	# BG_DST="feeds/luci/themes/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg"
-	BG_DST="feeds/kenzo/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg"
+	BG_DST=$(find feeds -type f -path "*/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg" 2>/dev/null | head -n 1)
+	# 替换默认主题背景
 	if [ ! -f "$BG_SRC" ]; then
 		log_error "背景文件 $BG_SRC 不存在"
-		return 1
+		return 0
+	fi
+	if [ ! -f "$BG_DST" ]; then
+		log_warn "背景文件 $BG_DST 不存在"
+		return 0
 	fi
 	cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
 }
@@ -140,6 +146,7 @@ main() {
 	patch_config
 	modify_ip_address
 	modify_theme
+	cp_background_img
 	apply_custom_settings
 	preset_openclash_core
 
