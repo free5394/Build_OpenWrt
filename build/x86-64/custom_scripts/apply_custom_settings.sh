@@ -32,7 +32,7 @@ patch_config() {
 		log_error "配置文件 $CONFIG_FILE 不存在"
 		return 1
 	fi
-	sed -i.bak -e '/^CONFIG_TARGET_ROOTFS_PARTSIZE=/d' \
+	sed -i -e '/^CONFIG_TARGET_ROOTFS_PARTSIZE=/d' \
 		-e '$a CONFIG_TARGET_ROOTFS_PARTSIZE='"$PART_SIZE" \
 		"$CONFIG_FILE"
 	log_info "已设置固件rootfs大小为: $PART_SIZE"
