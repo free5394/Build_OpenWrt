@@ -46,7 +46,10 @@ set -e
 # =============================================
 # 业务逻辑开始（重新构建：清理 → 重新配置 → 编译 → 上传）
 # =============================================
-build_enter_workspace
+build_enter_workspace || {
+	log_error "无法进入工作目录，终止构建"
+	exit 1
+}
 
 if [ ! -d "$OPENWRT_DIR" ]; then
 	log_error "OpenWrt 目录 '$OPENWRT_DIR' 不存在"
@@ -56,7 +59,10 @@ fi
 log_info "删除上传文件夹..."
 rm -rf "$UPLOAD_DIR"
 
-build_enter_openwrt_dir
+build_enter_openwrt_dir || {
+	log_error "无法进入 OpenWrt 目录，终止构建"
+	exit 1
+}
 
 log_info "清理旧构建..."
 make clean # 清理编译产物

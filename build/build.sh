@@ -46,7 +46,10 @@ set -e
 # =============================================
 # 业务逻辑开始（首次构建：clone → 配置 → 编译 → 上传）
 # =============================================
-build_enter_workspace
+build_enter_workspace || {
+	log_error "无法进入工作目录，终止构建"
+	exit 1
+}
 
 if [ -d "$OPENWRT_DIR" ]; then
 	log_error "OpenWrt 目录 '$OPENWRT_DIR' 已经存在"
@@ -59,7 +62,10 @@ git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OP
 log_info "复制文件..."
 cp -rf "$SCRIPT_DIR/$DEVICE_ARCH"/* "$OPENWRT_DIR/"
 
-build_enter_openwrt_dir
+build_enter_openwrt_dir || {
+	log_error "无法进入 OpenWrt 目录，终止构建"
+	exit 1
+}
 
 log_info "设置文件权限..."
 chmod +x files/etc/uci-defaults/*.sh
