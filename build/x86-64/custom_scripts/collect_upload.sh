@@ -88,6 +88,7 @@ cp_img() {
         done
     ' sh "$dest_dir" "$name_suffix" {} +
 	log_info "cp_img 执行完成"
+	return 0
 }
 
 compress_logs() {
@@ -118,20 +119,25 @@ compress_logs() {
 	fi
 	# 压缩日志目录（不用 -v 避免CI日志冗长；V=sc 已在 build_common.sh 中配置）
 	log_info "压缩日志目录 $logs_dir"
-	tar -czf "$log_file" "$logs_dir"
+	tar -czf "$log_file" "$logs_dir" || {
+		log_warn "日志压缩失败，继续上传"
+		return 1
+	}
 	log_info "compress_logs 执行完成"
+	return 0
 }
 
 # 校验关键环境变量
 verify_params() {
 	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ]; then
 		log_error "缺少必要参数: GITHUB_WORKSPACE UPLOAD_DIR"
-		exit 1
+		return 1
 	fi
 	if [ ! -d "$GITHUB_WORKSPACE" ]; then
 		log_warn "工作空间目录 $GITHUB_WORKSPACE 不存在，无文件可处理。"
-		exit 1
+		return 1
 	fi
+	return 0
 }
 
 # 为上传目录中的所有文件生成 sha256sums 校验文件
@@ -149,13 +155,14 @@ generate_checksums() {
 		find . -type f ! -name "sha256sums" -print0 | sort -z | xargs -0 sha256sum
 	) >"$checksum_file"
 	log_info "已生成 sha256sums 校验文件: $checksum_file"
+	return 0
 }
 
 # 主函数
 main() {
 	log_info "$SCRIPT_NAME 脚本开始执行"
 
-	verify_params "$@"
+	verify_params "$@" || exit 1
 
 	# 定义路径
 	src_dir="./bin/targets"
@@ -165,7 +172,7 @@ main() {
 
 	cp_img "$src_dir" "$dest_dir" "$NAME_SUFFIX"
 
-	compress_logs "$dest_dir" "$NAME_SUFFIX"
+	compress_logs "$dest_dir" "$NAME_SUFFIX" || true
 
 	generate_checksums "$dest_dir"
 
