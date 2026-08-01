@@ -62,6 +62,21 @@ build_enter_openwrt_dir() {
 	return 0
 }
 
+# 建立公共 dl 目录
+build_mkdir_dl_share() {
+	log_info "建立公共 dl 目录..."
+	mkdir -p $HOME/immortalwrt_dl_share
+	ln -s $HOME/immortalwrt_dl_share ./dl
+	return 0
+}
+
+# 清理 dl 目录
+clean_dl_share() {
+	log_info "清理 dl 目录..."
+	rm -rf ./dl
+	return 0
+}
+
 # 设置文件权限
 build_set_permissions_files() {
 	log_info "设置文件权限..."
@@ -122,6 +137,7 @@ build_upload() {
 }
 
 _build_process() {
+	build_mkdir_dl_share
 	build_set_permissions_files
 	build_apply_feeds_and_settings
 	# 生成配置文件

@@ -70,6 +70,9 @@ build_enter_openwrt_dir || {
 	exit 1
 }
 
+# 清理 dl 目录
+clean_dl_share
+
 log_info "清理旧构建..."
 make clean # 清理编译产物
 # make dirclean                 # 清理更彻底（包括工具链）
