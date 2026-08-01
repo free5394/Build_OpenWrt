@@ -42,6 +42,7 @@ lan_ip_addr=""
 # =============================================
 log() {
 	echo "[$(date '+%H:%M:%S')] $*"
+	return 0
 }
 
 die() {
@@ -55,18 +56,28 @@ modify_root_password() {
 		log "未配置 root 密码，跳过 root 密码修改"
 		return 0
 	fi
-	sed -i "s|^root:[^:]*:|root:${root_password}:|" /etc/shadow
+	sed -i "s|^root:[^:]*:|root:${root_password}:|" /etc/shadow || {
+		log "root 密码修改失败"
+		return 1
+	}
 	log "root 密码修改完成"
+	return 0
 }
 
 # 修改系统时区为东八区（上海）
 modify_timezone() {
-	uci batch <<EOF
+	if uci batch <<EOF
 set system.@system[0].timezone='CST-8'
 set system.@system[0].zonename='Asia/Shanghai'
 commit system
 EOF
-	log "时区修改完成"
+	then
+		log "时区修改完成"
+	else
+		log "时区修改失败"
+		return 1
+	fi
+	return 0
 }
 
 # ==========================================
@@ -96,6 +107,7 @@ modify_luci_theme() {
 	fi
 
 	log "LuCI 默认主题已成功修改为: ${default_theme}"
+	return 0
 }
 
 # 修补仓库源
@@ -112,21 +124,21 @@ modify_repositories() {
 	# 备份以便失败回滚
 	cp -f "$DISTFEEDS" "$DISTFEEDS_BAK" || {
 		log "备份 $DISTFEEDS 失败"
-		return 0
+		return 1
 	}
 
 	# 删除 kenzo/small 源（BusyBox sed BRE 下用 ; 分隔更稳）
 	sed -i '/kenzo/d; /small/d' "$DISTFEEDS" || {
 		log "删除 kenzo/small 失败，回滚"
 		cp "$DISTFEEDS_BAK" "$DISTFEEDS"
-		return 0
+		return 1
 	}
 
 	# 替换镜像源
 	sed -i 's|https://.*/releases/|https://mirrors.tuna.tsinghua.edu.cn/openwrt/releases/|g' "$DISTFEEDS" || {
 		log "镜像源替换失败，回滚"
 		cp "$DISTFEEDS_BAK" "$DISTFEEDS"
-		return 0
+		return 1
 	}
 
 	# 验证：统计仍含 https:// 但未替换为清华镜像的行数，确认全部替换
@@ -136,6 +148,7 @@ modify_repositories() {
 	else
 		log "仓库源修补未达预期，剩余 $UNREPLACED 行未替换，详情请检查 $DISTFEEDS"
 	fi
+	return 0
 }
 
 # 修改LAN口IP（校验纯 IP，合法时按 CIDR /24 格式写入）
@@ -149,7 +162,7 @@ modify_lan_ip() {
 	# 2. 正则校验是否为纯 IPv4 地址（如 192.168.1.1）
 	ip_regex='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
 	if ! echo "$lan_ip_addr" | grep -Eq "$ip_regex"; then
-		log_err "LAN口IP地址格式非法: '$lan_ip_addr'，跳过修改"
+		log "LAN口IP地址格式非法: '$lan_ip_addr'，跳过修改"
 		return 0
 	fi
 
@@ -166,6 +179,7 @@ set network.lan.ipaddr='${target_ip}'
 commit network
 EOF
 	log "LAN口IP地址已成功修改为: ${target_ip}"
+	return 0
 }
 
 # 禁用 WAN口 IPv6
@@ -174,13 +188,19 @@ modify_wan_ipv6() {
 		log "未检测到 wan 接口，跳过 wan 接口 IPv6 设置"
 		return 0
 	fi
-	uci batch <<EOF
+	if uci batch <<EOF
 set network.wan.ipv6='0'
 set network.wan.sourcefilter='0'
 set network.wan.delegate='0'
 commit network
 EOF
-	log "WAN口 IPv6 禁用完成"
+	then
+		log "WAN口 IPv6 禁用完成"
+	else
+		log "WAN口 IPv6 禁用失败"
+		return 1
+	fi
+	return 0
 }
 
 # 配置wan6口的IPv6参数
@@ -194,7 +214,7 @@ modify_wan6_ipv6() {
 	# 2. 批量写入 wan6 口的 IPv6 配置并提交
 	# 说明：batch 内部直接使用 set 指令，不需要加 uci 前缀和 -q 参数
 	# 若 wan6 节点不存在，set network.wan6=interface 会自动创建
-	uci batch <<EOF
+	if uci batch <<EOF
 set network.wan6=interface
 set network.wan6.device='@wan'
 set network.wan6.proto='dhcpv6'
@@ -204,7 +224,13 @@ set network.wan6.norelease='1'
 set network.wan6.multipath='off'
 commit network
 EOF
-	log "wan6口IPv6配置修改完成"
+	then
+		log "wan6口IPv6配置修改完成"
+	else
+		log "wan6口IPv6配置修改失败"
+		return 1
+	fi
+	return 0
 }
 
 # 修改WAN口为PPPoE
@@ -220,21 +246,25 @@ modify_wan_pppoe() {
 	uci set network.wan.proto='pppoe'
 	uci set network.wan.username="$pppoe_username"
 	uci set network.wan.password="$pppoe_password"
-	uci commit network
+	uci commit network || {
+		log "WAN口 PPPoE 配置提交失败"
+		return 1
+	}
 	log "WAN口为PPPoE 配置完成"
+	return 0
 }
 
 main() {
 	log "[$SCRIPT_NAME] 开始执行"
 
-	modify_timezone
-	modify_repositories
-	modify_lan_ip
-	modify_wan_pppoe
-	modify_wan_ipv6
-	modify_wan6_ipv6
-	modify_root_password
-	modify_luci_theme
+	modify_timezone || log "时区修改失败，跳过"
+	modify_repositories || log "仓库源修补失败，跳过"
+	modify_lan_ip || log "LAN口IP修改失败，跳过"
+	modify_wan_pppoe || log "WAN口PPPoE配置失败，跳过"
+	modify_wan_ipv6 || log "WAN口IPv6禁用失败，跳过"
+	modify_wan6_ipv6 || log "wan6口IPv6配置失败，跳过"
+	modify_root_password || log "root密码修改失败，跳过"
+	modify_luci_theme || log "LuCI主题修改失败，跳过"
 
 	log "[$SCRIPT_NAME] 执行完成"
 }
