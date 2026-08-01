@@ -61,6 +61,7 @@ COMMIT_HASH=$(git show -s --date=short --format='hash: %H')
 EOF
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
+	return 0
 }
 
 # 调用主函数
