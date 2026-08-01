@@ -37,7 +37,11 @@ set_password() {
 	awk -v pwd="$ROOT_PASSWORD" '
 		/^root_password=/ { printf "root_password=\"%s\"\n", pwd; next }
 		{ print }
-	' "$CUSTOM_SETTINGS" > "$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS"
+	' "$CUSTOM_SETTINGS" > "$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
+		log_error "根密码写入失败"
+		return 1
+	}
+	return 0
 }
 
 # 设置 PPPoE 配置
@@ -55,7 +59,11 @@ set_pppoe() {
 		/^pppoe_username=/ { printf "pppoe_username=\"%s\"\n", user; next }
 		/^pppoe_password=/ { printf "pppoe_password=\"%s\"\n", pass; next }
 		{ print }
-	' "$CUSTOM_SETTINGS" > "$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS"
+	' "$CUSTOM_SETTINGS" > "$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
+		log_error "PPPoE 配置写入失败"
+		return 1
+	}
+	return 0
 }
 
 # 主函数
