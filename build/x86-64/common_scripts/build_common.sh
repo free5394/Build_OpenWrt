@@ -12,6 +12,7 @@ build_enter_workspace() {
 		log_error "无法切换到工作目录 '$GITHUB_WORKSPACE'"
 		return 1
 	}
+	return 0
 }
 
 # 切换到 OpenWrt 目录
@@ -21,6 +22,7 @@ build_enter_openwrt_dir() {
 		log_error "无法切换到 OpenWrt 目录 '$OPENWRT_DIR'"
 		return 1
 	}
+	return 0
 }
 
 # 更新 feeds 并应用自定义设置
