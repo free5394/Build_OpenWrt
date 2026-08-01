@@ -19,6 +19,10 @@ export UPLOAD_RELEASE=true
 # 编译缓存
 export USE_CCACHE=1
 export CCACHE_DIR=${CCACHE_DIR:-"$HOME/ccache"}
+# 忽略目录路径变更带来的 Hash 变化（提高缓存命中率）
+export CCACHE_NOHASHDIR=true
+# 禁用 ccache 内部压缩以提升 CPU 换缓存的效率（若 SSD/内存空间充足）
+export CCACHE_NOCOMPRESS=true
 
 export NAME_SUFFIX=$_config_name
 # 自定义配置文件
