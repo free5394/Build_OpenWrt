@@ -63,8 +63,8 @@ jobs:
       OPENWRT_BRANCH: ${{ inputs.repo_branch || 'v25.12.1' }}
       PART_SIZE: ${{ inputs.part_size || 1024 }}
       IP_ADDRESS: ${{ inputs.ip_address || '192.168.10.1' }}
-      UPLOAD_ARTIFACT: ${{ inputs.upload_artifact || true }}
-      UPLOAD_RELEASE: ${{ inputs.upload_release || true }}
+      UPLOAD_ARTIFACT: ${{ inputs.upload_artifact}}
+      UPLOAD_RELEASE: ${{ inputs.upload_release }}
       CCACHE_DIR: /home/runner/.ccache
 
     strategy:
