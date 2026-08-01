@@ -73,21 +73,9 @@ build_enter_openwrt_dir || {
 	exit 1
 }
 
-log_info "设置文件权限..."
-chmod +x files/etc/uci-defaults/*.sh
-chmod +x custom_scripts/*.sh
+# 构建流程
+# 生成配置文件
+# build_make_new_config "$@"
 
-build_apply_feeds_and_settings
-
-# log_info "生成配置文件..."
-# make menuconfig
-# ./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
-
-log_info "配置文件..."
-cp -f "custom_config/$CUSTOM_CONFIG" .config && make defconfig V=s
-
-build_download
-build_compile
-build_upload
-
-log_info "全部完成"
+# 补全配置文件
+build_make_custom_config "$@"

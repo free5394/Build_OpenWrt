@@ -75,15 +75,9 @@ make clean # 清理编译产物
 # make dirclean                 # 清理更彻底（包括工具链）
 # make distclean                # 完全清理（需重新配置）
 
-build_apply_feeds_and_settings
+# 构建流程
+# 生成配置文件
+build_make_new_config "$@"
 
-log_info "生成配置文件..."
-rm -rf .config
-make menuconfig
-./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
-
-build_download
-build_compile
-build_upload
-
-log_info "全部完成"
+# 补全配置文件
+# build_make_custom_config "$@"
