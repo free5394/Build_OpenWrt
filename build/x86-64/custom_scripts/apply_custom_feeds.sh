@@ -69,13 +69,12 @@ clone_repo() {
 			log_error "克隆失败: $repo_url (分支: $branch)"
 			return 1
 		}
-	else
-		git clone --depth 1 "$repo_url" "$target_dir" || {
-			log_error "克隆失败: $repo_url"
-			return 1
-		}
+		return 0
 	fi
-
+	git clone --depth 1 "$repo_url" "$target_dir" || {
+		log_error "克隆失败: $repo_url"
+		return 1
+	}
 	return 0
 }
 
