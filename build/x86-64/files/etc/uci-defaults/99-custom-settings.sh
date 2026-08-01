@@ -34,6 +34,9 @@ pppoe_password=""
 # LuCI 默认主题
 default_theme="argon"
 
+# LAN口IP地址
+lan_ip_addr=""
+
 # =============================================
 # 业务逻辑开始
 # =============================================
@@ -135,6 +138,36 @@ modify_repositories() {
 	fi
 }
 
+# 修改LAN口IP（校验纯 IP，合法时按 CIDR /24 格式写入）
+modify_lan_ip() {
+	# 1. 检查变量是否为空
+	if [ -z "$lan_ip_addr" ]; then
+		log "未配置 LAN口IP地址，跳过 IP地址修改"
+		return 0
+	fi
+
+	# 2. 正则校验是否为纯 IPv4 地址（如 192.168.1.1）
+	ip_regex='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+	if ! echo "$lan_ip_addr" | grep -Eq "$ip_regex"; then
+		log_err "LAN口IP地址格式非法: '$lan_ip_addr'，跳过修改"
+		return 0
+	fi
+
+	# 3. 如果变量本身没有带掩码，按注释要求自动追加 /24
+	target_ip="${lan_ip_addr}"
+	if [ "${target_ip#*/}" = "${target_ip}" ]; then
+		target_ip="${target_ip}/24"
+	fi
+
+	# 4. 写入 UCI (删除旧 netmask，使用标准的 ipaddr CIDR 格式)
+	uci -q batch <<EOF
+del network.lan.netmask
+set network.lan.ipaddr='${target_ip}'
+commit network
+EOF
+	log "LAN口IP地址已成功修改为: ${target_ip}"
+}
+
 # 禁用 WAN口 IPv6
 modify_wan_ipv6() {
 	if ! uci -q get network.wan >/dev/null 2>&1; then
@@ -196,6 +229,7 @@ main() {
 
 	modify_timezone
 	modify_repositories
+	modify_lan_ip
 	modify_wan_pppoe
 	modify_wan_ipv6
 	modify_wan6_ipv6
