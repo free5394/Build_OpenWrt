@@ -25,7 +25,7 @@ CONFIG_FILE="${CONFIG_FILE:-.config}"
 # 修补配置文件
 patch_config() {
 	if [ -z "$PART_SIZE" ]; then
-		log_error "PART_SIZE is empty"
+		log_warn "PART_SIZE is empty"
 		return 0
 	fi
 	if [ ! -f "$CONFIG_FILE" ]; then
@@ -36,6 +36,7 @@ patch_config() {
 		-e '$a CONFIG_TARGET_ROOTFS_PARTSIZE='"$PART_SIZE" \
 		"$CONFIG_FILE"
 	log_info "已设置固件rootfs大小为: $PART_SIZE"
+	return 0
 }
 
 # 方案一, 修改默认LAN IP地址
@@ -54,13 +55,18 @@ modify_ip_address() {
 	if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
 		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
 	else
-		log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
-	fi
+			log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
+		fi
+	return 0
 }
 
 modify_theme() {
 	# 替换默认主题为 luci-theme-argon
-	sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
+	sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile 2>/dev/null || {
+		log_warn "luci-theme-argon 替换失败，可能 feeds 未安装"
+		return 1
+	}
+	return 0
 }
 
 # 替换argon主题背景
@@ -69,7 +75,7 @@ cp_background_img() {
 	BG_DST=$(find feeds -type f -path "*/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg" 2>/dev/null | head -n 1)
 	# 替换默认主题背景
 	if [ ! -f "$BG_SRC" ]; then
-		log_error "背景文件 $BG_SRC 不存在"
+		log_warn "背景文件 $BG_SRC 不存在"
 		return 0
 	fi
 	if [ ! -f "$BG_DST" ]; then
@@ -77,6 +83,7 @@ cp_background_img() {
 		return 0
 	fi
 	cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
+	return 0
 }
 
 apply_custom_settings() {
@@ -88,8 +95,9 @@ apply_custom_settings() {
 		sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
 		log_info "已启用 ttyd root 免登录"
 	else
-		log_info "TTYD_AUTOLOGIN=0，跳过 ttyd 免登录配置"
-	fi
+			log_info "TTYD_AUTOLOGIN=0，跳过 ttyd 免登录配置"
+		fi
+	return 0
 }
 
 # 配置 openclash 核心配置
@@ -137,6 +145,7 @@ preset_openclash_core() {
 		log_warn "GeoSite.dat 下载失败，OpenClash 可运行但 GeoSite 规则不可用"
 	}
 	log_info "已添加 openclash 核心配置"
+	return 0
 }
 
 # 主函数
@@ -145,9 +154,9 @@ main() {
 
 	patch_config
 	modify_ip_address
-	modify_theme
-	cp_background_img
-	apply_custom_settings
+	modify_theme || true
+	cp_background_img || true
+	apply_custom_settings || true
 	preset_openclash_core
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
