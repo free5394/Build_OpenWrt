@@ -39,7 +39,7 @@ _log() {
 
 	# 级别过滤
 	if [ "$_lvl_val" -lt "${LOG_LEVEL}" ] 2>/dev/null; then
-		return
+		return 0
 	fi
 
 	# 时间戳（不受 locale 干扰）
@@ -53,6 +53,7 @@ _log() {
 		"$_lvl_name" \
 		"$*" \
 		"$COLOR_RESET"
+	return 0
 }
 
 #----- 对外接口 ----------------------------------------
