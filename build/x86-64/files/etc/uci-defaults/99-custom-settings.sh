@@ -45,11 +45,6 @@ log() {
 	return 0
 }
 
-die() {
-	log "错误: $*"
-	exit 1
-}
-
 # 修改root 密码
 modify_root_password() {
 	if [ -z "$root_password" ]; then
@@ -66,17 +61,13 @@ modify_root_password() {
 
 # 修改系统时区为东八区（上海）
 modify_timezone() {
-	if uci batch <<EOF
-set system.@system[0].timezone='CST-8'
-set system.@system[0].zonename='Asia/Shanghai'
-commit system
-EOF
-	then
-		log "时区修改完成"
-	else
+	uci set system.@system[0].timezone='CST-8'
+	uci set system.@system[0].zonename='Asia/Shanghai'
+	uci commit system || {
 		log "时区修改失败"
 		return 1
-	fi
+	}
+	log "时区修改完成"
 	return 0
 }
 
@@ -98,7 +89,10 @@ modify_luci_theme() {
 	uci set luci.main.mediaurlbase="/luci-static/${default_theme}"
 	# 设置为默认选中的主题（兼容新版 LuCI 映射）
 	uci set "luci.themes.Design=/luci-static/${default_theme}" 2>/dev/null || true
-	uci commit luci
+	uci commit luci || {
+		log "LuCI 主题提交失败"
+		return 1
+	}
 
 	# 3. 安全清理 LuCI 缓存
 	rm -f /tmp/luci-indexcache
@@ -130,14 +124,14 @@ modify_repositories() {
 	# 删除 kenzo/small 源（BusyBox sed BRE 下用 ; 分隔更稳）
 	sed -i '/kenzo/d; /small/d' "$DISTFEEDS" || {
 		log "删除 kenzo/small 失败，回滚"
-		cp "$DISTFEEDS_BAK" "$DISTFEEDS"
+		cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
 		return 1
 	}
 
 	# 替换镜像源
 	sed -i 's|https://.*/releases/|https://mirrors.tuna.tsinghua.edu.cn/openwrt/releases/|g' "$DISTFEEDS" || {
 		log "镜像源替换失败，回滚"
-		cp "$DISTFEEDS_BAK" "$DISTFEEDS"
+		cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
 		return 1
 	}
 
@@ -173,11 +167,12 @@ modify_lan_ip() {
 	fi
 
 	# 4. 写入 UCI (删除旧 netmask，使用标准的 ipaddr CIDR 格式)
-	uci -q batch <<EOF
-del network.lan.netmask
-set network.lan.ipaddr='${target_ip}'
-commit network
-EOF
+	uci del network.lan.netmask
+	uci set network.lan.ipaddr="${target_ip}"
+	uci commit network || {
+		log "LAN口IP地址提交失败"
+		return 1
+	}
 	log "LAN口IP地址已成功修改为: ${target_ip}"
 	return 0
 }
@@ -188,18 +183,14 @@ modify_wan_ipv6() {
 		log "未检测到 wan 接口，跳过 wan 接口 IPv6 设置"
 		return 0
 	fi
-	if uci batch <<EOF
-set network.wan.ipv6='0'
-set network.wan.sourcefilter='0'
-set network.wan.delegate='0'
-commit network
-EOF
-	then
-		log "WAN口 IPv6 禁用完成"
-	else
-		log "WAN口 IPv6 禁用失败"
+	uci set network.wan.ipv6='0'
+	uci set network.wan.sourcefilter='0'
+	uci set network.wan.delegate='0'
+	uci commit network || {
+		log "WAN口 IPv6 禁用提交失败"
 		return 1
-	fi
+	}
+	log "WAN口 IPv6 禁用完成"
 	return 0
 }
 
@@ -211,25 +202,20 @@ modify_wan6_ipv6() {
 		return 0
 	fi
 
-	# 2. 批量写入 wan6 口的 IPv6 配置并提交
-	# 说明：batch 内部直接使用 set 指令，不需要加 uci 前缀和 -q 参数
+	# 2. 写入 wan6 口的 IPv6 配置并提交
 	# 若 wan6 节点不存在，set network.wan6=interface 会自动创建
-	if uci batch <<EOF
-set network.wan6=interface
-set network.wan6.device='@wan'
-set network.wan6.proto='dhcpv6'
-set network.wan6.reqaddress='try'
-set network.wan6.reqprefix='auto'
-set network.wan6.norelease='1'
-set network.wan6.multipath='off'
-commit network
-EOF
-	then
-		log "wan6口IPv6配置修改完成"
-	else
-		log "wan6口IPv6配置修改失败"
+	uci set network.wan6=interface
+	uci set network.wan6.device='@wan'
+	uci set network.wan6.proto='dhcpv6'
+	uci set network.wan6.reqaddress='try'
+	uci set network.wan6.reqprefix='auto'
+	uci set network.wan6.norelease='1'
+	uci set network.wan6.multipath='off'
+	uci commit network || {
+		log "wan6口IPv6配置提交失败"
 		return 1
-	fi
+	}
+	log "wan6口IPv6配置修改完成"
 	return 0
 }
 
