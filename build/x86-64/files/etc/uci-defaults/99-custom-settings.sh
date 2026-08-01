@@ -31,6 +31,9 @@ root_password='$6$eAx0vGeWLH768Ag.$4jKvsP1IeRyDhVnGnLD87XtGL.yTtf9chz3OAvXOMNSi.
 pppoe_username=""
 pppoe_password=""
 
+# LuCI 默认主题
+default_theme="argon"
+
 # =============================================
 # 业务逻辑开始
 # =============================================
@@ -61,6 +64,35 @@ set system.@system[0].zonename='Asia/Shanghai'
 commit system
 EOF
 	log "时区修改完成"
+}
+
+# ==========================================
+# 修改 LuCI 默认主题
+# ==========================================
+modify_luci_theme() {
+	# 1. 检查 LuCI 配置文件是否存在
+	if [ ! -f /etc/config/luci ]; then
+		log "未检测到 LuCI 配置文件 (/etc/config/luci)，跳过主题修改"
+		return 0
+	fi
+	if [ -z "$default_theme" ]; then
+		log "未配置 LuCI 默认主题，跳过主题修改"
+		return 0
+	fi
+
+	# 2. 修改 UCI 配置
+	uci set luci.main.mediaurlbase="/luci-static/${default_theme}"
+	# 设置为默认选中的主题（兼容新版 LuCI 映射）
+	uci set "luci.themes.Design=/luci-static/${default_theme}" 2>/dev/null || true
+	uci commit luci
+
+	# 3. 安全清理 LuCI 缓存
+	rm -f /tmp/luci-indexcache
+	if [ -d /tmp/luci-modulecache ]; then
+		rm -rf /tmp/luci-modulecache/*
+	fi
+
+	log "LuCI 默认主题已成功修改为: ${default_theme}"
 }
 
 # 修补仓库源
@@ -168,6 +200,7 @@ main() {
 	modify_wan_ipv6
 	modify_wan6_ipv6
 	modify_root_password
+	modify_luci_theme
 
 	log "[$SCRIPT_NAME] 执行完成"
 }
