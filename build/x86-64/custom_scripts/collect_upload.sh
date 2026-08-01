@@ -67,7 +67,6 @@ cp_img() {
 	# 检查源目录是否存在
 	if [ ! -d "$src_dir" ]; then
 		log_warn "源目录 $src_dir 不存在，无文件可处理。"
-		log_info "cp_img 执行完成"
 		return 0
 	fi
 
