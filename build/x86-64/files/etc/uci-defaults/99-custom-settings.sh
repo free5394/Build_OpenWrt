@@ -31,8 +31,8 @@ root_password='$6$eAx0vGeWLH768Ag.$4jKvsP1IeRyDhVnGnLD87XtGL.yTtf9chz3OAvXOMNSi.
 pppoe_username=""
 pppoe_password=""
 
-# LuCI 默认主题
-default_theme="argon"
+# LuCI 默认主题 argon
+default_theme=""
 
 # LAN口IP地址
 lan_ip_addr=""

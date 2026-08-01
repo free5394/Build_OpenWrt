@@ -35,6 +35,7 @@ fi
 CUSTOM_SETTINGS="files/etc/uci-defaults/99-custom-settings.sh"
 CONFIG_FILE="${CONFIG_FILE:-.config}"
 MODIFY_LAN_IP_TYPE=2 # 默认 方案二, 修改默认LAN IP地址
+MODIFY_THEME_TYPE=2  # 默认 方案二, 修改默认主题
 
 # 修补配置文件
 patch_config() {
@@ -109,12 +110,42 @@ modify_lan_ip_address() {
 	return 0
 }
 
-modify_theme() {
-	# 替换默认主题为 luci-theme-argon
+# 方案一, 修改默认主题为 luci-theme-argon
+modify_theme_1() {
 	sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile 2>/dev/null || {
 		log_warn "luci-theme-argon 替换失败，可能 feeds 未安装"
 		return 1
 	}
+	return 0
+}
+
+# 方案二, 修改默认主题为 luci-theme-argon
+modify_theme_2() {
+	if [ ! -f "$CUSTOM_SETTINGS" ]; then
+		log_error "自设置文件 $CUSTOM_SETTINGS 不存在"
+		return 1
+	fi
+	log_info "设置默认主题为: argon"
+	awk -v theme="argon" '
+    /^default_theme=/ { printf "default_theme=\"%s\"\n", theme; next }
+    { print }
+	' "$CUSTOM_SETTINGS" >"$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
+		log_error "脚本 $CUSTOM_SETTINGS 主题写入失败"
+		return 1
+	}
+	return 0
+}
+# 修改默认主题为 luci-theme-argon
+modify_theme() {
+	if [ "${MODIFY_THEME_TYPE}" = "0" ]; then
+		log_info "跳过修改默认主题"
+		return 0
+	fi
+	if [ "${MODIFY_THEME_TYPE}" = "1" ]; then
+		modify_theme_1 || true
+		return 0
+	fi
+	modify_theme_2 || true
 	return 0
 }
 
