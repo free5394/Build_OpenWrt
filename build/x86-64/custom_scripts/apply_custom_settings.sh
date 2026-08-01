@@ -167,9 +167,6 @@ cp_background_img() {
 }
 
 apply_custom_settings() {
-	# 更改默认 Shell 为 zsh
-	# sed -i 's/\/bin\/ash/\/usr\/bin\/zsh/g' package/base-files/files/etc/passwd
-
 	# ttyd 免登录（默认开启，设置 TTYD_AUTOLOGIN=0 关闭；免登录有安全风险，禁止在公网暴露 ttyd）
 	if [ "${TTYD_AUTOLOGIN:-0}" = "1" ]; then
 		sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
