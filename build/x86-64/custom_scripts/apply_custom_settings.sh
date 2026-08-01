@@ -55,8 +55,8 @@ modify_ip_address() {
 	if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
 		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
 	else
-			log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
-		fi
+		log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
+	fi
 	return 0
 }
 
@@ -95,8 +95,8 @@ apply_custom_settings() {
 		sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
 		log_info "已启用 ttyd root 免登录"
 	else
-			log_info "TTYD_AUTOLOGIN=0，跳过 ttyd 免登录配置"
-		fi
+		log_info "TTYD_AUTOLOGIN=0，跳过 ttyd 免登录配置"
+	fi
 	return 0
 }
 
