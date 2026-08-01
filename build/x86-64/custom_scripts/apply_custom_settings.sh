@@ -32,7 +32,9 @@ fi
 # =============================================
 # 业务逻辑开始
 # =============================================
+CUSTOM_SETTINGS="files/etc/uci-defaults/99-custom-settings.sh"
 CONFIG_FILE="${CONFIG_FILE:-.config}"
+MODIFY_LAN_IP_TYPE=2 # 默认 方案二, 修改默认LAN IP地址
 
 # 修补配置文件
 patch_config() {
@@ -52,7 +54,7 @@ patch_config() {
 }
 
 # 方案一, 修改默认LAN IP地址
-modify_ip_address() {
+modify_lan_ip_address_1() {
 	CONFIG_GENERATE="package/base-files/files/bin/config_generate"
 	if [ -z "$IP_ADDRESS" ]; then
 		log_info "未配置 IP地址，跳过 IP地址配置"
@@ -66,9 +68,44 @@ modify_ip_address() {
 	# 校验 IP 是否成功写入，防止上游 config_generate 格式变更导致静默失败
 	if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
 		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
-	else
-		log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
+		return 0
 	fi
+	log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
+	return 0
+}
+
+# 方案二, 修改默认LAN IP地址
+modify_lan_ip_address_2() {
+	if [ -z "$IP_ADDRESS" ]; then
+		log_info "未配置 IP地址，跳过 IP地址配置"
+		return 0
+	fi
+	if [ ! -f "$CUSTOM_SETTINGS" ]; then
+		log_error "自设置文件 $CUSTOM_SETTINGS 不存在"
+		return 1
+	fi
+	log_info "设置 IP地址为: $IP_ADDRESS"
+	awk -v ip_address="$IP_ADDRESS" '
+    /^lan_ip_addr=/ { printf "lan_ip_addr=\"%s\"\n", ip_address; next }
+    { print }
+	' "$CUSTOM_SETTINGS" >"$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
+		log_error "脚本 $CUSTOM_SETTINGS IP地址写入失败"
+		return 1
+	}
+	return 0
+}
+
+# 修改默认LAN IP地址
+modify_lan_ip_address() {
+	if [ "${MODIFY_LAN_IP_TYPE}" = "0" ]; then
+		log_info "跳过修改默认LAN IP地址"
+		return 0
+	fi
+	if [ "${MODIFY_LAN_IP_TYPE}" = "1" ]; then
+		modify_lan_ip_address_1 || true
+		return 0
+	fi
+	modify_lan_ip_address_2 || true
 	return 0
 }
 
@@ -164,12 +201,12 @@ preset_openclash_core() {
 main() {
 	log_info "$SCRIPT_NAME 脚本开始执行"
 
-	patch_config
-	modify_ip_address
+	patch_config || true
+	modify_lan_ip_address || true
 	modify_theme || true
 	cp_background_img || true
 	apply_custom_settings || true
-	preset_openclash_core
+	preset_openclash_core || true
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
