@@ -29,11 +29,15 @@ add_feed() {
 	# 已存在则跳过
 	if grep -qF "$feed_line" feeds.conf.default; then
 		log_info "[跳过] 已存在: $feed_line"
-		return
+		return 0
 	fi
 
-	sed -i "${insert_line} $feed_line" feeds.conf.default
+	sed -i "${insert_line} $feed_line" feeds.conf.default || {
+		log_error "插入 feed 失败: $feed_line"
+		return 1
+	}
 	log_info "[新增] $feed_line"
+	return 0
 }
 
 # 克隆Git仓库到指定目录
@@ -60,6 +64,7 @@ clone_repo() {
 		}
 	fi
 
+	return 0
 }
 
 # 路径规范化函数（兼容无 realpath -m 的环境）
@@ -72,6 +77,7 @@ norm_path() {
 		/*) printf '%s\n' "$1" ;;
 		*) printf '%s\n' "$(pwd)/$1" ;;
 		esac
+		return 0
 	fi
 }
 
@@ -256,6 +262,7 @@ EOF
 	done <"$matched_file"
 
 	log_info "=== 执行完成：匹配 $MATCH_CNT 项，成功删除 $DEL_CNT 项 ==="
+	return 0
 }
 
 # 添加自定义Feeds
@@ -279,8 +286,8 @@ add_custom_feeds() {
 	# rm -rf feeds/packages/utils/v2dat
 
 	log_info "删除冲突的插件..."
-	del_matching_dirs feeds/kenzo feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video
-	del_matching_dirs feeds/small feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video
+	del_matching_dirs feeds/kenzo feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video || log_warn "del_matching_dirs(kenzo) 部分失败，继续"
+	del_matching_dirs feeds/small feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video || log_warn "del_matching_dirs(small) 部分失败，继续"
 
 	log_info "安装golang..."
 	rm -rf feeds/packages/lang/golang
@@ -288,6 +295,7 @@ add_custom_feeds() {
 
 	log_info "安装feeds..."
 	./scripts/feeds install -a
+	return 0
 }
 
 # 主函数
