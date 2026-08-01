@@ -5,13 +5,14 @@ append_env() {
 	env_line="$1"
 
 	# 已存在则跳过
-	if grep -qF "$env_line" ~/.bashrc; then
+	if grep -qF "$env_line" ~/.bashrc 2>/dev/null; then
 		echo "[跳过] 已存在: $env_line"
-		return
+		return 0
 	fi
 
 	printf '%s\n' "$env_line" >> ~/.bashrc
 	echo "[新增] $env_line"
+	return 0
 }
 
 # 安装依赖
@@ -27,12 +28,14 @@ install_dependencies() {
 		ninja-build p7zip p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
 		python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
 		upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
+	return 0
 }
 
 # 设置ccache
 setup_ccache() {
 	append_env "export USE_CCACHE=1"
 	append_env "export CCACHE_DIR=\$HOME/ccache"
+	return 0
 }
 
 # 清理环境
@@ -41,12 +44,14 @@ clean_up() {
 	sudo apt clean
 	sudo apt autoremove -y
 	sudo rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+	return 0
 }
 
 # 自定义设置
 custom_setup() {
 	# 设置时区
 	[ -n "${TZ:-}" ] && sudo timedatectl set-timezone "$TZ"
+	return 0
 }
 
 # 主函数
