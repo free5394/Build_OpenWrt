@@ -12,6 +12,15 @@ if (set -o pipefail 2>/dev/null); then
 fi
 
 # =============================================
+# 引入环境变量模块
+# =============================================
+# shellcheck source=/dev/null
+. "$(dirname -- "$0")/set-env.sh" || {
+	printf '错误: 无法加载环境变量模块 set-env.sh\n' >&2
+	exit 1
+}
+
+# =============================================
 # 引入公共模块（强制依赖，最佳实践）
 # =============================================
 # shellcheck source=/dev/null
@@ -28,15 +37,6 @@ fi
 # shellcheck source=/dev/null
 . "$(dirname -- "$0")/x86-64/common_scripts/logger.sh" || {
 	printf '错误: 无法加载日志模块 logger.sh\n' >&2
-	exit 1
-}
-
-# =============================================
-# 引入环境变量模块
-# =============================================
-# shellcheck source=/dev/null
-. "$(dirname -- "$0")/set-env.sh" || {
-	printf '错误: 无法加载环境变量模块 set-env.sh\n' >&2
 	exit 1
 }
 
