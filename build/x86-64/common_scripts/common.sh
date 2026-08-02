@@ -284,4 +284,62 @@ find_matching_dirs() {
 	rm -f "$_tmp_sub_dirs"
 }
 
+# ==============================================================================
+# 子函数 4: 覆盖匹配的目录 (支持回滚，成功后删除源文件)
+# ==============================================================================
+update_matching_dirs() {
+	if [ $# -lt 2 ]; then
+		echo "错误: 参数不足！" >&2
+		echo "用法: $0 <基准目录路径> <目标目录1> [目标目录2 ...]" >&2
+		return 1
+	fi
+
+	_base_dir="$1"
+
+	_match_list=$(mktemp)
+	find_matching_dirs "$@" >"$_match_list"
+
+	if [ ! -s "$_match_list" ]; then
+		echo "提示: 没有找到匹配的目录，无需更新。"
+		rm -f "$_match_list"
+		return 0
+	fi
+
+	echo "开始处理覆盖任务..."
+
+	while IFS= read -r _target_path; do
+		[ -z "$_target_path" ] && continue
+
+		_keyword=$(basename "$_target_path")
+		_source_path="${_base_dir}/${_keyword}"
+
+		echo "--------------------------------------------------"
+		echo "操作: 用 '$_source_path' 覆盖 '$_target_path'"
+
+		_backup_path="${_target_path}.bak.$$"
+
+		# --- 步骤 A: 备份原目录 ---
+		if ! mv "$_target_path" "$_backup_path"; then
+			echo "错误: 无法备份目标目录，跳过此项。" >&2
+			continue
+		fi
+		if mv "$_source_path" "$_target_path"; then
+			# 清理备份
+			rm -rf "$_backup_path"
+			echo "操作:覆盖成功。"
+			continue
+		fi
+		echo "警告: 无法移动目标目录，恢复备份并清理源目录 $_source_path。" >&2
+		# 恢复备份目录
+		mv "$_backup_path" "$_target_path"
+		# 清理源目录，避免冲突
+		rm -rf "$_source_path"
+		return 0
+
+	done <"$_match_list"
+
+	rm -f "$_match_list"
+	return 0
+}
+
 build_script_info "$@"
