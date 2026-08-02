@@ -53,14 +53,14 @@ add_feed() {
 }
 
 # 克隆Git仓库到指定目录
-# 参数1: 仓库URL（必选） 参数2: 分支名（可选） 参数3: 目标目录（必选）
+# 参数1: 仓库URL（必选） 参数2: 目标目录（必选） 参数3: 分支名（可选）
 clone_repo() {
 	repo_url="$1"
-	branch="$2"
-	target_dir="$3"
+	target_dir="$2"
+	branch="$3"
 
 	if [ -z "$repo_url" ] || [ -z "$target_dir" ]; then
-		log_error "缺少必要参数: clone_repo <仓库URL> [分支] <目标目录>"
+		log_error "缺少必要参数:%s  <仓库URL> <目标目录>" "$0"
 		return 1
 	fi
 
