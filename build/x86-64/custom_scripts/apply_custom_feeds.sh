@@ -276,15 +276,48 @@ EOF
 	return 0
 }
 
-# 添加自定义Feeds
-add_custom_feeds() {
-	# 添加自定义Feeds
-	add_feed "src-git kenzo https://github.com/kenzok8/openwrt-packages" '1i'
-	add_feed "src-git small https://github.com/kenzok8/small" '2i'
+# 更新feeds
+update_feeds() {
+	custom_feeds_bak="$CUSTOM_BAK/feeds"
+	# 检查是否启用备份功能
+	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
+		# 检查备份目录是否存在
+		if [ -d "$custom_feeds_bak" ]; then
+			log_info "feeds 备份已存在，恢复备份"
+			cp -rf "$custom_feeds_bak" .
+			log_info "feeds 备份恢复完成"
+		fi
+		log_info "更新feeds..."
+		./scripts/feeds update -a
 
+		log_info "开始备份feeds..."
+		rm -rf "$CUSTOM_BAK/feeds/" && mkdir -p "$CUSTOM_BAK/feeds/"
+		# 查找 feeds 目录下第一层（不含以 .tmp 结尾）的目录，并复制到 bak 目录
+		find feeds -mindepth 1 -maxdepth 1 -type d ! -name "*.tmp" -exec cp -rf {} "$CUSTOM_BAK/feeds/" \;
+		log_info "feeds备份完成"
+		return 0
+	fi
 	log_info "更新feeds..."
 	./scripts/feeds update -a
+	return 0
+}
 
+# 安装feeds
+install_feeds() {
+	log_info "安装feeds..."
+	./scripts/feeds install -a
+	return 0
+}
+
+# 添加自定义Feeds
+add_custom_feeds() {
+	add_feed "src-git kenzo https://github.com/kenzok8/openwrt-packages" '1i'
+	add_feed "src-git small https://github.com/kenzok8/small" '2i'
+	return 0
+}
+
+# patch feeds
+patch_feeds() {
 	log_info "删除出错插件"
 	# luci-app-fchomo: small feed 中此插件编译报错，等待上游修复后可移除此行
 	rm -rf feeds/small/luci-app-fchomo
@@ -301,11 +334,12 @@ add_custom_feeds() {
 	del_matching_dirs feeds/small feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video || log_warn "del_matching_dirs(small) 部分失败，继续"
 
 	log_info "安装golang..."
-	rm -rf feeds/packages/lang/golang
-	git clone https://github.com/kenzok8/golang -b 1.26 feeds/packages/lang/golang
-
-	log_info "安装feeds..."
-	./scripts/feeds install -a
+	mv feeds/packages/lang/golang feeds/packages/lang/golang.bak
+	git clone https://github.com/kenzok8/golang -b 1.26 feeds/packages/lang/golang || {
+		log_error "安装golang失败,恢复原始版本"
+		mv feeds/packages/lang/golang.bak feeds/packages/lang/golang
+		return 1
+	}
 	return 0
 }
 
@@ -313,10 +347,11 @@ add_custom_feeds() {
 main() {
 	log_info "$SCRIPT_NAME 脚本开始执行"
 
-	# 示例命令1：正常执行
-	log_info "当前工作目录: $(pwd)"
 	# 添加自定义Feeds
 	add_custom_feeds
+	update_feeds
+	patch_feeds
+	install_feeds
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
