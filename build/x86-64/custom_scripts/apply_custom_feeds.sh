@@ -316,6 +316,44 @@ add_custom_feeds() {
 	return 0
 }
 
+# 更新golang
+update_golang() {
+	golang_dir="feeds/packages/lang/golang"
+	golang_dir_tmp="$golang_dir.tmp"
+	custom_golang_bak="$CUSTOM_BAK/golang"
+
+	# 备份当前golang目录
+	mv "$golang_dir" "$golang_dir_tmp"
+	# 检查备份目录是否存在
+	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_golang_bak" ]; then
+		log_info "golang 备份已存在，恢复备份"
+		cp -rf "$custom_golang_bak" "$(dirname "$golang_dir")/" || {
+			log_warn "恢复golang备份失败，恢复原始版本"
+			# 恢复原始版本
+			mv "$golang_dir_tmp" "$golang_dir"
+			return 0
+		}
+		rm -rf "$golang_dir_tmp"
+		log_info "golang 备份恢复完成"
+		return 0
+	fi
+	log_info "更新golang..."
+	git clone https://github.com/kenzok8/golang -b 1.26 "$golang_dir" || {
+		log_warn "更新golang失败,恢复原始版本"
+		mv "$golang_dir_tmp" "$golang_dir"
+		return 0
+	}
+	rm -rf "$golang_dir_tmp"
+	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
+		log_info "开始备份golang仓库..."
+		rm -rf "$custom_golang_bak" && mkdir -p "$custom_golang_bak"
+		cp -rf "$golang_dir" "$custom_golang_bak"
+		log_info "golang 备份完成"
+	fi
+	return 0
+
+}
+
 # patch feeds
 patch_feeds() {
 	log_info "删除出错插件"
@@ -333,13 +371,7 @@ patch_feeds() {
 	del_matching_dirs feeds/kenzo feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video || log_warn "del_matching_dirs(kenzo) 部分失败，继续"
 	del_matching_dirs feeds/small feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video || log_warn "del_matching_dirs(small) 部分失败，继续"
 
-	log_info "安装golang..."
-	mv feeds/packages/lang/golang feeds/packages/lang/golang.bak
-	git clone https://github.com/kenzok8/golang -b 1.26 feeds/packages/lang/golang || {
-		log_error "安装golang失败,恢复原始版本"
-		mv feeds/packages/lang/golang.bak feeds/packages/lang/golang
-		return 1
-	}
+	update_golang
 	return 0
 }
 
