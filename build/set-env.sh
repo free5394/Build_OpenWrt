@@ -24,6 +24,9 @@ export CCACHE_NOHASHDIR=true
 # 禁用 ccache 内部压缩以提升 CPU 换缓存的效率（若 SSD/内存空间充足）
 export CCACHE_NOCOMPRESS=true
 
+# 抑制 common.sh/set-env.sh 的加载日志，减少 CI 噪声
+export LOG_SILENT=1
+
 export NAME_SUFFIX=$_config_name
 # 自定义配置文件
 export CUSTOM_CONFIG=$_config_name.config
