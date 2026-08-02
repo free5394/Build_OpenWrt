@@ -31,7 +31,7 @@ root_password='$6$eAx0vGeWLH768Ag.$4jKvsP1IeRyDhVnGnLD87XtGL.yTtf9chz3OAvXOMNSi.
 pppoe_username=""
 pppoe_password=""
 
-# LuCI 默认主题 argon
+# LuCI 默认主题 argon bootstrap
 default_theme=""
 
 # LAN口IP地址
@@ -87,8 +87,6 @@ modify_luci_theme() {
 
 	# 2. 修改 UCI 配置
 	uci set luci.main.mediaurlbase="/luci-static/${default_theme}"
-	# 设置为默认选中的主题（兼容新版 LuCI 映射）
-	uci set "luci.themes.Design=/luci-static/${default_theme}" 2>/dev/null || true
 	uci commit luci || {
 		log "LuCI 主题提交失败"
 		return 1
