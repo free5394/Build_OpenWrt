@@ -241,14 +241,14 @@ modify_wan_pppoe() {
 main() {
 	log "[$SCRIPT_NAME] 开始执行"
 
-	modify_timezone || log "时区修改失败，跳过"
-	modify_repositories || log "仓库源修补失败，跳过"
-	modify_lan_ip || log "LAN口IP修改失败，跳过"
-	modify_wan_pppoe || log "WAN口PPPoE配置失败，跳过"
-	modify_wan_ipv6 || log "WAN口IPv6禁用失败，跳过"
-	modify_wan6_ipv6 || log "wan6口IPv6配置失败，跳过"
-	modify_luci_theme || log "LuCI主题修改失败，跳过"
-	modify_root_password || log "root密码修改失败，跳过"
+	modify_timezone
+	modify_repositories
+	modify_lan_ip
+	modify_wan_pppoe
+	modify_wan_ipv6
+	modify_wan6_ipv6
+	modify_luci_theme
+	modify_root_password
 
 	log "[$SCRIPT_NAME] 执行完成"
 }
