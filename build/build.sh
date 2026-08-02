@@ -95,7 +95,7 @@ build_enter_openwrt_dir || {
 
 # 构建流程
 # 生成配置文件
-# build_make_new_config "$@"
+# time_it build_make_new_config "$@"
 
 # 补全配置文件
-build_make_custom_config "$@"
+time_it build_make_custom_config "$@"
