@@ -66,7 +66,7 @@ log_info "开始克隆OpenWrt仓库..."
 git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$OPENWRT_DIR"
 
 log_info "复制文件..."
-cp -rf "$SCRIPT_DIR/$DEVICE_ARCH"/* "$OPENWRT_DIR/"
+cp -rf "$(dirname -- "$0")"/x86-64/* "$OPENWRT_DIR/"
 
 build_enter_openwrt_dir || {
 	log_error "无法进入 OpenWrt 目录，终止构建"
