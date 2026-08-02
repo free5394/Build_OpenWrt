@@ -192,4 +192,117 @@ norm_path() {
 	return 0
 }
 
+# ==============================================================================
+# 子函数 1: 提取基准目录下的直接子目录名称（排除以 . 开头的隐藏目录）
+# 参数: $1 - 基准目录路径
+# 输出: 匹配子目录列表（每行一个目录路径）
+# ==============================================================================
+find_sub_dirs() {
+	_base_dir="$1"
+
+	if [ ! -d "$_base_dir" ]; then
+		printf "错误: 基准目录 %s 不存在或不是有效的目录！\n" "$_base_dir" >&2
+		return 1
+	fi
+
+	# 遍历目录下的所有条目
+	# Shell 的通配符 * 默认不匹配隐藏文件（符合需求），且能正确处理特殊字符
+	for _full_path in "$_base_dir"/*; do
+		# 检查 glob 是否未匹配到任何文件（即目录为空的情况）
+		# 如果目录为空，"$_base_dir"/* 会展开成字面字符串 "$_base_dir"/*
+		# 使用 -d 判断可以自然过滤掉文件和未展开的 glob 字符串
+		if [ -d "$_full_path" ]; then
+			# 使用 POSIX 参数扩展 ${var##*/} 提取文件名，替代 basename 命令
+			_dir_name="${_full_path##*/}"
+			printf "%s\n" "$_dir_name"
+		fi
+	done
+}
+
+# ==============================================================================
+# 子函数 2: 在单个目标目录下查找与关键字匹配的子目录（最多深入到第3层级）
+# 参数: $1 - 目标目录路径
+#       $2... - 关键字列表（通过参数或外部传递）
+# ==============================================================================
+search_single_target() {
+	_target_dir="$1"
+	_kw_file="$2"
+
+	if [ ! -d "$_target_dir" ]; then
+		printf "警告: 目标目录 '%s' 不存在，已跳过。\n" "$_target_dir" >&2
+		return 1
+	fi
+
+	# 逻辑说明：
+	# 1. find 一次性获取所有候选目录
+	# 2. awk 从关键字文件构建哈希表，比对路径最后一段 ($NF)
+	# 这种方式在大量文件和关键字场景下性能最优
+	find "$_target_dir" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | awk -F/ '
+        BEGIN { 
+            # 从参数1(ARGV[1])读取关键字文件
+            while ((getline line < ARGV[1]) > 0) {
+                kw[line] = 1
+            }
+            close(ARGV[1])
+            # 清空ARGV[1]防止 awk 将其当作输入文件处理
+            ARGV[1] = ""
+        }
+        {
+            # $NF 是 awk 内置变量，代表当前行的最后一个字段（即目录名）
+            if ($NF in kw) {
+                print $0
+            }
+        }
+    ' "$_kw_file" -
+}
+
+# ==============================================================================
+# 主函数: find_matching_dirs
+# 参数: $1 - 基准目录路径
+#       $2及后续 - 目标目录路径列表
+# ==============================================================================
+find_matching_dirs() {
+	if [ $# -lt 2 ]; then
+		echo "错误: 参数不足！" >&2
+		echo "用法: $0 <基准目录路径> <目标目录1> [目标目录2 ...]" >&2
+		return 1
+	fi
+
+	_base_dir="$1"
+	shift
+
+	if [ ! -d "$_base_dir" ]; then
+		echo "错误: 基准目录 '$_base_dir' 不存在或不是有效的目录！" >&2
+		return 1
+	fi
+
+	# 1. 创建临时文件存储关键字
+	# 使用临时文件解决了参数传递时的各种转义和空格问题，且不会覆盖位置参数 $@
+	_tmp_sub_dirs=$(mktemp)
+
+	# 2. 查找基准目录下的直接子目录
+	find_sub_dirs "$_base_dir" >"$_tmp_sub_dirs"
+	_ret=$?
+
+	if [ $_ret -ne 0 ]; then
+		rm -f "$_tmp_sub_dirs"
+		return 1
+	fi
+
+	# 如果关键字文件为空，直接退出
+	if [ ! -s "$_tmp_sub_dirs" ]; then
+		rm -f "$_tmp_sub_dirs"
+		return 0
+	fi
+
+	# 3. 遍历目标目录
+	# 此时 $@ 保持原样，包含所有目标目录路径
+	for _target in "$@"; do
+		search_single_target "$_target" "$_tmp_sub_dirs"
+	done
+
+	# 4. 清理临时文件
+	rm -f "$_tmp_sub_dirs"
+}
+
 build_script_info "$@"
