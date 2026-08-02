@@ -24,6 +24,10 @@ export CCACHE_NOHASHDIR=true
 # 禁用 ccache 内部压缩以提升 CPU 换缓存的效率（若 SSD/内存空间充足）
 export CCACHE_NOCOMPRESS=true
 
+# 自定义备份目录
+export BAK_ENABLED=1 # 是否启用备份功能,0 不启用， 1 启用
+export CUSTOM_BAK="$GITHUB_WORKSPACE/custom_bak"
+
 # 抑制 common.sh/set-env.sh 的加载日志，减少 CI 噪声
 export LOG_SILENT=1
 

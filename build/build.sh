@@ -62,8 +62,28 @@ if [ -d "$OPENWRT_DIR" ]; then
 	exit 1
 fi
 
-log_info "开始克隆OpenWrt仓库..."
-git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$OPENWRT_DIR"
+# 克隆 OpenWrt 仓库
+build_clone_openwrt() {
+	custom_openwrt_bak="$CUSTOM_BAK/${OPENWRT_DIR##*/}"
+	# 检查备份目录是否存在
+	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_openwrt_bak" ]; then
+		log_info "OpenWrt 备份已存在，恢复备份"
+		cp -rf "$custom_openwrt_bak" .
+		log_info "OpenWrt 备份恢复完成"
+		return 0
+	fi
+	log_info "开始克隆OpenWrt仓库..."
+	git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$OPENWRT_DIR"
+	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
+		log_info "开始备份OpenWrt仓库..."
+		mkdir -p "$custom_openwrt_bak"
+		cp -rf "$OPENWRT_DIR" "$CUSTOM_BAK"
+		log_info "OpenWrt 备份完成"
+	fi
+	return 0
+}
+
+time_it build_clone_openwrt
 
 log_info "复制文件..."
 cp -rf "$(dirname -- "$0")"/x86-64/* "$OPENWRT_DIR/"
