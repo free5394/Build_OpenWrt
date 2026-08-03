@@ -103,10 +103,10 @@ modify_lan_ip_address() {
 		return 0
 	fi
 	if [ "${MODIFY_LAN_IP_TYPE}" = "1" ]; then
-		modify_lan_ip_address_1 || true
+		modify_lan_ip_address_1
 		return 0
 	fi
-	modify_lan_ip_address_2 || true
+	modify_lan_ip_address_2
 	return 0
 }
 
@@ -135,6 +135,7 @@ modify_theme_2() {
 	}
 	return 0
 }
+
 # 修改默认主题为 luci-theme-argon
 modify_theme() {
 	if [ "${MODIFY_THEME_TYPE}" = "0" ]; then
@@ -142,10 +143,10 @@ modify_theme() {
 		return 0
 	fi
 	if [ "${MODIFY_THEME_TYPE}" = "1" ]; then
-		modify_theme_1 || true
+		modify_theme_1
 		return 0
 	fi
-	modify_theme_2 || true
+	modify_theme_2
 	return 0
 }
 
@@ -166,14 +167,15 @@ cp_background_img() {
 	return 0
 }
 
-apply_custom_settings() {
+# 配置 ttyd 免登录
+apply_ttyd_auto_login() {
 	# ttyd 免登录（默认关闭，设置 TTYD_AUTOLOGIN=1 开启；免登录有安全风险，禁止在公网暴露 ttyd）
-	if [ "${TTYD_AUTOLOGIN:-0}" = "1" ]; then
-		sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
-		log_info "已启用 ttyd root 免登录"
-	else
+	if [ "${TTYD_AUTOLOGIN:-0}" = "0" ]; then
 		log_info "TTYD_AUTOLOGIN=0，跳过 ttyd 免登录配置"
+		return 0
 	fi
+	sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
+	log_info "已启用 ttyd root 免登录"
 	return 0
 }
 
@@ -211,8 +213,7 @@ preset_openclash_core() {
 		return 1
 	fi
 	mv -f "$_core_bin" files/etc/openclash/core/clash_meta
-	rm -rf "$_tmp_dir"
-	rm -f /tmp/clash_meta.tar.gz
+	rm -rf "$_tmp_dir" /tmp/clash_meta.tar.gz
 	chmod +x files/etc/openclash/core/clash_meta
 	# 下载 GeoIP / GeoSite 数据（带重试）
 	wget --tries=3 --timeout=30 --max-redirect=3 -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O files/etc/openclash/GeoIP.dat || {
@@ -233,7 +234,7 @@ main() {
 	modify_lan_ip_address || true
 	modify_theme || true
 	cp_background_img || true
-	apply_custom_settings || true
+	apply_ttyd_auto_login || true
 	preset_openclash_core || true
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
