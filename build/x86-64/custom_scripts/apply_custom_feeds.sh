@@ -333,7 +333,8 @@ update_golang() {
 	golang_dir="feeds/packages/lang/golang"
 	golang_dir_tmp="$golang_dir.tmp"
 	custom_golang_bak="$CUSTOM_BAK/golang"
-
+	# 确保目标目录存在
+	mkdir -p "$golang_dir"
 	# 备份当前golang目录
 	mv "$golang_dir" "$golang_dir_tmp"
 	# 检查备份目录是否存在
@@ -357,10 +358,10 @@ update_golang() {
 	}
 	rm -rf "$golang_dir_tmp"
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "开始备份golang仓库..."
+		log_info "开始备份golang仓库到 %s" "$custom_golang_bak"
 		rm -rf "$custom_golang_bak" && mkdir -p "$custom_golang_bak"
 		cp -rf "$golang_dir" "$custom_golang_bak"
-		log_info "golang 备份完成"
+		log_info "golang 备份完成到 %s" "$custom_golang_bak"
 	fi
 	return 0
 
