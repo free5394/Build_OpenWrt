@@ -55,6 +55,21 @@ log() {
 }
 
 # =============================================
+# 通用 uci 提交安全封装（用于非 network 配置）
+# =============================================
+uci_commit_safe() {
+	local config="$1"
+	if uci commit "$config"; then
+		log "配置 $config 提交成功"
+		return 0
+	fi
+	log "配置 $config 提交失败，回滚 $config 配置"
+	uci revert "$config"
+	return 1
+
+}
+
+# =============================================
 # 修改 root 密码（增加备份恢复）
 # =============================================
 modify_root_password() {
@@ -86,13 +101,8 @@ modify_timezone() {
 	uci set system.@system[0].timezone='CST-8'
 	uci set system.@system[0].zonename='Asia/Shanghai'
 
-	if uci commit system; then
-		log "时区修改完成"
-		return 0
-	fi
-	log "时区修改失败，回滚 system 配置"
-	uci revert system
-	return 1
+	uci_commit_safe system
+	return $?
 }
 
 # =============================================
@@ -109,15 +119,14 @@ modify_luci_theme() {
 	fi
 
 	uci set luci.main.mediaurlbase="/luci-static/${default_theme}"
-	if uci commit luci; then
+
+	if uci_commit_safe luci; then
 		# 安全清理 LuCI 缓存
 		rm -f /tmp/luci-indexcache
 		[ -d /tmp/luci-modulecache ] && rm -rf /tmp/luci-modulecache/*
 		log "LuCI 默认主题已成功修改为: ${default_theme}"
 		return 0
 	fi
-	log "LuCI 主题提交失败，回滚 luci 配置"
-	uci revert luci
 	return 1
 }
 
@@ -145,8 +154,8 @@ modify_repositories() {
 		return 0
 	}
 
-	# 验证：统计未替换的行（排除注释行）
-	UNREPLACED=$(grep -v '^\s*#' "$DISTFEEDS" | grep 'https://' | grep -c -v 'mirrors.tuna.tsinghua.edu.cn' 2>/dev/null || echo 0)
+	# 验证：统计未替换的行（排除注释行，兼容 busybox grep）
+	UNREPLACED=$(grep -v '^[[:space:]]*#' "$DISTFEEDS" | grep 'https://' | grep -c -v 'mirrors.tuna.tsinghua.edu.cn' 2>/dev/null || echo 0)
 	if [ "$UNREPLACED" -eq 0 ]; then
 		log "仓库源修补完成（全部已替换）"
 		rm -f "$DISTFEEDS_BAK"
