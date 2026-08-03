@@ -294,26 +294,22 @@ EOF
 # 更新feeds
 update_feeds() {
 	custom_feeds_bak="$CUSTOM_BAK/feeds"
+	# 检查是否启用备份功能 并且备份目录存在
+	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_feeds_bak" ]; then
+		log_info "feeds 备份已存在，恢复备份"
+		cp -rf "$custom_feeds_bak" .
+		log_info "feeds 备份恢复完成"
+	fi
+	log_info "更新feeds..."
+	./scripts/feeds update -a
 	# 检查是否启用备份功能
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		# 检查备份目录是否存在
-		if [ -d "$custom_feeds_bak" ]; then
-			log_info "feeds 备份已存在，恢复备份"
-			cp -rf "$custom_feeds_bak" .
-			log_info "feeds 备份恢复完成"
-		fi
-		log_info "更新feeds..."
-		./scripts/feeds update -a
-
 		log_info "开始备份feeds..."
 		rm -rf "$CUSTOM_BAK/feeds/" && mkdir -p "$CUSTOM_BAK/feeds/"
 		# 查找 feeds 目录下第一层（不含以 .tmp 结尾）的目录，并复制到 bak 目录
 		find feeds -mindepth 1 -maxdepth 1 -type d ! -name "*.tmp" -exec cp -rf {} "$CUSTOM_BAK/feeds/" \;
 		log_info "feeds备份完成"
-		return 0
 	fi
-	log_info "更新feeds..."
-	./scripts/feeds update -a
 	return 0
 }
 
