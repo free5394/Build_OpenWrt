@@ -1,10 +1,11 @@
 #!/bin/sh
 # =============================================
-# 1. 严格模式：命令失败即退出
+# OpenWrt uci-defaults 初始化脚本（改进版）
+# 说明：该脚本在首次启动时运行，用于配置系统基础项。
+# 下方业务变量均为可选，留空表示跳过对应配置步骤。
 # =============================================
-set -e
 
-# 安全地尝试开启 pipefail
+# 安全尝试开启 pipefail（不影响后续错误处理策略）
 if (set -o pipefail) 2>/dev/null; then
 	set -o pipefail
 fi
@@ -21,71 +22,85 @@ LOG_FILE="/tmp/$SCRIPT_NAME.log"
 # =============================================
 exec >"$LOG_FILE" 2>&1
 
-# 检查 uci 命令是否存在
+# 检查 uci 命令是否存在（致命错误，无法继续则退出）
 command -v uci >/dev/null 2>&1 || {
 	echo "uci not found"
 	exit 1
 }
 
 # =============================================
-# 业务变量
+# 业务变量（按需修改）
 # =============================================
-# 根密码 （已加密）
+# 根密码（已加密的哈希字符串，若为空则跳过密码修改）
 root_password='$6$eAx0vGeWLH768Ag.$4jKvsP1IeRyDhVnGnLD87XtGL.yTtf9chz3OAvXOMNSi.cFEGvywcrlL5vmC3URhyGUcKboWHpcUJK.o.cYP0.'
 
-# PPPoE 用户名和密码
+# PPPoE 用户名和密码（均非空时才会配置 PPPoE）
 pppoe_username=""
 pppoe_password=""
 
-# LuCI 默认主题 argon bootstrap
+# LuCI 默认主题（如 argon、bootstrap，留空则跳过）
 default_theme=""
 
-# LAN口IP地址
+# LAN口IP地址（纯 IPv4，例如 192.168.1.1，会自动追加 /24 掩码）
 lan_ip_addr=""
 
 # =============================================
-# 业务逻辑开始
+# 日志函数
 # =============================================
 log() {
 	msg="[$(date '+%H:%M:%S')] $*"
 	echo "$msg"
-	logger -t "$SCRIPT_NAME" "$msg" || true # 避免 logger 失败导致脚本退出
+	logger -t "$SCRIPT_NAME" "$msg" || true
 	return 0
 }
 
-# 修改root 密码
+# =============================================
+# 修改 root 密码（增加备份恢复）
+# =============================================
 modify_root_password() {
 	if [ -z "$root_password" ]; then
 		log "未配置 root 密码，跳过 root 密码修改"
 		return 0
 	fi
-	sed -i "s|^root:[^:]*:|root:${root_password}:|" /etc/shadow || {
-		log "root 密码修改失败"
+
+	cp -f /etc/shadow /etc/shadow.bak 2>/dev/null || {
+		log "无法备份 /etc/shadow，放弃修改密码"
 		return 1
 	}
+
+	sed -i "s|^root:[^:]*:|root:${root_password}:|" /etc/shadow || {
+		log "root 密码修改失败，尝试恢复备份"
+		cp -f /etc/shadow.bak /etc/shadow
+		return 1
+	}
+
+	rm -f /etc/shadow.bak
 	log "root 密码修改完成"
 	return 0
 }
 
+# =============================================
 # 修改系统时区为东八区（上海）
+# =============================================
 modify_timezone() {
 	uci set system.@system[0].timezone='CST-8'
 	uci set system.@system[0].zonename='Asia/Shanghai'
-	uci commit system || {
-		log "时区修改失败"
+
+	if uci commit system; then
+		log "时区修改完成"
 		return 0
-	}
-	log "时区修改完成"
-	return 0
+	fi
+	log "时区修改失败，回滚 system 配置"
+	uci revert system
+	return 1
 }
 
-# ==========================================
+# =============================================
 # 修改 LuCI 默认主题
-# ==========================================
+# =============================================
 modify_luci_theme() {
-	# 1. 检查 LuCI 配置文件是否存在
 	if [ ! -f /etc/config/luci ]; then
-		log "未检测到 LuCI 配置文件 (/etc/config/luci)，跳过主题修改"
+		log "未检测到 LuCI 配置文件，跳过主题修改"
 		return 0
 	fi
 	if [ -z "$default_theme" ]; then
@@ -93,117 +108,96 @@ modify_luci_theme() {
 		return 0
 	fi
 
-	# 2. 修改 UCI 配置
 	uci set luci.main.mediaurlbase="/luci-static/${default_theme}"
-	uci commit luci || {
-		log "LuCI 主题提交失败"
-		return 1
-	}
-
-	# 3. 安全清理 LuCI 缓存
-	rm -f /tmp/luci-indexcache
-	if [ -d /tmp/luci-modulecache ]; then
-		rm -rf /tmp/luci-modulecache/*
+	if uci commit luci; then
+		# 安全清理 LuCI 缓存
+		rm -f /tmp/luci-indexcache
+		[ -d /tmp/luci-modulecache ] && rm -rf /tmp/luci-modulecache/*
+		log "LuCI 默认主题已成功修改为: ${default_theme}"
+		return 0
 	fi
-
-	log "LuCI 默认主题已成功修改为: ${default_theme}"
-	return 0
+	log "LuCI 主题提交失败，回滚 luci 配置"
+	uci revert luci
+	return 1
 }
 
-# 修补仓库源
+# =============================================
+# 修补仓库源（增强验证与严格回滚）
+# =============================================
 modify_repositories() {
 	DISTFEEDS="/etc/apk/repositories.d/distfeeds.list"
 	DISTFEEDS_BAK="$DISTFEEDS.bak"
 
-	# 文件不存在兜底：避免 sed 对不存在文件返回非零
 	if [ ! -f "$DISTFEEDS" ]; then
 		log "未找到 $DISTFEEDS，跳过仓库源修补"
 		return 0
 	fi
 
-	# 备份以便失败回滚
 	cp -f "$DISTFEEDS" "$DISTFEEDS_BAK" || {
-		log "备份 $DISTFEEDS 失败"
+		log "备份 $DISTFEEDS 失败，放弃修改"
 		return 0
 	}
 
-	# 替换镜像源
+	# 替换镜像源（清华源）
 	sed -i 's|https://.*/releases/|https://mirrors.tuna.tsinghua.edu.cn/openwrt/releases/|g' "$DISTFEEDS" || {
 		log "镜像源替换失败，回滚"
 		cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
 		return 0
 	}
 
-	# 验证：统计仍含 https:// 但未替换为清华镜像的行数，确认全部替换
-	UNREPLACED=$(grep 'https://' "$DISTFEEDS" | grep -c -v 'mirrors.tuna.tsinghua.edu.cn' 2>/dev/null || echo 0)
+	# 验证：统计未替换的行（排除注释行）
+	UNREPLACED=$(grep -v '^\s*#' "$DISTFEEDS" | grep 'https://' | grep -c -v 'mirrors.tuna.tsinghua.edu.cn' 2>/dev/null || echo 0)
 	if [ "$UNREPLACED" -eq 0 ]; then
 		log "仓库源修补完成（全部已替换）"
-	else
-		log "仓库源修补未达预期，剩余 $UNREPLACED 行未替换，详情请检查 $DISTFEEDS"
+		rm -f "$DISTFEEDS_BAK"
+		return 0
 	fi
+	log "仓库源修补未达预期，剩余 $UNREPLACED 行未替换，回滚到原始文件"
+	cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
 	return 0
 }
 
-# 修改LAN口IP（校验纯 IP，合法时按 CIDR /24 格式写入）
+# =============================================
+# 修改 LAN口IP（强化校验）
+# =============================================
 modify_lan_ip() {
-	# 1. 检查变量是否为空
 	if [ -z "$lan_ip_addr" ]; then
-		log "未配置 LAN口IP地址，跳过 IP地址修改"
+		log "未配置 LAN口IP地址，跳过"
 		return 0
 	fi
 
-	# 2. 正则校验是否为纯 IPv4 地址（如 192.168.1.1）
-	ip_regex='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+	# 严格 IPv4 正则（0.0.0.0 ~ 255.255.255.255）
+	ip_regex='^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
 	if ! echo "$lan_ip_addr" | grep -Eq "$ip_regex"; then
 		log "LAN口IP地址格式非法: '$lan_ip_addr'，跳过修改"
 		return 0
 	fi
 
-	# 3. 如果变量本身没有带掩码，按注释要求自动追加 /24
 	target_ip="${lan_ip_addr}"
 	if [ "${target_ip#*/}" = "${target_ip}" ]; then
 		target_ip="${target_ip}/24"
 	fi
 
-	# 4. 写入 UCI (删除旧 netmask，使用标准的 ipaddr CIDR 格式)
-	uci -q del network.lan.netmask || true
+	uci -q del network.lan.netmask 2>/dev/null || true
 	uci set network.lan.ipaddr="${target_ip}"
-	uci commit network || {
-		log "LAN口IP地址提交失败"
-		return 1
-	}
-	log "LAN口IP地址已成功修改为: ${target_ip}"
-	return 0
-}
-
-# 禁用 WAN口 IPv6
-modify_wan_ipv6() {
-	if ! uci -q get network.wan >/dev/null 2>&1; then
-		log "未检测到 wan 接口，跳过 wan 接口 IPv6 设置"
+	if uci commit network; then
+		log "LAN口IP地址已成功修改为: ${target_ip}"
 		return 0
 	fi
-	uci -q delete network.wan6 || true
-	uci set network.wan.ipv6='0'
-	uci set network.wan.sourcefilter='0'
-	uci set network.wan.delegate='0'
-	uci commit network || {
-		log "WAN口 IPv6 禁用提交失败"
-		return 1
-	}
-	log "WAN口 IPv6 禁用完成"
-	return 0
+	log "LAN口IP地址提交失败，回滚 network 配置"
+	uci revert network
+	return 1
 }
 
-# 配置wan6口的IPv6参数
+# =============================================
+# 配置 wan6 接口的 IPv6 参数
+# =============================================
 modify_wan6_ipv6() {
-	# 1. 检查 wan 接口是否存在，不存在则跳过后续配置
 	if ! uci -q get network.wan >/dev/null 2>&1; then
 		log "未检测到 wan 接口，跳过 wan6 接口 IPv6 配置"
 		return 0
 	fi
 
-	# 2. 写入 wan6 口的 IPv6 配置并提交
-	# 若 wan6 节点不存在，set network.wan6=interface 会自动创建
 	uci set network.wan6=interface
 	uci set network.wan6.device='@wan'
 	uci set network.wan6.proto='dhcpv6'
@@ -211,15 +205,19 @@ modify_wan6_ipv6() {
 	uci set network.wan6.reqprefix='auto'
 	uci set network.wan6.norelease='1'
 	uci set network.wan6.multipath='off'
-	uci commit network || {
-		log "wan6口IPv6配置提交失败"
-		return 1
-	}
-	log "wan6口IPv6配置修改完成"
-	return 0
+
+	if uci commit network; then
+		log "wan6口IPv6配置修改完成"
+		return 0
+	fi
+	log "wan6口IPv6配置提交失败，回滚 network 配置"
+	uci revert network
+	return 1
 }
 
-# 修改WAN口为PPPoE
+# =============================================
+# 修改 WAN口为 PPPoE
+# =============================================
 modify_wan_pppoe() {
 	if ! uci -q get network.wan >/dev/null 2>&1; then
 		log "未检测到 wan 接口，跳过 PPPoE 配置"
@@ -229,17 +227,23 @@ modify_wan_pppoe() {
 		log "未配置 PPPoE 用户名或密码，跳过 PPPoE 配置"
 		return 0
 	fi
+
 	uci set network.wan.proto='pppoe'
 	uci set network.wan.username="$pppoe_username"
 	uci set network.wan.password="$pppoe_password"
-	uci commit network || {
-		log "WAN口 PPPoE 配置提交失败"
-		return 1
-	}
-	log "WAN口为PPPoE 配置完成"
-	return 0
+
+	if uci commit network; then
+		log "WAN口 PPPoE 配置完成"
+		return 0
+	fi
+	log "WAN口 PPPoE 配置提交失败，回滚 network 配置"
+	uci revert network
+	return 1
 }
 
+# =============================================
+# 主函数：按顺序执行各模块，错误不中断
+# =============================================
 main() {
 	log "[$SCRIPT_NAME] 开始执行"
 
@@ -247,14 +251,12 @@ main() {
 	modify_repositories
 	modify_lan_ip
 	modify_wan_pppoe
-	modify_wan_ipv6
 	modify_wan6_ipv6
 	modify_luci_theme
 	modify_root_password
 
-	log "[$SCRIPT_NAME] 执行完成"
+	log "[$SCRIPT_NAME] 执行完成（请查看上方日志确认各模块状态）"
 }
 
-# 调用主函数
 main "$@"
 exit 0
