@@ -67,29 +67,29 @@ clone_repo() {
 	custom_repo_bak="$CUSTOM_BAK/${target_dir##*/}"
 	# 检查备份目录是否存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_repo_bak" ]; then
-		log_info "仓库备份已存在，恢复备份"
+		log_info "仓库 %s 备份已存在，恢复备份" "$target_dir"
 		cp -rf "$custom_repo_bak" "$target_dir"
-		log_info "仓库备份恢复完成"
+		log_info "仓库 %s 备份恢复完成" "$target_dir"
 		return 0
 	fi
 
 	if [ -n "$branch" ]; then
 		git clone --depth 1 -b "$branch" "$repo_url" "$target_dir" || {
-			log_error "克隆失败: $repo_url (分支: $branch)"
+			log_error "克隆失败: %s (分支: %s)" "$repo_url" "$branch"
 			return 1
 		}
 	else
 		git clone --depth 1 "$repo_url" "$target_dir" || {
-			log_error "克隆失败: $repo_url"
+			log_error "克隆失败: %s" "$repo_url"
 			return 1
 		}
 	fi
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "$target_dir 开始备份..."
+		log_info "开始备份仓库 %s 到 %s" "$target_dir" "$custom_repo_bak"
 		cp -rf "$target_dir" "$custom_repo_bak"
-		log_info "$target_dir 备份完成"
+		log_info "备份仓库 %s 到 %s 完成" "$target_dir" "$custom_repo_bak"
 	fi
-	log_info "$repo_url 克隆完成"
+	log_info "克隆仓库 %s 到 %s 完成" "$repo_url" "$target_dir"
 	return 0
 }
 
