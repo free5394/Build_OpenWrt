@@ -63,7 +63,7 @@ clone_repo() {
 		log_error "缺少必要参数:%s  <仓库URL> <目标目录>" "$0"
 		return 1
 	fi
-
+	mkdir -p "$target_dir"
 	custom_repo_bak="$CUSTOM_BAK/${target_dir##*/}"
 	# 检查备份目录是否存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_repo_bak" ]; then
@@ -86,6 +86,7 @@ clone_repo() {
 	fi
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
 		log_info "开始备份仓库 %s 到 %s" "$target_dir" "$custom_repo_bak"
+		mkdir -p "$custom_repo_bak"
 		cp -rf "$target_dir" "$custom_repo_bak"
 		log_info "备份仓库 %s 到 %s 完成" "$target_dir" "$custom_repo_bak"
 	fi
