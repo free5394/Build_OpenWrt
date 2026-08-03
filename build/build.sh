@@ -71,7 +71,7 @@ build_clone_openwrt() {
 		log_info "OpenWrt 备份已存在，恢复备份"
 		mkdir -p "$custom_bak"
 		mkdir -p "$target_dir"
-		rsync -av --delete "$custom_bak/" "$target_dir/"
+		rsync -aq --delete "$custom_bak/" "$target_dir/"
 		log_info "OpenWrt 备份恢复完成"
 		return 0
 	fi
@@ -81,7 +81,7 @@ build_clone_openwrt() {
 		log_info "开始备份OpenWrt仓库..."
 		mkdir -p "$custom_bak"
 		mkdir -p "$target_dir"
-		rsync -av --delete "$target_dir/" "$custom_bak/"
+		rsync -aq --delete "$target_dir/" "$custom_bak/"
 		log_info "OpenWrt 备份完成"
 	fi
 	return 0

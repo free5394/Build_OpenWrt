@@ -52,7 +52,7 @@ clone_repo() {
 		log_info "仓库备份存在，恢复备份 $custom_repo_bak 到 $target_dir"
 		mkdir -p "$custom_repo_bak"
 		mkdir -p "$target_dir"
-		rsync -av --delete "$custom_repo_bak/" "$target_dir/"
+		rsync -aq --delete "$custom_repo_bak/" "$target_dir/"
 		return 0
 	fi
 
@@ -71,7 +71,7 @@ clone_repo() {
 		log_info "仓库备份，备份 $target_dir 到 $custom_repo_bak"
 		mkdir -p "$custom_repo_bak"
 		mkdir -p "$target_dir"
-		rsync -av --delete "$target_dir/" "$custom_repo_bak/"
+		rsync -aq --delete "$target_dir/" "$custom_repo_bak/"
 	fi
 	log_info "克隆仓库 $repo_url 到 $target_dir 完成"
 	return 0
@@ -86,7 +86,7 @@ update_feeds() {
 		log_info "feeds备份存在，恢复备份 $custom_feeds_bak 到当前目录"
 		mkdir -p "$custom_feeds_bak"
 		mkdir -p "$target_dir"
-		rsync -av --delete "$custom_feeds_bak/" "$target_dir/"
+		rsync -aq --delete "$custom_feeds_bak/" "$target_dir/"
 	fi
 	log_info "更新feeds..."
 	./scripts/feeds update -a
@@ -96,7 +96,7 @@ update_feeds() {
 		mkdir -p "$custom_feeds_bak"
 		mkdir -p "$target_dir"
 		# 只备份 feeds 目录下第一层目录，不备份 .tmp 文件目录
-		rsync -av --delete --exclude='/*.tmp/' --include='/*/' --exclude='/*' "$target_dir/" "$custom_feeds_bak/"
+		rsync -aq --delete --exclude='/*.tmp/' --include='/*/' --exclude='/*' "$target_dir/" "$custom_feeds_bak/"
 	fi
 	return 0
 }
@@ -142,7 +142,7 @@ update_golang() {
 		log_info "golang 备份存在，恢复备份 $custom_golang_bak 到 $golang_dir"
 		mkdir -p "$custom_golang_bak"
 		mkdir -p "$golang_dir"
-		rsync -av --delete "$custom_golang_bak/" "$golang_dir/"
+		rsync -aq --delete "$custom_golang_bak/" "$golang_dir/"
 		log_info "golang 备份恢复完成"
 		return 0
 	fi
@@ -157,7 +157,7 @@ update_golang() {
 		log_info "golang 备份，备份 $golang_dir 到 $custom_golang_bak"
 		mkdir -p "$custom_golang_bak"
 		mkdir -p "$golang_dir"
-		rsync -av --delete "$golang_dir/" "$custom_golang_bak/"
+		rsync -aq --delete "$golang_dir/" "$custom_golang_bak/"
 		log_info "golang 备份完成"
 	fi
 	return 0
