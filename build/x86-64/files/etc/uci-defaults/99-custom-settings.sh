@@ -39,6 +39,9 @@ default_theme=""
 # LAN口IP地址（纯 IPv4，例如 192.168.1.1，会自动追加 /24 掩码）
 lan_ip_addr=""
 
+# IPv6 服务类型 0 不启用， 1 启用(wan口，无wan6)，2 启用(独立wan6)
+ipv6_type="2"
+
 # =============================================
 # 日志函数
 # =============================================
@@ -142,7 +145,7 @@ modify_repositories() {
 		return 1
 	}
 	# 验证：统计未替换的行（排除注释行，兼容 busybox grep）
-	UNREPLACED=$(grep -v '^[[:space:]]*#' "$DISTFEEDS" | grep 'https://' | grep -c -v "$mirrors" 2>/dev/null || echo 0)
+	UNREPLACED=$(grep '^https://' "$DISTFEEDS" 2>/dev/null | grep -v "$mirrors" | wc -l)
 	if [ "$UNREPLACED" -eq 0 ]; then
 		log "仓库源修补完成（全部已替换）"
 		rm -f "$DISTFEEDS_BAK"
@@ -151,6 +154,36 @@ modify_repositories() {
 	log "仓库源修补未达预期，剩余 $UNREPLACED 行未替换，回滚到原始文件"
 	cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
 	return 1
+}
+
+# =============================================
+# 配置 wan6 接口的防火墙规则
+# =============================================
+add_wan6_rule() {
+	# 1. 找到 name 为 'wan' 的 zone 的索引（例如 @zone[1]）
+	idx=$(uci show firewall | grep -E "^firewall\.@zone\[[0-9]+\]\.name='wan'" | awk -F. '{print $2}')
+
+	if [ -z "$idx" ]; then
+		log "错误：未找到名称为 wan 的防火墙区域"
+		return 1
+	fi
+
+	# 2. 获取该区域当前的网络接口列表（uci get 会将 list 转换为空格分隔的字符串）
+	current_networks=$(uci get firewall.${idx}.network)
+
+	# 3. 判断 wan6 是否已经存在（前后加空格确保精确匹配，避免匹配到 wan6x 之类的）
+	case " $current_networks " in
+	*" wan6 "*)
+		echo "提示：wan6 已经在 ${idx} (wan) 防火墙区域中，无需重复添加。"
+		;;
+	*)
+		echo "提示：wan6 不在 ${idx} (wan) 防火墙区域中，开始添加..."
+		uci add_list firewall.${idx}.network='wan6'
+		uci_commit_safe firewall || return 1
+		log "已将 wan6 加入到 ${idx} (wan) 区域"
+		;;
+	esac
+
 }
 
 # =============================================
@@ -186,28 +219,52 @@ modify_network() {
 		return 0
 	fi
 
-	# 禁用 wan 接口的 IPv6 配置
-	uci set network.wan.ipv6='0'
-	uci set network.wan.sourcefilter='0'
-	uci set network.wan.delegate='0'
-
 	device='@wan'
 	if [ -n "$pppoe_username" ] && [ -n "$pppoe_password" ]; then
 		uci set network.wan.proto='pppoe'
 		uci set network.wan.username="$pppoe_username"
 		uci set network.wan.password="$pppoe_password"
 		device="pppoe-wan"
+		need_commit=1
+	fi
+	if [ "${ipv6_type:-0}" -eq 1 ]; then
+		# 启用 wan 接口的 IPv6 配置
+		uci set network.wan.ipv6='1'
+		uci set network.wan.sourcefilter='1'
+		uci set network.wan.delegate='1'
+
+		need_commit=1
+	else
+		# 禁用 wan 接口的 IPv6 配置
+		uci set network.wan.ipv6='0'
+		uci set network.wan.sourcefilter='0'
+		uci set network.wan.delegate='0'
+		need_commit=1
 	fi
 
 	# 配置 wan6 接口的 IPv6 参数
-	uci set network.wan6=interface
-	uci set network.wan6.device="$device"
-	uci set network.wan6.proto='dhcpv6'
-	uci set network.wan6.reqaddress='try'
-	uci set network.wan6.reqprefix='auto'
-	uci set network.wan6.norelease='1'
+	if [ "${ipv6_type:-0}" -eq 2 ]; then
+		# 配置 wan6 接口的 IPv6 参数
+		uci set network.wan6=interface
+		uci set network.wan6.device="$device"
+		uci set network.wan6.proto='dhcpv6'
+		uci set network.wan6.reqaddress='try'
+		uci set network.wan6.reqprefix='auto'
+		uci set network.wan6.norelease='1'
+
+		uci -q del network.wan6.disabled 2>/dev/null || true
+		need_commit=1
+	else
+		# 禁用 wan6 接口
+		uci set network.wan6.disabled='1'
+		need_commit=1
+	fi
 
 	uci_commit_safe "network" || return 1
+	# 配置 wan6 接口的防火墙规则
+	if [ "${ipv6_type:-0}" -eq 2 ]; then
+		add_wan6_rule || return 1
+	fi
 	return 0
 }
 
