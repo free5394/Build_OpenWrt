@@ -64,20 +64,24 @@ fi
 
 # 克隆 OpenWrt 仓库
 build_clone_openwrt() {
-	custom_openwrt_bak="$CUSTOM_BAK/${OPENWRT_DIR##*/}"
+	target_dir="${OPENWRT_DIR%/}"
+	custom_bak="$CUSTOM_BAK/${target_dir##*/}"
 	# 检查备份目录是否存在
-	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_openwrt_bak" ]; then
+	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_bak" ]; then
 		log_info "OpenWrt 备份已存在，恢复备份"
-		cp -rf "$custom_openwrt_bak" .
+		mkdir -p "$custom_bak"
+		mkdir -p "$target_dir"
+		rsync -av --delete "$custom_bak/" "$target_dir/"
 		log_info "OpenWrt 备份恢复完成"
 		return 0
 	fi
 	log_info "开始克隆OpenWrt仓库..."
-	git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$OPENWRT_DIR"
+	git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$target_dir"
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
 		log_info "开始备份OpenWrt仓库..."
-		mkdir -p "$custom_openwrt_bak"
-		cp -rf "$OPENWRT_DIR" "$CUSTOM_BAK"
+		mkdir -p "$custom_bak"
+		mkdir -p "$target_dir"
+		rsync -av --delete "$target_dir/" "$custom_bak/"
 		log_info "OpenWrt 备份完成"
 	fi
 	return 0
