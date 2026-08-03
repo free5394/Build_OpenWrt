@@ -21,6 +21,12 @@ LOG_FILE="/tmp/$SCRIPT_NAME.log"
 # =============================================
 exec >"$LOG_FILE" 2>&1
 
+# 检查 uci 命令是否存在
+command -v uci >/dev/null 2>&1 || {
+	echo "uci not found"
+	exit 1
+}
+
 # =============================================
 # 业务变量
 # =============================================
@@ -41,7 +47,9 @@ lan_ip_addr=""
 # 业务逻辑开始
 # =============================================
 log() {
-	echo "[$(date '+%H:%M:%S')] $*"
+	msg="[$(date '+%H:%M:%S')] $*"
+	echo "$msg"
+	logger -t "$SCRIPT_NAME" "$msg" || true # 避免 logger 失败导致脚本退出
 	return 0
 }
 
@@ -65,7 +73,7 @@ modify_timezone() {
 	uci set system.@system[0].zonename='Asia/Shanghai'
 	uci commit system || {
 		log "时区修改失败"
-		return 1
+		return 0
 	}
 	log "时区修改完成"
 	return 0
@@ -116,25 +124,18 @@ modify_repositories() {
 	# 备份以便失败回滚
 	cp -f "$DISTFEEDS" "$DISTFEEDS_BAK" || {
 		log "备份 $DISTFEEDS 失败"
-		return 1
-	}
-
-	# 删除 kenzo/small 源（BusyBox sed BRE 下用 ; 分隔更稳）
-	sed -i '/kenzo/d; /small/d' "$DISTFEEDS" || {
-		log "删除 kenzo/small 失败，回滚"
-		cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
-		return 1
+		return 0
 	}
 
 	# 替换镜像源
 	sed -i 's|https://.*/releases/|https://mirrors.tuna.tsinghua.edu.cn/openwrt/releases/|g' "$DISTFEEDS" || {
 		log "镜像源替换失败，回滚"
 		cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
-		return 1
+		return 0
 	}
 
 	# 验证：统计仍含 https:// 但未替换为清华镜像的行数，确认全部替换
-	UNREPLACED=$(grep 'https://' "$DISTFEEDS" | grep -cv 'mirrors.tuna.tsinghua.edu.cn' || true)
+	UNREPLACED=$(grep 'https://' "$DISTFEEDS" | grep -c -v 'mirrors.tuna.tsinghua.edu.cn' 2>/dev/null || echo 0)
 	if [ "$UNREPLACED" -eq 0 ]; then
 		log "仓库源修补完成（全部已替换）"
 	else
@@ -165,7 +166,7 @@ modify_lan_ip() {
 	fi
 
 	# 4. 写入 UCI (删除旧 netmask，使用标准的 ipaddr CIDR 格式)
-	uci del network.lan.netmask
+	uci -q del network.lan.netmask || true
 	uci set network.lan.ipaddr="${target_ip}"
 	uci commit network || {
 		log "LAN口IP地址提交失败"
@@ -181,6 +182,7 @@ modify_wan_ipv6() {
 		log "未检测到 wan 接口，跳过 wan 接口 IPv6 设置"
 		return 0
 	fi
+	uci -q delete network.wan6 || true
 	uci set network.wan.ipv6='0'
 	uci set network.wan.sourcefilter='0'
 	uci set network.wan.delegate='0'
