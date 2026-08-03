@@ -44,13 +44,13 @@ clone_repo() {
 		log_error "缺少必要参数:%s  <仓库URL> <目标目录>" "$0"
 		return 1
 	fi
-	mkdir -p "$target_dir"
+
 	custom_repo_bak="$CUSTOM_BAK/${target_dir##*/}"
 	# 检查备份目录是否存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_repo_bak" ]; then
-		log_info "仓库 %s 备份已存在，恢复备份" "$target_dir"
+		log_info "仓库备份存在，恢复备份 %s 到 %s" "$custom_repo_bak" "$target_dir"
+		mkdir -p "$target_dir"
 		cp -rf "$custom_repo_bak" "$target_dir"
-		log_info "仓库 %s 备份恢复完成" "$target_dir"
 		return 0
 	fi
 
@@ -66,10 +66,9 @@ clone_repo() {
 		}
 	fi
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "开始备份仓库 %s 到 %s" "$target_dir" "$custom_repo_bak"
+		log_info "仓库备份，备份 %s 到 %s" "$target_dir" "$custom_repo_bak"
 		mkdir -p "$custom_repo_bak"
 		cp -rf "$target_dir" "$custom_repo_bak"
-		log_info "备份仓库 %s 到 %s 完成" "$target_dir" "$custom_repo_bak"
 	fi
 	log_info "克隆仓库 %s 到 %s 完成" "$repo_url" "$target_dir"
 	return 0
@@ -80,19 +79,17 @@ update_feeds() {
 	custom_feeds_bak="$CUSTOM_BAK/feeds"
 	# 检查是否启用备份功能 并且备份目录存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_feeds_bak" ]; then
-		log_info "feeds 备份已存在，恢复备份"
+		log_info "feeds备份存在，恢复备份 %s 到当前目录" "$custom_feeds_bak"
 		cp -rf "$custom_feeds_bak" .
-		log_info "feeds 备份恢复完成"
 	fi
 	log_info "更新feeds..."
 	./scripts/feeds update -a
 	# 检查是否启用备份功能
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "开始备份feeds..."
+		log_info "feeds备份，备份 %s  到 %s 完成" "feeds" "$custom_feeds_bak"
 		rm -rf "$CUSTOM_BAK/feeds/" && mkdir -p "$CUSTOM_BAK/feeds/"
 		# 查找 feeds 目录下第一层（不含以 .tmp 结尾）的目录，并复制到 bak 目录
 		find feeds -mindepth 1 -maxdepth 1 -type d ! -name "*.tmp" -exec cp -rf {} "$CUSTOM_BAK/feeds/" \;
-		log_info "feeds备份完成"
 	fi
 	return 0
 }
@@ -135,9 +132,9 @@ update_golang() {
 	mv "$golang_dir" "$golang_dir_tmp"
 	# 检查备份目录是否存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_golang_bak" ]; then
-		log_info "golang 备份已存在，恢复备份"
+		log_info "golang 备份存在，恢复备份 %s 到 %s" "$custom_golang_bak" "$golang_dir"
 		cp -rf "$custom_golang_bak" "$(dirname "$golang_dir")/" || {
-			log_warn "恢复golang备份失败，恢复原始版本"
+			log_warn "golang备份恢复失败，恢复原始版本"
 			# 恢复原始版本
 			mv "$golang_dir_tmp" "$golang_dir"
 			return 0
@@ -154,10 +151,10 @@ update_golang() {
 	}
 	rm -rf "$golang_dir_tmp"
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "开始备份golang仓库到 %s" "$custom_golang_bak"
+		log_info "golang 备份，备份 %s 到 %s" "$golang_dir" "$custom_golang_bak"
 		rm -rf "$custom_golang_bak" && mkdir -p "$custom_golang_bak"
 		cp -rf "$golang_dir" "$custom_golang_bak"
-		log_info "golang 备份完成到 %s" "$custom_golang_bak"
+		log_info "golang 备份完成"
 	fi
 	return 0
 
