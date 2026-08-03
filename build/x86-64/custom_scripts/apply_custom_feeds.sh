@@ -45,12 +45,14 @@ clone_repo() {
 		return 1
 	fi
 
+	target_dir="${target_dir%/}"
 	custom_repo_bak="$CUSTOM_BAK/${target_dir##*/}"
 	# 检查备份目录是否存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_repo_bak" ]; then
 		log_info "仓库备份存在，恢复备份 $custom_repo_bak 到 $target_dir"
+		mkdir -p "$custom_repo_bak"
 		mkdir -p "$target_dir"
-		cp -rf "$custom_repo_bak" "$target_dir"
+		rsync -av --delete "$custom_repo_bak/" "$target_dir/"
 		return 0
 	fi
 
@@ -68,7 +70,8 @@ clone_repo() {
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
 		log_info "仓库备份，备份 $target_dir 到 $custom_repo_bak"
 		mkdir -p "$custom_repo_bak"
-		cp -rf "$target_dir" "$custom_repo_bak"
+		mkdir -p "$target_dir"
+		rsync -av --delete "$target_dir/" "$custom_repo_bak/"
 	fi
 	log_info "克隆仓库 $repo_url 到 $target_dir 完成"
 	return 0
@@ -77,19 +80,23 @@ clone_repo() {
 # 更新feeds
 update_feeds() {
 	custom_feeds_bak="$CUSTOM_BAK/feeds"
+	target_dir="feeds"
 	# 检查是否启用备份功能 并且备份目录存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_feeds_bak" ]; then
 		log_info "feeds备份存在，恢复备份 $custom_feeds_bak 到当前目录"
-		cp -rf "$custom_feeds_bak" .
+		mkdir -p "$custom_feeds_bak"
+		mkdir -p "$target_dir"
+		rsync -av --delete "$custom_feeds_bak/" "$target_dir/"
 	fi
 	log_info "更新feeds..."
 	./scripts/feeds update -a
 	# 检查是否启用备份功能
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
 		log_info "feeds备份，备份 feeds 到 $custom_feeds_bak"
-		rm -rf "$CUSTOM_BAK/feeds/" && mkdir -p "$CUSTOM_BAK/feeds/"
-		# 查找 feeds 目录下第一层（不含以 .tmp 结尾）的目录，并复制到 bak 目录
-		find feeds -mindepth 1 -maxdepth 1 -type d ! -name "*.tmp" -exec cp -rf {} "$CUSTOM_BAK/feeds/" \;
+		mkdir -p "$custom_feeds_bak"
+		mkdir -p "$target_dir"
+		# 只备份 feeds 目录下第一层目录，不备份 .tmp 文件目录
+		rsync -av --delete --exclude='/*.tmp/' --include='/*/' --exclude='/*' "$target_dir/" "$custom_feeds_bak/"
 	fi
 	return 0
 }
@@ -107,11 +114,11 @@ update_package() {
 	clone_repo "https://github.com/kenzok8/openwrt-packages" "$community_dir/kenzo"
 	clone_repo "https://github.com/kenzok8/small" "$community_dir/small"
 
-	# log_info "删除出错插件"
-	# # luci-app-fchomo: small feed 中此插件编译报错，等待上游修复后可移除此行
-	# rm -rf feeds/small/luci-app-fchomo
-	# # luci-app-eqos: kenzo feed 中此插件与官方 luci-app-eqos 冲突导致编译报错，等待上游修复后可移除此行
-	# rm -rf feeds/kenzo/luci-app-eqos
+	log_info "删除出错插件"
+	# luci-app-fchomo: small feed 中此插件编译报错，等待上游修复后可移除此行
+	rm -rf "$community_dir"/small/luci-app-fchomo
+	# luci-app-eqos: kenzo feed 中此插件与官方 luci-app-eqos 冲突导致编译报错，等待上游修复后可移除此行
+	# rm -rf "$community_dir"/kenzo/luci-app-eqos
 
 	log_info "覆盖原始package目录"
 	update_matching_dirs "$community_dir/kenzo" "feeds"
@@ -133,13 +140,9 @@ update_golang() {
 	# 检查备份目录是否存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_golang_bak" ]; then
 		log_info "golang 备份存在，恢复备份 $custom_golang_bak 到 $golang_dir"
-		cp -rf "$custom_golang_bak" "$(dirname "$golang_dir")/" || {
-			log_warn "golang备份恢复失败，恢复原始版本"
-			# 恢复原始版本
-			mv "$golang_dir_tmp" "$golang_dir"
-			return 0
-		}
-		rm -rf "$golang_dir_tmp"
+		mkdir -p "$custom_golang_bak"
+		mkdir -p "$golang_dir"
+		rsync -av --delete "$custom_golang_bak/" "$golang_dir/"
 		log_info "golang 备份恢复完成"
 		return 0
 	fi
@@ -152,33 +155,13 @@ update_golang() {
 	rm -rf "$golang_dir_tmp"
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
 		log_info "golang 备份，备份 $golang_dir 到 $custom_golang_bak"
-		rm -rf "$custom_golang_bak" && mkdir -p "$custom_golang_bak"
-		cp -rf "$golang_dir" "$custom_golang_bak"
+		mkdir -p "$custom_golang_bak"
+		mkdir -p "$golang_dir"
+		rsync -av --delete "$golang_dir/" "$custom_golang_bak/"
 		log_info "golang 备份完成"
 	fi
 	return 0
 
-}
-
-# patch feeds
-patch_feeds() {
-	log_info "删除出错插件"
-	# luci-app-fchomo: small feed 中此插件编译报错，等待上游修复后可移除此行
-	rm -rf feeds/small/luci-app-fchomo
-	# luci-app-eqos: kenzo feed 中此插件与官方 luci-app-eqos 冲突导致编译报错，等待上游修复后可移除此行
-	rm -rf feeds/kenzo/luci-app-eqos
-
-	# echo "删除冲突的插件..."
-	# rm -rf feeds/luci/applications/luci-app-mosdns
-	# rm -rf feeds/packages/net/{alist,adguardhome,mosdns,xray*,v2ray*,sing*,smartdns}
-	# rm -rf feeds/packages/utils/v2dat
-
-	log_info "删除冲突的插件..."
-	del_matching_dirs feeds/kenzo feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video || log_warn "del_matching_dirs(kenzo) 部分失败，继续"
-	del_matching_dirs feeds/small feeds/luci feeds/packages feeds/routing feeds/telephony feeds/video || log_warn "del_matching_dirs(small) 部分失败，继续"
-
-	update_golang
-	return 0
 }
 
 # 主函数
