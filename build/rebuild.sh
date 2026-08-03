@@ -79,8 +79,14 @@ make clean # 清理编译产物
 # make distclean                # 完全清理（需重新配置）
 
 # 构建流程
-# 生成配置文件
-time_it build_make_new_config "$@"
+build_make_custom_config() {
+	pre_build_process
+	build_custom_config_patch
+	post_build_process
+
+	log_info "全部完成"
+	return 0
+}
 
 # 补全配置文件
-# time_it build_make_custom_config "$@"
+time_it build_make_custom_config "$@"

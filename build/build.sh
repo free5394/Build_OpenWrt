@@ -98,8 +98,14 @@ build_enter_openwrt_dir || {
 }
 
 # 构建流程
-# 生成配置文件
-# time_it build_make_new_config "$@"
+build_make_custom_config() {
+	pre_build_process
+	build_custom_config
+	post_build_process
+
+	log_info "全部完成"
+	return 0
+}
 
 # 补全配置文件
 time_it build_make_custom_config "$@"

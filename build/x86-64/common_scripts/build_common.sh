@@ -56,18 +56,29 @@ build_apply_feeds_and_settings() {
 }
 
 # 生成或补全配置文件
-build_make_config() {
-	config_enable="$1"
-	if [ "$config_enable" -eq "0" ]; then
-		log_info "生成配置文件..."
-		rm -rf .config
-		make menuconfig
-		./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
-	else
-		log_info "补全配置文件..."
-		cp -f "custom_config/$CUSTOM_CONFIG" .config
-		make defconfig V=s
-	fi
+build_custom_config() {
+	log_info "补全配置文件..."
+	cp -f "custom_config/$CUSTOM_CONFIG" .config
+	make defconfig V=s
+	return 0
+}
+
+# 生成新配置文件
+build_new_config() {
+	log_info "生成配置文件..."
+	rm -rf .config
+	make menuconfig
+	./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
+	return 0
+}
+
+build_custom_config_patch() {
+	log_info "补全配置文件..."
+	cp -f "custom_config/$CUSTOM_CONFIG" .config
+	make defconfig V=s
+	log_info "调整配置文件..."
+	make menuconfig
+	./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
 	return 0
 }
 
@@ -99,33 +110,17 @@ build_upload() {
 	return 0
 }
 
-_build_process() {
+# 构建前流程
+pre_build_process() {
 	build_mkdir_dl_share
 	build_set_permissions_files
 	build_apply_feeds_and_settings
-	# 生成配置文件
-	build_make_config "$1"
+}
+
+# 构建后流程
+post_build_process() {
 	build_apply_custom_settings
 	build_download
 	build_compile
 	build_upload
-
-	log_info "全部完成"
-	return 0
-}
-
-build_make_new_config() {
-	_build_process "0" || {
-		log_error "生成配置文件构建失败"
-		return 1
-	}
-	return 0
-}
-
-build_make_custom_config() {
-	_build_process "1" || {
-		log_error "补全配置文件构建失败"
-		return 1
-	}
-	return 0
 }
