@@ -171,7 +171,7 @@ LOG_FILE="${LOG_DIR:-./logs}/$(cur_script_name).log"
 # =============================================
 mkdir -p "$(dirname -- "$LOG_FILE")"
 if [ "$LOG_REDIRECTION_ENABLE" -eq 1 ]; then
-	exec exec >>"$LOG_FILE" 2>&1
+	exec >"$LOG_FILE" 2>&1
 fi
 
 # =============================================
