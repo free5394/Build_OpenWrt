@@ -41,7 +41,7 @@ _cleanup_on_exit() {
 	_exit_code=$?
 	# 仅在异常退出且上传目录已设置时清理
 	if [ "$_exit_code" -ne 0 ] && [ -n "$_CLEANUP_DEST_DIR" ] && [ -d "$_CLEANUP_DEST_DIR" ]; then
-		log_warn "脚本异常退出（code=$_exit_code），清理未完成的上传目录: $_CLEANUP_DEST_DIR"
+		log_warn "脚本异常退出（code=%s），清理未完成的上传目录: %s" "$_exit_code" "$_CLEANUP_DEST_DIR"
 		rm -rf "$_CLEANUP_DEST_DIR" || true
 	fi
 }
@@ -51,8 +51,7 @@ cp_img() {
 	log_info "cp_img 开始执行"
 	# 参数校验
 	if [ $# -ne 2 ] && [ $# -ne 3 ]; then
-		log_error "错误：参数数量只能为 2 或 3，当前为 $#"
-		log_info "用法：cp_img <基准目录> <目标目录> <名称后缀>"
+		log_error "参数错误！用法：%s <基准目录> <目标目录> <名称后缀（可选）>" "$0"
 		return 1
 	fi
 
@@ -60,13 +59,13 @@ cp_img() {
 	dest_dir="$2"
 	name_suffix="${3:-}"
 	if [ -z "$src_dir" ] || [ -z "$dest_dir" ]; then
-		log_error "缺少必要参数: cp_img <基准目录> <目标目录> <名称后缀（可选）>"
+		log_error "缺少必要参数！用法： %s <基准目录> <目标目录> <名称后缀（可选）>" "$0"
 		return 1
 	fi
 
 	# 检查源目录是否存在
 	if [ ! -d "$src_dir" ]; then
-		log_warn "源目录 $src_dir 不存在，无文件可处理。"
+		log_warn "源目录 %s 不存在，无文件可处理。" "$src_dir"
 		return 0
 	fi
 
@@ -75,15 +74,15 @@ cp_img() {
 
 	# 处理名称后缀
 	if [ -z "$name_suffix" ]; then
-		log_info "NAME_SUFFIX 为空，直接移动文件至 $dest_dir"
+		log_info "NAME_SUFFIX 为空，直接移动文件至 %s" "$dest_dir"
 
 		# 使用 -exec ... + 批量移动，高效且避免命令行长度限制
 		find "$src_dir" -type f -name "*wrt*.img.gz" -exec mv -f {} "$dest_dir/" +
 
-		log_info "cp_img 执行完成"
+		log_info "%s 执行完成" "$0"
 		return 0
 	fi
-	log_info "NAME_SUFFIX 非空，将重命名文件并移动至 $dest_dir"
+	log_info "NAME_SUFFIX 非空，将重命名文件并移动至 %s" "$dest_dir"
 
 	# 使用 find + sh -c 批量处理，传入目标目录和后缀作为参数
 	find "$src_dir" -type f -name "*wrt*.img.gz" -exec sh -c '
@@ -98,28 +97,27 @@ cp_img() {
             echo "已移动并重命名：$f -> $dest/$newname"
         done
     ' sh "$dest_dir" "$name_suffix" {} +
-	log_info "cp_img 执行完成"
+	log_info "%s 执行完成" "$0"
 	return 0
 }
 
 compress_logs() {
-	log_info "compress_logs 开始执行"
+	log_info "%s 开始执行" "$0"
 	# 参数校验
 	if [ $# -ne 1 ] && [ $# -ne 2 ]; then
-		log_error "错误：参数数量只能为 1 或 2，当前为 $#"
-		log_info "用法：compress_logs <目标目录> <名称后缀（可选）>"
+		log_error "参数错误！用法：%s <目标目录> <名称后缀（可选）>" "$0"
 		return 1
 	fi
 	dest_dir="$1"
 	name_suffix="${2:-}"
 	if [ -z "$dest_dir" ]; then
-		log_error "缺少必要参数: compress_logs <目标目录>"
+		log_error "缺少必要参数！用法：%s <目标目录> <名称后缀（可选）>" "$0"
 		return 1
 	fi
 
 	logs_dir="./logs"
 	if [ ! -d "$logs_dir" ]; then
-		log_warn "日志目录 $logs_dir 不存在，无文件可处理。"
+		log_warn "日志目录 %s 不存在，无文件可处理。" "$logs_dir"
 		return 0
 	fi
 	# 创建目标目录（若不存在）
@@ -129,23 +127,23 @@ compress_logs() {
 		log_file="$dest_dir/logs-$name_suffix.tar.gz"
 	fi
 	# 压缩日志目录（不用 -v 避免CI日志冗长；V=sc 已在 build_common.sh 中配置）
-	log_info "压缩日志目录 $logs_dir"
+	log_info "压缩日志目录 %s" "$logs_dir"
 	tar -czf "$log_file" "$logs_dir" || {
 		log_warn "日志压缩失败，继续上传"
 		return 1
 	}
-	log_info "compress_logs 执行完成"
+	log_info "%s 执行完成" "$0"
 	return 0
 }
 
 # 校验关键环境变量
 verify_params() {
 	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ]; then
-		log_error "缺少必要参数: GITHUB_WORKSPACE UPLOAD_DIR"
+		log_error "缺少必环境变量: GITHUB_WORKSPACE UPLOAD_DIR"
 		return 1
 	fi
 	if [ ! -d "$GITHUB_WORKSPACE" ]; then
-		log_warn "工作空间目录 $GITHUB_WORKSPACE 不存在，无文件可处理。"
+		log_warn "工作空间目录 %s 不存在，无文件可处理。" "$GITHUB_WORKSPACE"
 		return 1
 	fi
 	return 0
@@ -165,13 +163,13 @@ generate_checksums() {
 		# 对除 sha256sums 自身外的所有文件计算校验值
 		find . -type f ! -name "sha256sums" -print0 | sort -z | xargs -0 sha256sum
 	) >"$checksum_file"
-	log_info "已生成 sha256sums 校验文件: $checksum_file"
+	log_info "已生成 sha256sums 校验文件: %s" "$dest_dir/sha256sums"
 	return 0
 }
 
 # 主函数
 main() {
-	log_info "$SCRIPT_NAME 脚本开始执行"
+	log_info "%s 开始执行" "$0"
 
 	verify_params "$@" || exit 1
 
@@ -189,7 +187,7 @@ main() {
 
 	# 全部步骤成功完成，取消清理 trap 避免误删产物
 	trap - EXIT
-	log_info "$SCRIPT_NAME 脚本执行完成"
+	log_info "%s 执行完成" "$0"
 }
 
 # 调用主函数
