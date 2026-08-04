@@ -40,17 +40,17 @@ MODIFY_THEME_TYPE=2  # 默认 方案二, 修改默认主题
 # 修补配置文件
 patch_config() {
 	if [ -z "$PART_SIZE" ]; then
-		log_warn "PART_SIZE is empty"
+		log_warn "PART_SIZE 为空，跳过设置固件rootfs大小"
 		return 0
 	fi
 	if [ ! -f "$CONFIG_FILE" ]; then
-		log_error "配置文件 $CONFIG_FILE 不存在"
+		log_error "配置文件 %s 不存在" "$CONFIG_FILE"
 		return 1
 	fi
 	sed -i -e '/^CONFIG_TARGET_ROOTFS_PARTSIZE=/d' \
 		-e '$a CONFIG_TARGET_ROOTFS_PARTSIZE='"$PART_SIZE" \
 		"$CONFIG_FILE"
-	log_info "已设置固件rootfs大小为: $PART_SIZE"
+	log_info "已设置固件rootfs大小为: %s" "$PART_SIZE"
 	return 0
 }
 
@@ -58,39 +58,39 @@ patch_config() {
 modify_lan_ip_address_1() {
 	CONFIG_GENERATE="package/base-files/files/bin/config_generate"
 	if [ -z "$IP_ADDRESS" ]; then
-		log_info "未配置 IP地址，跳过 IP地址配置"
+		log_warn "未配置 IP地址，跳过 IP地址配置"
 		return 0
 	fi
 	if [ ! -f "$CONFIG_GENERATE" ]; then
-		log_error "配置生成文件 $CONFIG_GENERATE 不存在"
+		log_error "配置生成文件 %s 不存在" "$CONFIG_GENERATE"
 		return 1
 	fi
 	sed -i '/lan) ipad/s/"[0-9.]*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
 	# 校验 IP 是否成功写入，防止上游 config_generate 格式变更导致静默失败
 	if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
-		log_info "已修改默认LAN IP地址为: $IP_ADDRESS"
+		log_info "已修改默认LAN IP地址为: %s" "$IP_ADDRESS"
 		return 0
 	fi
-	log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 $CONFIG_GENERATE"
+	log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 %s" "$CONFIG_GENERATE"
 	return 0
 }
 
 # 方案二, 修改默认LAN IP地址
 modify_lan_ip_address_2() {
 	if [ -z "$IP_ADDRESS" ]; then
-		log_info "未配置 IP地址，跳过 IP地址配置"
+		log_warn "未配置 IP地址，跳过 IP地址配置"
 		return 0
 	fi
 	if [ ! -f "$CUSTOM_SETTINGS" ]; then
-		log_error "自设置文件 $CUSTOM_SETTINGS 不存在"
+		log_error "自设置文件 %s 不存在" "$CUSTOM_SETTINGS"
 		return 1
 	fi
-	log_info "设置 IP地址为: $IP_ADDRESS"
+	log_info "设置 IP地址为: %s" "$IP_ADDRESS"
 	awk -v ip_address="$IP_ADDRESS" '
     /^lan_ip_addr=/ { printf "lan_ip_addr=\"%s\"\n", ip_address; next }
     { print }
 	' "$CUSTOM_SETTINGS" >"$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
-		log_error "脚本 $CUSTOM_SETTINGS IP地址写入失败"
+		log_error "脚本 %s IP地址写入失败" "$CUSTOM_SETTINGS"
 		return 1
 	}
 	return 0
@@ -122,7 +122,7 @@ modify_theme_1() {
 # 方案二, 修改默认主题为 luci-theme-argon
 modify_theme_2() {
 	if [ ! -f "$CUSTOM_SETTINGS" ]; then
-		log_error "自设置文件 $CUSTOM_SETTINGS 不存在"
+		log_error "自设置文件 %s 不存在" "$CUSTOM_SETTINGS"
 		return 1
 	fi
 	log_info "设置默认主题为: argon"
@@ -130,7 +130,7 @@ modify_theme_2() {
     /^default_theme=/ { printf "default_theme=\"%s\"\n", theme; next }
     { print }
 	' "$CUSTOM_SETTINGS" >"$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
-		log_error "脚本 $CUSTOM_SETTINGS 主题写入失败"
+		log_error "脚本 %s 主题写入失败" "$CUSTOM_SETTINGS"
 		return 1
 	}
 	return 0
@@ -156,11 +156,11 @@ cp_background_img() {
 	BG_DST=$(find feeds -type f -path "*/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg" 2>/dev/null | head -n 1)
 	# 替换默认主题背景
 	if [ ! -f "$BG_SRC" ]; then
-		log_warn "背景文件 $BG_SRC 不存在"
+		log_warn "背景文件 %s 不存在" "$BG_SRC"
 		return 0
 	fi
 	if [ ! -f "$BG_DST" ]; then
-		log_warn "背景文件 $BG_DST 不存在"
+		log_warn "背景文件 %s 不存在" "$BG_DST"
 		return 0
 	fi
 	cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
@@ -182,7 +182,7 @@ apply_ttyd_auto_login() {
 # 配置 openclash 核心配置
 preset_openclash_core() {
 	if [ ! -f "$CONFIG_FILE" ]; then
-		log_error "配置文件 $CONFIG_FILE 不存在"
+		log_error "配置文件 %s 不存在" "$CONFIG_FILE"
 		return 1
 	fi
 	# 精确判断 .config 中是否选中 luci-app-openclash
@@ -196,7 +196,7 @@ preset_openclash_core() {
 	# 下载 clash_meta 核心（带重试与失败检查）
 	META_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-amd64-$_core_ver.tar.gz"
 	if ! wget --tries=3 --timeout=30 --max-redirect=3 -qO /tmp/clash_meta.tar.gz "$META_URL"; then
-		log_error "OpenClash 核心下载失败: $META_URL"
+		log_error "OpenClash 核心下载失败: %s" "$META_URL"
 		return 1
 	fi
 	# 先解压到临时目录再 mv，避免 tar 路径遍历风险
