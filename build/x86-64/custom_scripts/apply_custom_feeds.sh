@@ -157,19 +157,21 @@ update_matching_dirs() {
 
 		# --- 步骤 A: 备份原目录 ---
 		if ! mv "$_target_path" "$_backup_path"; then
-			log_warn "无法备份目标目录，跳过此项。"
+			log_warn "备份 %s 到 %s 失败，跳过此项。" "$_target_path" "$_backup_path"
 			continue
 		fi
-		log_info "操作: 用 '$_source_path' 覆盖 '$_target_path'"
+
 		if mv "$_source_path" "$_target_path"; then
+			log_info "操作: 用 %s 覆盖 %s 成功" "$_source_path" "$_target_path"
 			# 清理备份
 			rm -rf "$_backup_path"
-			log_info "覆盖成功。"
 			continue
 		fi
-		log_warn "无法移动目标目录，恢复备份并清理源目录 $_source_path。"
+		log_warn "操作: 用 %s 覆盖 %s 失败" "$_source_path" "$_target_path"
+		log_info "恢复备份 %s 到 %s" "$_backup_path" "$_target_path"
 		# 恢复备份目录
 		mv "$_backup_path" "$_target_path"
+		log_info "删除源目录 %s 以避免冲突。" "$_source_path"
 		# 清理源目录，避免冲突
 		rm -rf "$_source_path"
 		return 0
