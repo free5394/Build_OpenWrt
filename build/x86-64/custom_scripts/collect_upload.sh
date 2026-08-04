@@ -12,20 +12,20 @@ if (set -o pipefail 2>/dev/null); then
 fi
 
 # =============================================
-# 引入公共模块（强制依赖，最佳实践）
-# =============================================
-# shellcheck source=/dev/null
-. "$(dirname -- "$0")"/../common_scripts/common.sh || {
-	printf '错误: 无法加载公共模块 common.sh\n' >&2
-	exit 1
-}
-
-# =============================================
 # 引入日志模块
 # =============================================
 # shellcheck source=/dev/null
 . "$(dirname -- "$0")"/../common_scripts/logger.sh || {
 	printf '错误: 无法加载日志模块 logger.sh\n' >&2
+	exit 1
+}
+
+# =============================================
+# 引入公共模块（强制依赖，最佳实践）
+# =============================================
+# shellcheck source=/dev/null
+. "$(dirname -- "$0")"/../common_scripts/common.sh || {
+	printf '错误: 无法加载公共模块 common.sh\n' >&2
 	exit 1
 }
 
