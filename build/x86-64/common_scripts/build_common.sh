@@ -5,6 +5,14 @@
 # 使用方法： . ./build_common.sh
 #==================================================
 
+# 防止直接执行此脚本，确保它是被 source 的
+case "$0" in
+*build_common.sh)
+	echo "This is a library, do not run directly." >&2
+	exit 1
+	;;
+esac
+
 # 切换到工作空间目录
 build_enter_workspace() {
 	log_info "切换到工作目录..."
