@@ -164,8 +164,7 @@ cur_script_parent_dir() {
 # =============================================
 # 日志文件路径
 # =============================================
-: "${LOG_DIR:=${GITHUB_WORKSPACE:-.}/logs}"
-LOG_FILE="${LOG_DIR}/$(cur_script_name).log"
+LOG_FILE="${LOG_DIR:-./logs}/$(cur_script_name).log"
 
 # =============================================
 # 统一日志输出重定向（追加模式，按需启用）
