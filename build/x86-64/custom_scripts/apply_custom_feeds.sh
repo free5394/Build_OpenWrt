@@ -30,8 +30,100 @@ fi
 }
 
 # =============================================
-# 业务逻辑开始
+# 工具函数
 # =============================================
+
+# ==============================================================================
+# 子函数 1: 查找基准目录下的直接子目录名称
+# 参数: $1 - 基准目录路径
+# 输出: 匹配子目录列表（每行一个目录路径）
+# ==============================================================================
+find_sub_dirs() {
+	_base_dir="$1"
+
+	if [ ! -d "$_base_dir" ]; then
+		printf "错误: 基准目录 %s 不存在或不是有效的目录！\n" "$_base_dir" >&2
+		return 1
+	fi
+
+	for _full_path in "$_base_dir"/*; do
+		if [ -d "$_full_path" ]; then
+			_dir_name="${_full_path##*/}"
+			printf "%s\n" "$_dir_name"
+		fi
+	done
+}
+
+# ==============================================================================
+# 子函数 2: 在单个目标目录下查找匹配项 （最多深入到第3层级）
+# 参数: $1 - 目标目录路径
+#       $2... - 关键字列表（通过参数或外部传递）
+# ==============================================================================
+search_single_target() {
+	_target_dir="$1"
+	_kw_file="$2"
+
+	if [ ! -d "$_target_dir" ]; then
+		printf "警告: 目标目录 '%s' 不存在，已跳过。\n" "$_target_dir" >&2
+		return 1
+	fi
+
+	find "$_target_dir" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | awk -F/ '
+        BEGIN { 
+            while ((getline line < ARGV[1]) > 0) {
+                kw[line] = 1
+            }
+            close(ARGV[1])
+            ARGV[1] = ""
+        }
+        {
+            if ($NF in kw) {
+                print $0
+            }
+        }
+    ' "$_kw_file" -
+}
+
+# ==============================================================================
+# 子函数 3: 查找所有匹配目录
+# 参数: $1 - 基准目录路径
+#       $2及后续 - 目标目录路径列表
+# ==============================================================================
+find_matching_dirs() {
+	if [ $# -lt 2 ]; then
+		echo "错误: 参数不足！" >&2
+		echo "用法: $0 <基准目录路径> <目标目录1> [目标目录2 ...]" >&2
+		return 1
+	fi
+
+	_base_dir="$1"
+	shift
+
+	if [ ! -d "$_base_dir" ]; then
+		echo "错误: 基准目录 '$_base_dir' 不存在或不是有效的目录！" >&2
+		return 1
+	fi
+
+	_tmp_sub_dirs=$(mktemp)
+	find_sub_dirs "$_base_dir" >"$_tmp_sub_dirs"
+	_ret=$?
+
+	if [ $_ret -ne 0 ]; then
+		rm -f "$_tmp_sub_dirs"
+		return 1
+	fi
+
+	if [ ! -s "$_tmp_sub_dirs" ]; then
+		rm -f "$_tmp_sub_dirs"
+		return 0
+	fi
+
+	for _target in "$@"; do
+		search_single_target "$_target" "$_tmp_sub_dirs"
+	done
+
+	rm -f "$_tmp_sub_dirs"
+}
 
 # 克隆Git仓库到指定目录
 # 参数1: 仓库URL（必选） 参数2: 目标目录（必选） 参数3: 分支名（可选）
@@ -131,6 +223,10 @@ update_matching_dirs() {
 	rm -f "$_match_list"
 	return 0
 }
+
+# =============================================
+# 业务逻辑开始
+# =============================================
 
 # 更新feeds
 update_feeds() {
