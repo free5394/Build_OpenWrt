@@ -125,50 +125,6 @@ find_matching_dirs() {
 	rm -f "$_tmp_sub_dirs"
 }
 
-# 克隆Git仓库到指定目录
-# 参数1: 仓库URL（必选） 参数2: 目标目录（必选） 参数3: 分支名（可选）
-clone_repo() {
-	repo_url="$1"
-	target_dir="$2"
-	branch="$3"
-
-	if [ -z "$repo_url" ] || [ -z "$target_dir" ]; then
-		log_error "缺少必要参数:%s  <仓库URL> <目标目录>" "$0"
-		return 1
-	fi
-
-	target_dir="${target_dir%/}"
-	custom_repo_bak="$CUSTOM_BAK/${target_dir##*/}"
-	# 检查备份目录是否存在
-	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_repo_bak" ]; then
-		log_info "仓库备份存在，恢复备份 $custom_repo_bak 到 $target_dir"
-		mkdir -p "$custom_repo_bak"
-		mkdir -p "$target_dir"
-		rsync -aq --delete "$custom_repo_bak/" "$target_dir/"
-		return 0
-	fi
-
-	if [ -n "$branch" ]; then
-		git clone --depth 1 -b "$branch" "$repo_url" "$target_dir" || {
-			log_error "克隆失败: $repo_url (分支: $branch)"
-			return 1
-		}
-	else
-		git clone --depth 1 "$repo_url" "$target_dir" || {
-			log_error "克隆失败: $repo_url"
-			return 1
-		}
-	fi
-	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "仓库备份，备份 $target_dir 到 $custom_repo_bak"
-		mkdir -p "$custom_repo_bak"
-		mkdir -p "$target_dir"
-		rsync -aq --delete "$target_dir/" "$custom_repo_bak/"
-	fi
-	log_info "克隆仓库 $repo_url 到 $target_dir 完成"
-	return 0
-}
-
 # ==============================================================================
 # 子函数 4: 覆盖匹配的目录 (支持回滚，成功后删除源文件)
 # ==============================================================================
