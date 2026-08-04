@@ -17,13 +17,13 @@ on:
 
       part_size:
         description: "设置rootfs大小"
-        required: false
+        required: true
         default: 1024
         type: number
 
       ip_address:
         description: "设置默认IP地址"
-        required: false
+        required: true
         default: "192.168.10.1"
         type: string
 
