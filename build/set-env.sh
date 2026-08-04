@@ -20,8 +20,10 @@ export UPLOAD_ARTIFACT=true
 export UPLOAD_RELEASE=true
 
 # 自定义备份目录
-export BAK_ENABLED=1           # 是否启用备份功能,0 不启用， 1 启用
-export CUSTOM_BAK="custom_bak" # 自定义备份目录,相对于 GITHUB_WORKSPACE
+export BAK_ENABLED=1           # 是否启用备份功能，0 不启用， 1 启用
+export CUSTOM_BAK="custom_bak" # 自定义备份目录，相对于 GITHUB_WORKSPACE
+
+export LOG_REDIRECTION_ENABLE=0 # 是否开启日志重定向，0 不启用， 1 启用
 
 # 编译缓存
 export USE_CCACHE=1
