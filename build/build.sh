@@ -11,6 +11,10 @@ if (set -o pipefail 2>/dev/null); then
 	set -o pipefail
 fi
 
+# 工作目录
+export GITHUB_WORKSPACE="$(pwd)"
+export LOG_DIR="$GITHUB_WORKSPACE/logs"
+
 # =============================================
 # 引入环境变量模块
 # =============================================
@@ -52,13 +56,19 @@ fi
 # =============================================
 # 业务逻辑开始（首次构建：clone → 配置 → 编译 → 上传）
 # =============================================
+build_env_info || {
+	log_error "无法获取环境变量信息，终止构建"
+	exit 1
+}
+
+# 切换到工作空间目录
 build_enter_workspace || {
 	log_error "无法进入工作目录，终止构建"
 	exit 1
 }
 
 if [ -d "$OPENWRT_DIR" ]; then
-	log_error "OpenWrt 目录 '$OPENWRT_DIR' 已经存在"
+	log_error "目录 %s 已经存在，终止构建" "$OPENWRT_DIR"
 	exit 1
 fi
 

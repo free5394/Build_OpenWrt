@@ -11,14 +11,16 @@ if (set -o pipefail 2>/dev/null); then
 	set -o pipefail
 fi
 
+# 工作目录
+export GITHUB_WORKSPACE="$(pwd)"
+export LOG_DIR="$GITHUB_WORKSPACE/logs"
+
 # =============================================
-# 引入公共模块（强制依赖，最佳实践）
+# 引入环境变量模块
 # =============================================
 # shellcheck source=/dev/null
-# 使用 eval 确保路径解析正确，利用 || exit 1 确保加载失败即终止
-# 注意：使用 -- 防止文件名以 - 开头被误认为参数
-. "$(dirname -- "$0")/x86-64/common_scripts/common.sh" || {
-	printf '错误: 无法加载公共模块 common.sh\n' >&2
+. "$(dirname -- "$0")/set-env.sh" || {
+	printf '错误: 无法加载环境变量模块 set-env.sh\n' >&2
 	exit 1
 }
 
@@ -32,11 +34,13 @@ fi
 }
 
 # =============================================
-# 引入环境变量模块
+# 引入公共模块（强制依赖，最佳实践）
 # =============================================
 # shellcheck source=/dev/null
-. "$(dirname -- "$0")/set-env.sh" || {
-	printf '错误: 无法加载环境变量模块 set-env.sh\n' >&2
+# 使用 eval 确保路径解析正确，利用 || exit 1 确保加载失败即终止
+# 注意：使用 -- 防止文件名以 - 开头被误认为参数
+. "$(dirname -- "$0")/x86-64/common_scripts/common.sh" || {
+	printf '错误: 无法加载公共模块 common.sh\n' >&2
 	exit 1
 }
 
@@ -52,13 +56,19 @@ fi
 # =============================================
 # 业务逻辑开始（重新构建：清理 → 重新配置 → 编译 → 上传）
 # =============================================
+build_env_info || {
+	log_error "无法获取环境变量信息，终止构建"
+	exit 1
+}
+
+# 切换到工作空间目录
 build_enter_workspace || {
 	log_error "无法进入工作目录，终止构建"
 	exit 1
 }
 
 if [ ! -d "$OPENWRT_DIR" ]; then
-	log_error "OpenWrt 目录 '$OPENWRT_DIR' 不存在"
+	log_error "OpenWrt 目录 %s 不存在" "$OPENWRT_DIR"
 	exit 1
 fi
 
