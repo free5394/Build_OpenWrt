@@ -121,15 +121,22 @@ compress_dir() {
 		log_error "<压缩目录>( %s ) 或者 <目标目录>( %s ) 不存在" "$src_dir" "$dest_dir"
 		return 2
 	fi
+	# 1. 获取 src_dir 的父目录: /home/user/build
+	parent_dir=$(dirname "$src_dir")
+	# 2. 获取 src_dir 的最后一层目录名: artifacts
+	base_name=$(basename "$src_dir")
 	# 创建目标目录（若不存在）
 	mkdir -p "$dest_dir"
-	compress_file="$dest_dir/$(basename "$src_dir").tar.gz"
+	compress_file="$dest_dir/$base_name.tar.gz"
 	if [ -n "$name_suffix" ]; then
-		compress_file="$dest_dir/$(basename "$src_dir")-$name_suffix.tar.gz"
+		compress_file="$dest_dir/$base_name-$name_suffix.tar.gz"
 	fi
 	# 压缩目录（不用 -v 避免CI日志冗长；V=sc 已在 build_common.sh 中配置）
 	log_info "压缩目录 %s 到 %s" "$src_dir" "$compress_file"
-	tar -czf "$compress_file" "$src_dir" || {
+	# 3. 执行压缩
+	# -C "$parent_dir" : 告诉 tar 先进入父目录
+	# "$base_name"     : 告诉 tar 只打包当前目录下的 artifacts 文件夹
+	tar -czf "$compress_file" -C "$parent_dir" "$base_name" || {
 		log_warn "压缩失败，继续上传"
 		return 1
 	}
