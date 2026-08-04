@@ -47,12 +47,13 @@ _cleanup_on_exit() {
 }
 trap _cleanup_on_exit EXIT
 
+# 上传镜像
 cp_img() {
 	log_info "cp_img 开始执行"
 	# 参数校验
 	if [ $# -ne 2 ] && [ $# -ne 3 ]; then
 		log_error "参数错误！用法：%s <基准目录> <目标目录> <名称后缀（可选）>" "$0"
-		return 1
+		return 2
 	fi
 
 	src_dir="$1"
@@ -60,7 +61,7 @@ cp_img() {
 	name_suffix="${3:-}"
 	if [ -z "$src_dir" ] || [ -z "$dest_dir" ]; then
 		log_error "缺少必要参数！用法： %s <基准目录> <目标目录> <名称后缀（可选）>" "$0"
-		return 1
+		return 2
 	fi
 
 	# 检查源目录是否存在
@@ -101,18 +102,19 @@ cp_img() {
 	return 0
 }
 
+# 压缩日志目录
 compress_logs() {
 	log_info "%s 开始执行" "$0"
 	# 参数校验
 	if [ $# -ne 1 ] && [ $# -ne 2 ]; then
 		log_error "参数错误！用法：%s <目标目录> <名称后缀（可选）>" "$0"
-		return 1
+		return 2
 	fi
 	dest_dir="$1"
 	name_suffix="${2:-}"
 	if [ -z "$dest_dir" ]; then
 		log_error "缺少必要参数！用法：%s <目标目录> <名称后缀（可选）>" "$0"
-		return 1
+		return 2
 	fi
 
 	logs_dir="./logs"
@@ -140,12 +142,35 @@ compress_logs() {
 verify_params() {
 	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ]; then
 		log_error "缺少必环境变量: GITHUB_WORKSPACE UPLOAD_DIR"
-		return 1
+		return 2
 	fi
 	if [ ! -d "$GITHUB_WORKSPACE" ]; then
 		log_warn "工作空间目录 %s 不存在，无文件可处理。" "$GITHUB_WORKSPACE"
+		return 2
+	fi
+	return 0
+}
+
+# 上传配置文件
+cp_config() {
+	log_info "%s 开始执行" "$0"
+	# 参数校验
+	if [ $# -ne 2 ]; then
+		log_error "参数错误！用法：%s <配置文件> <目标目录>" "$0"
+		return 2
+	fi
+	config_file="$1"
+	dest_dir="$2"
+	if [ -z "$config_file" ] || [ ! -f "$config_file" ]; then
+		log_warn "配置文件 %s 不存在，跳过上传" "$config_file"
 		return 1
 	fi
+	if [ -z "$dest_dir" ] || [ ! -d "$dest_dir" ]; then
+		log_warn "目标目录 %s 不存在，跳过上传" "$dest_dir"
+		return 1
+	fi
+	log_info "开始上传配置文件 %s 到 %s" "$config_file" "$dest_dir"
+	cp -rf "$config_file" "$dest_dir"
 	return 0
 }
 
@@ -179,11 +204,13 @@ main() {
 	# 设置清理目标，供 EXIT trap 在异常退出时使用
 	_CLEANUP_DEST_DIR="$dest_dir"
 
-	cp_img "$src_dir" "$dest_dir" "$NAME_SUFFIX"
+	cp_img "$src_dir" "$dest_dir" "$NAME_SUFFIX" || log_warn "镜像上传失败，继续上传"
 
-	compress_logs "$dest_dir" "$NAME_SUFFIX" || true
+	compress_logs "$dest_dir" "$NAME_SUFFIX" || log_warn "日志压缩失败，继续上传"
 
-	generate_checksums "$dest_dir"
+	cp_config "$CUSTOM_CONFIG" "$dest_dir" || log_warn "配置文件上传失败，继续上传"
+
+	generate_checksums "$dest_dir" || log_warn "校验文件生成失败，继续上传"
 
 	# 全部步骤成功完成，取消清理 trap 避免误删产物
 	trap - EXIT
