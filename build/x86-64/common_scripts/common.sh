@@ -166,3 +166,71 @@ clone_repo() {
 	log_info "克隆仓库 $repo_url 到 $target_dir 完成"
 	return 0
 }
+
+# ==========================================
+# 函数名：download_file
+# 功能：通用下载函数，支持 wget/curl 自动适配
+# 参数：
+#   $1: URL (必填)
+#   $2: 保存路径 (必填)
+#   $3: (可选) 重试次数，默认 3
+#   $4: (可选) 超时秒数，默认 30
+#   $5: (可选) 最大重定向次数，默认 3
+# 返回：0 成功，1 失败 (已输出日志)
+# ==========================================
+download_file() {
+	_url="$1"
+	_save="$2"
+	_retries="${3:-3}"
+	_timeout="${4:-30}"
+	_redirects="${5:-3}"
+
+	# 1. 参数校验：URL (必填)
+	if [ -z "$_url" ]; then
+		log_error "参数错误：下载 URL 不能为空"
+		return 1
+	fi
+
+	# 2. 参数校验：保存路径 (必填)
+	if [ -z "$_save" ]; then
+		log_error "参数错误：文件保存路径不能为空"
+		return 1
+	fi
+
+	# 3. 工具检测 (优先 wget)
+	if command -v wget >/dev/null 2>&1; then
+		_tool="wget"
+	elif command -v curl >/dev/null 2>&1; then
+		_tool="curl"
+	else
+		log_error "系统缺少 wget 或 curl 下载工具"
+		return 1
+	fi
+
+	_save=$(norm_path "$_save")
+	log_info "开始下载: %s -> %s" "$_url" "$_save"
+
+	# 4. 执行下载 (扁平化错误处理)
+	case "$_tool" in
+	wget)
+		# GNU Wget 参数: -q 静默, -O 指定文件
+		if ! wget -q --tries="$_retries" --timeout="$_timeout" --max-redirect="$_redirects" -O "$_save" "$_url"; then
+			log_error "下载失败: %s" "$_url"
+			return 1
+		fi
+		;;
+	curl)
+		# cURL 参数映射: --retry 指重试次数(不含首次)，需减 1
+		_retry_cnt=$((_retries - 1))
+		_curl_opts="-sS -L --retry $_retry_cnt --connect-timeout $_timeout --max-time 300 --max-redirs $_redirects"
+
+		# -o 指定输出文件
+		if ! curl $_curl_opts -o "$_save" "$_url"; then
+			log_error "下载失败: %s" "$_url"
+			return 1
+		fi
+		;;
+	esac
+
+	return 0
+}
