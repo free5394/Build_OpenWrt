@@ -223,9 +223,9 @@ update_package() {
 	clone_repo "https://github.com/kenzok8/openwrt-packages" "$community_dir/kenzo"
 	clone_repo "https://github.com/kenzok8/small" "$community_dir/small"
 
-	log_info "删除出错插件"
+	# log_info "删除出错插件"
 	# luci-app-fchomo: small feed 中此插件编译报错，等待上游修复后可移除此行
-	rm -rf "$community_dir"/small/luci-app-fchomo
+	# rm -rf "$community_dir"/small/luci-app-fchomo
 	# luci-app-eqos: kenzo feed 中此插件与官方 luci-app-eqos 冲突导致编译报错，等待上游修复后可移除此行
 	# rm -rf "$community_dir"/kenzo/luci-app-eqos
 
