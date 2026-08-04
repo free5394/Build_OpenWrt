@@ -21,6 +21,15 @@ fi
 }
 
 # =============================================
+# 引入日志模块
+# =============================================
+# shellcheck source=/dev/null
+. "$(dirname -- "$0")/x86-64/common_scripts/logger.sh" || {
+	printf '错误: 无法加载日志模块 logger.sh\n' >&2
+	exit 1
+}
+
+# =============================================
 # 引入公共模块（强制依赖，最佳实践）
 # =============================================
 # shellcheck source=/dev/null
@@ -28,15 +37,6 @@ fi
 # 注意：使用 -- 防止文件名以 - 开头被误认为参数
 . "$(dirname -- "$0")/x86-64/common_scripts/common.sh" || {
 	printf '错误: 无法加载公共模块 common.sh\n' >&2
-	exit 1
-}
-
-# =============================================
-# 引入日志模块
-# =============================================
-# shellcheck source=/dev/null
-. "$(dirname -- "$0")/x86-64/common_scripts/logger.sh" || {
-	printf '错误: 无法加载日志模块 logger.sh\n' >&2
 	exit 1
 }
 
@@ -64,27 +64,7 @@ fi
 
 # 克隆 OpenWrt 仓库
 build_clone_openwrt() {
-	target_dir="${OPENWRT_DIR%/}"
-	custom_bak="$CUSTOM_BAK/${target_dir##*/}"
-	# 检查备份目录是否存在
-	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_bak" ]; then
-		log_info "OpenWrt 备份已存在，恢复备份"
-		mkdir -p "$custom_bak"
-		mkdir -p "$target_dir"
-		rsync -aq --delete "$custom_bak/" "$target_dir/"
-		log_info "OpenWrt 备份恢复完成"
-		return 0
-	fi
-	log_info "开始克隆OpenWrt仓库..."
-	git clone -b "$OPENWRT_BRANCH" --single-branch --depth 1 "https://github.com/$OPENWRT_REPO.git" "$target_dir"
-	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "开始备份OpenWrt仓库..."
-		mkdir -p "$custom_bak"
-		mkdir -p "$target_dir"
-		rsync -aq --delete "$target_dir/" "$custom_bak/"
-		log_info "OpenWrt 备份完成"
-	fi
-	return 0
+	clone_repo "https://github.com/$OPENWRT_REPO.git" "${OPENWRT_DIR%/}"
 }
 
 time_it build_clone_openwrt
