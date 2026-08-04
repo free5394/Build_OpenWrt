@@ -102,7 +102,7 @@ build_new_config() {
 
 build_custom_config_patch() {
 	log_info "补全配置文件..."
-	cp -f "custom_config/$CUSTOM_CONFIG" .config
+	cp -f "$CUSTOM_CONFIG" .config
 	make defconfig V=s
 	log_info "调整配置文件..."
 	make menuconfig
