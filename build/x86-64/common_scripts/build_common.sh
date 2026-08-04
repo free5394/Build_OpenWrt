@@ -72,6 +72,7 @@ build_custom_config() {
 	log_info "补全配置文件..."
 	cp -f "custom_config/$CUSTOM_CONFIG" .config
 	make defconfig V=s
+	./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
 	return 0
 }
 
