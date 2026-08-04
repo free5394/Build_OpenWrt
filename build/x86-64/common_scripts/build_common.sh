@@ -13,6 +13,10 @@ case "$0" in
 	;;
 esac
 
+# 如果已经加载过，直接返回，不再重复解析
+[ -n "$_SCRIPT_BUILD_COMMON_LOADED" ] && return 0
+_SCRIPT_BUILD_COMMON_LOADED=1
+
 # 切换到工作空间目录
 build_enter_workspace() {
 	log_info "切换到工作目录..."
