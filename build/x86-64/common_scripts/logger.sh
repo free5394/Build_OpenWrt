@@ -161,6 +161,23 @@ cur_script_parent_dir() {
 	printf '%s\n' "$script_parent_dir"
 }
 
+# =============================================
+# 日志文件路径
+# =============================================
+: "${LOG_DIR:=${GITHUB_WORKSPACE:-.}/logs}"
+LOG_FILE="${LOG_DIR}/$(cur_script_name).log"
+
+# =============================================
+# 统一日志输出重定向（追加模式，按需启用）
+# =============================================
+if [ "$LOG_REDIRECTION_ENABLE" -eq 1 ]; then
+	mkdir -p "$(dirname -- "$LOG_FILE")"
+	exec exec >>"$LOG_FILE" 2>&1
+fi
+
+# =============================================
+# 脚本加载信息
+# =============================================
 build_script_info() {
 	# 脚本全名（含后缀），兼容 $0 为空的极端情况
 	script_fullname=${0##*/}
@@ -181,19 +198,6 @@ build_script_info() {
 	log_debug '========= %s 脚本结束加载 ============' "$script_fullname"
 
 }
-
-# =============================================
-# 日志文件路径
-# =============================================
-: "${LOG_FILE:=${GITHUB_WORKSPACE:-.}/logs/$(cur_script_name).log}"
-
-# =============================================
-# 统一日志输出重定向（追加模式，按需启用）
-# =============================================
-if [ "$LOG_REDIRECTION_ENABLE" -eq 1 ]; then
-	mkdir -p "$(dirname -- "$LOG_FILE")"
-	exec exec >>"$LOG_FILE" 2>&1
-fi
 
 build_script_info "$@"
 
