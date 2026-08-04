@@ -178,7 +178,7 @@ update_matching_dirs() {
 		log_info "删除源目录 %s 以避免冲突。" "$_source_path"
 		# 清理源目录，避免冲突
 		rm -rf "$_source_path"
-		return 0
+		continue
 
 	done <"$_match_list"
 
