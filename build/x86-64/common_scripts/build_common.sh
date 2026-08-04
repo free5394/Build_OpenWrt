@@ -84,9 +84,10 @@ build_apply_feeds_and_settings() {
 # 生成或补全配置文件
 build_custom_config() {
 	log_info "补全配置文件..."
-	cp -f "custom_config/$CUSTOM_CONFIG" .config
+	cp -f "$CUSTOM_CONFIG" .config
 	make defconfig V=s
-	./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
+	# 生成补丁文件，便于上传
+	./scripts/diffconfig.sh >"$(basename "$CUSTOM_CONFIG")"
 	return 0
 }
 
