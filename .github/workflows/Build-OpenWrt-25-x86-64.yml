@@ -129,7 +129,6 @@ jobs:
           cp -rf ../build/x86-64/* .
           chmod +x files/etc/uci-defaults/*.sh
           chmod +x custom_scripts/*.sh
-          mkdir -p ./logs
 
       - name: 更新&安装插件
         run: |
