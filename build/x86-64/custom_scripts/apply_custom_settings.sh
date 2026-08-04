@@ -179,7 +179,10 @@ apply_ttyd_auto_login() {
 	return 0
 }
 
-# 配置 openclash 核心配置
+# ==========================================
+# 函数名：preset_openclash_core
+# 功能：配置 OpenClash 核心文件
+# ==========================================
 preset_openclash_core() {
 	if [ ! -f "$CONFIG_FILE" ]; then
 		log_error "配置文件 %s 不存在" "$CONFIG_FILE"
@@ -190,38 +193,52 @@ preset_openclash_core() {
 		log_info "未选择 luci-app-openclash，跳过 openclash core 配置"
 		return 0
 	fi
-	_core_ver="${OPENCLASH_CORE_VERSION:-v2}"
 	log_info "✅ 已选择 luci-app-openclash，添加 openclash core"
-	mkdir -p files/etc/openclash/core
-	# 下载 clash_meta 核心（带重试与失败检查）
+
+	# 2. 下载 Clash Meta 核心 (致命错误)
+	_core_ver="${OPENCLASH_CORE_VERSION:-v2}"
 	META_URL="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-amd64-$_core_ver.tar.gz"
-	if ! wget --tries=3 --timeout=30 --max-redirect=3 -qO /tmp/clash_meta.tar.gz "$META_URL"; then
-		log_error "OpenClash 核心下载失败: %s" "$META_URL"
+
+	# 调用下载函数，失败立即返回 1，无需 if 嵌套
+	_clash_tae_file="/tmp/clash_meta.tar.gz"
+	download_file "$META_URL" "$_clash_tae_file" || return 1
+
+	# 3. 安全解压核心
+	_tmp_dir=$(mktemp -d)
+	# 解压失败处理
+	if ! tar xzf "$_clash_tae_file" -C "$_tmp_dir"; then
+		log_error "OpenClash 核心解压失败"
+		rm -rf "$_tmp_dir" "$_clash_tae_file"
 		return 1
 	fi
-	# 先解压到临时目录再 mv，避免 tar 路径遍历风险
-	_tmp_dir=$(mktemp -d)
-	tar xzf /tmp/clash_meta.tar.gz -C "$_tmp_dir" || {
-		log_error "OpenClash 核心解压失败"
-		rm -rf "$_tmp_dir" /tmp/clash_meta.tar.gz
-		return 1
-	}
+
+	# 查找并移动二进制文件
 	_core_bin=$(find "$_tmp_dir" -type f -name "clash*" | head -1)
 	if [ -z "$_core_bin" ]; then
 		log_error "解压后未找到 clash_meta 二进制文件"
-		rm -rf "$_tmp_dir" /tmp/clash_meta.tar.gz
+		rm -rf "$_tmp_dir" "$_clash_tae_file"
 		return 1
 	fi
-	mv -f "$_core_bin" files/etc/openclash/core/clash_meta
-	rm -rf "$_tmp_dir" /tmp/clash_meta.tar.gz
-	chmod +x files/etc/openclash/core/clash_meta
-	# 下载 GeoIP / GeoSite 数据（带重试）
-	wget --tries=3 --timeout=30 --max-redirect=3 -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O files/etc/openclash/GeoIP.dat || {
+
+	_clash_bin="files/etc/openclash/core/clash_meta"
+	mkdir -p "$(dirname "$_clash_bin")"
+	mv -f "$_core_bin" "$_clash_bin" && chmod +x "$_clash_bin"
+	rm -rf "$_tmp_dir" "$_clash_tae_file"
+
+	# 4. 下载 GeoIP/GeoSite 数据 (非致命错误)
+	# 失败时 download_file 会记录 error，此处补充 warn 日志并允许脚本继续
+	log_info "下载 GeoIP 规则数据..."
+	download_file "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" \
+		"files/etc/openclash/GeoIP.dat" || {
 		log_warn "GeoIP.dat 下载失败，OpenClash 可运行但 GeoIP 规则不可用"
 	}
-	wget --tries=3 --timeout=30 --max-redirect=3 -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat -O files/etc/openclash/GeoSite.dat || {
+
+	log_info "下载 GeoSite 规则数据..."
+	download_file "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" \
+		"files/etc/openclash/GeoSite.dat" || {
 		log_warn "GeoSite.dat 下载失败，OpenClash 可运行但 GeoSite 规则不可用"
 	}
+
 	log_info "已添加 openclash 核心配置"
 	return 0
 }
