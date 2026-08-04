@@ -102,36 +102,35 @@ cp_img() {
 	return 0
 }
 
-# 压缩日志目录
-compress_logs() {
+# 压缩目录
+compress_dir() {
 	log_info "%s 开始执行" "$0"
 	# 参数校验
-	if [ $# -ne 1 ] && [ $# -ne 2 ]; then
-		log_error "参数错误！用法：%s <目标目录> <名称后缀（可选）>" "$0"
+	if [ $# -lt 2 ]; then
+		log_error "参数错误！用法：%s <压缩目录> <目标目录> <名称后缀（可选）>" "$0"
 		return 2
 	fi
-	dest_dir="$1"
-	name_suffix="${2:-}"
-	if [ -z "$dest_dir" ]; then
-		log_error "缺少必要参数！用法：%s <目标目录> <名称后缀（可选）>" "$0"
+	src_dir="$1"
+	dest_dir="$2"
+	name_suffix="${3:-}"
+	if [ -z "$src_dir" ] || [ -z "$dest_dir" ]; then
+		log_error "缺少必要参数！用法： %s <压缩目录> <目标目录> <名称后缀（可选）>" "$0"
 		return 2
 	fi
-
-	logs_dir="./logs"
-	if [ ! -d "$logs_dir" ]; then
-		log_warn "日志目录 %s 不存在，无文件可处理。" "$logs_dir"
-		return 0
+	if [ ! -d "$src_dir" ] || [ ! -d "$dest_dir" ]; then
+		log_error "<压缩目录>( %s ) 或者 <目标目录>( %s ) 不存在" "$src_dir" "$dest_dir"
+		return 2
 	fi
 	# 创建目标目录（若不存在）
 	mkdir -p "$dest_dir"
-	log_file="$dest_dir/logs.tar.gz"
+	compress_file="$dest_dir/$(basename "$src_dir").tar.gz"
 	if [ -n "$name_suffix" ]; then
-		log_file="$dest_dir/logs-$name_suffix.tar.gz"
+		compress_file="$dest_dir/$(basename "$src_dir")-$name_suffix.tar.gz"
 	fi
-	# 压缩日志目录（不用 -v 避免CI日志冗长；V=sc 已在 build_common.sh 中配置）
-	log_info "压缩日志目录 %s" "$logs_dir"
-	tar -czf "$log_file" "$logs_dir" || {
-		log_warn "日志压缩失败，继续上传"
+	# 压缩目录（不用 -v 避免CI日志冗长；V=sc 已在 build_common.sh 中配置）
+	log_info "压缩目录 %s 到 %s" "$src_dir" "$compress_file"
+	tar -czf "$compress_file" "$src_dir" || {
+		log_warn "压缩失败，继续上传"
 		return 1
 	}
 	log_info "%s 执行完成" "$0"
@@ -140,8 +139,8 @@ compress_logs() {
 
 # 校验关键环境变量
 verify_params() {
-	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ] || [ -z "$CUSTOM_CONFIG" ]; then
-		log_error "缺少必环境变量: GITHUB_WORKSPACE、UPLOAD_DIR、CUSTOM_CONFIG"
+	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ] || [ -z "$LOG_DIR" ] || [ -z "$CUSTOM_CONFIG" ]; then
+		log_error "缺少必环境变量: GITHUB_WORKSPACE、UPLOAD_DIR、LOG_DIR、CUSTOM_CONFIG"
 		return 2
 	fi
 	if [ ! -d "$GITHUB_WORKSPACE" ]; then
@@ -201,18 +200,18 @@ main() {
 	# 定义路径
 	src_dir="./bin/targets"
 	dest_dir="$GITHUB_WORKSPACE/$UPLOAD_DIR"
+	log_dir="$GITHUB_WORKSPACE/$LOG_DIR"
 	# 设置清理目标，供 EXIT trap 在异常退出时使用
 	_CLEANUP_DEST_DIR="$dest_dir"
 
+	# 全名 带后缀
 	file_name=$(basename "$CUSTOM_CONFIG")
+	# 去除后缀
 	name="${file_name%.*}"
 
 	cp_img "$src_dir" "$dest_dir" "$name" || log_warn "镜像上传失败，继续上传"
-
-	compress_logs "$dest_dir" "$name" || log_warn "日志压缩失败，继续上传"
-
+	compress_dir "$log_dir" "$dest_dir" "$name" || log_warn "日志压缩失败，继续上传"
 	cp_config "$file_name" "$dest_dir" || log_warn "配置文件上传失败，继续上传"
-
 	generate_checksums "$dest_dir" || log_warn "校验文件生成失败，继续上传"
 
 	# 全部步骤成功完成，取消清理 trap 避免误删产物
