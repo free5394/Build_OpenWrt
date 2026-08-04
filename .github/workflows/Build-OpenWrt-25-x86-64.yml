@@ -119,9 +119,18 @@ jobs:
           echo "LOG_ROOT=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
           mkdir -p "${{env.LOG_ROOT}}"
 
+      # - name: 克隆OpenWrt源码
+      #   run: |
+      #     git clone -b ${{env.OPENWRT_BRANCH}} --single-branch --depth 1 https://github.com/${{env.OPENWRT_REPO}}.git ${{env.OPENWRT_DIR}}
+
       - name: 克隆OpenWrt源码
-        run: |
-          git clone -b ${{env.OPENWRT_BRANCH}} --single-branch --depth 1 https://github.com/${{env.OPENWRT_REPO}}.git ${{env.OPENWRT_DIR}}
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: ${{env.OPENWRT_REPO}}
+          ref: ${{env.OPENWRT_BRANCH}}
+          path: ${{env.OPENWRT_DIR}}
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: 复制自定义文件
         run: |
