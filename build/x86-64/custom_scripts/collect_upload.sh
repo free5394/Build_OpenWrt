@@ -49,7 +49,6 @@ trap _cleanup_on_exit EXIT
 
 # 上传镜像
 cp_img() {
-	log_info "cp_img 开始执行"
 	# 参数校验
 	if [ $# -ne 2 ] && [ $# -ne 3 ]; then
 		log_error "参数错误！用法：%s <基准目录> <目标目录> <名称后缀（可选）>" "$0"
@@ -75,7 +74,7 @@ cp_img() {
 
 	# 处理名称后缀
 	if [ -z "$name_suffix" ]; then
-		log_info "NAME_SUFFIX 为空，直接移动文件至 %s" "$dest_dir"
+		log_info "后缀为空，直接移动文件至 %s" "$dest_dir"
 
 		# 使用 -exec ... + 批量移动，高效且避免命令行长度限制
 		find "$src_dir" -type f -name "*wrt*.img.gz" -exec mv -f {} "$dest_dir/" +
@@ -83,7 +82,7 @@ cp_img() {
 		log_info "%s 执行完成" "$0"
 		return 0
 	fi
-	log_info "NAME_SUFFIX 非空，将重命名文件并移动至 %s" "$dest_dir"
+	log_info "后缀非空，将重命名文件并移动至 %s" "$dest_dir"
 
 	# 使用 find + sh -c 批量处理，传入目标目录和后缀作为参数
 	find "$src_dir" -type f -name "*wrt*.img.gz" -exec sh -c '
@@ -98,13 +97,11 @@ cp_img() {
             echo "已移动并重命名：$f -> $dest/$newname"
         done
     ' sh "$dest_dir" "$name_suffix" {} +
-	log_info "%s 执行完成" "$0"
 	return 0
 }
 
 # 压缩目录
 compress_dir() {
-	log_info "%s 开始执行" "$0"
 	# 参数校验
 	if [ $# -lt 2 ]; then
 		log_error "参数错误！用法：%s <压缩目录> <目标目录> <名称后缀（可选）>" "$0"
@@ -140,7 +137,6 @@ compress_dir() {
 		log_warn "压缩失败，继续上传"
 		return 1
 	}
-	log_info "%s 执行完成" "$0"
 	return 0
 }
 
@@ -159,7 +155,6 @@ verify_params() {
 
 # 上传配置文件
 cp_config() {
-	log_info "%s 开始执行" "$0"
 	# 参数校验
 	if [ $# -ne 2 ]; then
 		log_error "参数错误！用法：%s <配置文件> <目标目录>" "$0"
@@ -175,7 +170,7 @@ cp_config() {
 		log_warn "目标目录 %s 不存在，跳过上传" "$dest_dir"
 		return 1
 	fi
-	log_info "开始上传配置文件 %s 到 %s" "$config_file" "$dest_dir"
+	log_info "复制文件 %s 到 %s" "$config_file" "$dest_dir"
 	cp -rf "$config_file" "$dest_dir"
 	return 0
 }
