@@ -157,7 +157,6 @@ jobs:
 
       - name: 设置环境变量
         run: |
-
           cd ${{env.OPENWRT_DIR}} 
           ./custom_scripts/set_variable_values.sh
 
