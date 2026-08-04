@@ -61,7 +61,13 @@ fi
 # ------------------------------------------------------------------------------
 norm_path() {
 	# 0. 参数校验：若未传参，默认返回当前目录绝对路径
-	path_in="${1:-.}"
+	path_in="$1"
+	cur_path=""
+
+	if [ -z "$path_in" ]; then
+		log_error "参数错误: 缺少必要参数:%s  <路径>" "$0"
+		return 2
+	fi
 
 	# 1. 优先分支：使用系统原生的 GNU realpath -m (效率最高，支持软链接解析)
 	if [ "$_NORM_PATH_HAS_REALPATH" -eq 1 ]; then
@@ -111,5 +117,52 @@ norm_path() {
 
 	# 2.4 输出结果：若为根目录则为 /，否则输出拼接好的路径
 	printf '%s\n' "${out_path:-/}"
+	return 0
+}
+
+# ------------------------------------------------------------------------------
+# 克隆Git仓库到指定目录
+# 参数1: 仓库URL（必选） 参数2: 目标目录（必选） 参数3: 分支名（可选）
+# ------------------------------------------------------------------------------
+clone_repo() {
+	repo_url="$1"
+	target_dir="$2"
+	branch="$3"
+
+	if [ -z "$repo_url" ] || [ -z "$target_dir" ]; then
+		log_error "缺少必要参数:%s  <仓库URL> <目标目录>" "$0"
+		return 1
+	fi
+	target_dir="${target_dir%/}"
+	bak_dir="${GITHUB_WORKSPACE}/${CUSTOM_BAK}/${target_dir##*/}"
+	# 规范化路径
+	bak_dir=$(norm_path "$bak_dir")
+	target_dir=$(norm_path "$target_dir")
+	log_info "克隆仓库 $repo_url 到 $target_dir"
+	# 检查备份目录是否存在
+	if [ "${BAK_ENABLED:-0}" -eq 1 ] && [ -d "$bak_dir" ]; then
+		log_info "仓库备份存在，恢复备份 $bak_dir 到 $target_dir"
+		mkdir -p "$bak_dir" "$target_dir"
+		rsync -aq --delete "$bak_dir/" "$target_dir/"
+		return 0
+	fi
+
+	if [ -n "$branch" ]; then
+		git clone --depth 1 -b "$branch" "$repo_url" "$target_dir" || {
+			log_error "克隆失败: $repo_url (分支: $branch)"
+			return 1
+		}
+	else
+		git clone --depth 1 "$repo_url" "$target_dir" || {
+			log_error "克隆失败: $repo_url"
+			return 1
+		}
+	fi
+	if [ "${BAK_ENABLED:-0}" -eq 1 ]; then
+		log_info "仓库备份，备份 $target_dir 到 $bak_dir"
+		mkdir -p "$bak_dir" "$target_dir"
+		rsync -aq --delete "$target_dir/" "$bak_dir/"
+	fi
+	log_info "克隆仓库 $repo_url 到 $target_dir 完成"
 	return 0
 }
