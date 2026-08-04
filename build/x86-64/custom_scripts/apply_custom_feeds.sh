@@ -195,8 +195,7 @@ update_feeds() {
 	# 检查是否启用备份功能 并且备份目录存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$bak_dir" ]; then
 		log_info "feeds备份存在，恢复备份 $bak_dir 到当前目录"
-		mkdir -p "$bak_dir"
-		mkdir -p "$target_dir"
+		mkdir -p "$bak_dir" "$target_dir"
 		rsync -aq --delete "$bak_dir/" "$target_dir/"
 	fi
 	log_info "更新feeds..."
@@ -204,8 +203,7 @@ update_feeds() {
 	# 检查是否启用备份功能
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
 		log_info "feeds备份，备份 feeds 到 $bak_dir"
-		mkdir -p "$bak_dir"
-		mkdir -p "$target_dir"
+		mkdir -p "$bak_dir" "$target_dir"
 		# 只备份 feeds 目录下第一层目录，不备份 .tmp 文件目录
 		rsync -aq --delete --exclude='/*.tmp/' --include='/*/' --exclude='/*' "$target_dir/" "$bak_dir/"
 	fi
