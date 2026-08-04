@@ -246,37 +246,26 @@ update_package() {
 # 更新golang
 update_golang() {
 	golang_dir="feeds/packages/lang/golang"
+	golang_dir=$(norm_path "$golang_dir")
+	if [ ! -d "$golang_dir" ]; then
+		log_info "%s 目录不存在，跳过更新" "$golang_dir"
+		return 0
+	fi
 	golang_dir_tmp="$golang_dir.tmp"
-	custom_golang_bak="$CUSTOM_BAK/golang"
-	# 确保目标目录存在
-	mkdir -p "$golang_dir"
-	# 备份当前golang目录
-	mv "$golang_dir" "$golang_dir_tmp"
-	# 检查备份目录是否存在
-	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$custom_golang_bak" ]; then
-		log_info "golang 备份存在，恢复备份 $custom_golang_bak 到 $golang_dir"
-		mkdir -p "$custom_golang_bak"
-		mkdir -p "$golang_dir"
-		rsync -aq --delete "$custom_golang_bak/" "$golang_dir/"
-		log_info "golang 备份恢复完成"
-		return 0
-	fi
-	log_info "更新golang..."
-	git clone https://github.com/kenzok8/golang -b 1.26 "$golang_dir" || {
-		log_warn "更新golang失败,恢复原始版本"
-		mv "$golang_dir_tmp" "$golang_dir"
-		return 0
-	}
-	rm -rf "$golang_dir_tmp"
-	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "golang 备份，备份 $golang_dir 到 $custom_golang_bak"
-		mkdir -p "$custom_golang_bak"
-		mkdir -p "$golang_dir"
-		rsync -aq --delete "$golang_dir/" "$custom_golang_bak/"
-		log_info "golang 备份完成"
-	fi
-	return 0
+	bak_dir="$GITHUB_WORKSPACE/$CUSTOM_BAK/golang"
 
+	golang_dir_tmp=$(norm_path "$golang_dir_tmp")
+	bak_dir=$(norm_path "$bak_dir")
+
+	# 备份当前golang目录
+	log_info "%s 重命名 %s" "$golang_dir" "$golang_dir_tmp"
+	mv "$golang_dir" "$golang_dir_tmp"
+	clone_repo "https://github.com/kenzok8/golang" "$golang_dir" "1.26" || {
+		log_warn "更新golang失败,恢复原始版本"
+		log_info "%s 重命名 %s" "$golang_dir_tmp" "$golang_dir"
+		mv "$golang_dir_tmp" "$golang_dir"
+	}
+	return 0
 }
 
 # 主函数
