@@ -42,9 +42,8 @@ on:
 env:
   OPENWRT_DIR: openwrt
   UPLOAD_DIR: upload
+  LOG_DIR: logs
   TZ: Asia/Shanghai
-  # 抑制 common.sh/set-env.sh 的加载日志，减少 CI 噪声
-  LOG_SILENT: "1"
 
 permissions:
   contents: write
@@ -109,10 +108,16 @@ jobs:
       - name: 恢复 ccache 缓存
         uses: actions/cache@v6.1.0
         with:
-          path: /home/runner/.ccache
+          path: ${{env.CCACHE_DIR}}
           key: ccache-${{ matrix.config_name }}-${{ github.sha }}
           restore-keys: |
             ccache-${{ matrix.config_name }}-
+
+      - name: 设置环境
+        run: |
+          echo "CONFIG_FILE=custom_config/${{matrix.config_name}}.config" >> $GITHUB_ENV
+          echo "LOG_ROOT=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
+          mkdir -p "${{env.LOG_ROOT}}"
 
       - name: 克隆OpenWrt源码
         run: |
@@ -129,32 +134,32 @@ jobs:
       - name: 更新&安装插件
         run: |
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/apply_custom_feeds.sh > logs/apply_custom_feeds.log 2>&1
+          ./custom_scripts/apply_custom_feeds.sh > "${{env.LOG_ROOT}}/apply_custom_feeds.log" 2>&1
 
       - name: 生成配置文件
         run: |
-          CONFIG_FILE="custom_config/${{matrix.config_name}}.config"
           cd ${{env.OPENWRT_DIR}}
-          [ -e "$CONFIG_FILE" ] && cp -f "$CONFIG_FILE" .config
-          make defconfig > logs/make_defconfig.log 2>&1
+          [ -f "${{env.CONFIG_FILE}}" ] && cp -f "${{env.CONFIG_FILE}}" .config
+          make defconfig V=s
+          ./scripts/diffconfig.sh >"$(basename ${{env.CONFIG_FILE}})"
 
       - name: 设置环境变量
         run: |
-          echo "NAME_SUFFIX=${{matrix.config_name}}" >> $GITHUB_ENV
+
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/set_variable_values.sh > logs/set_variable_values.log 2>&1
+          ./custom_scripts/set_variable_values.sh > "${{env.LOG_ROOT}}/set_variable_values.log" 2>&1
 
       - name: 应用自定义设置
         run: |
           cd ${{env.OPENWRT_DIR}}
-          ./custom_scripts/apply_custom_settings.sh > logs/apply_custom_settings.log 2>&1
+          ./custom_scripts/apply_custom_settings.sh > "${{env.LOG_ROOT}}/apply_custom_settings.log" 2>&1
 
       - name: 下载依赖包
         id: download
         if: success()
         run: |
           cd ${{env.OPENWRT_DIR}}
-          (make download -j $(($(nproc)+1)) V=s || make download -j1 V=s) > logs/download.log 2>&1
+          (make download -j $(($(nproc)+1)) V=s || make download -j1 V=s) > "${{env.LOG_ROOT}}/download.log" 2>&1
 
       - name: 编译固件
         id: compile
@@ -162,7 +167,7 @@ jobs:
         run: |
           cd ${{env.OPENWRT_DIR}}
           echo -e "$(($(nproc) + 1)) thread compile"
-          (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) > logs/openwrt.log 2>&1
+          (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) > "${{env.LOG_ROOT}}/openwrt.log" 2>&1
           echo "status=success" >> $GITHUB_OUTPUT
           echo "COMPILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
           echo "COMPILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
@@ -184,7 +189,7 @@ jobs:
       - name: 组织编译后的固件
         run: |
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/collect_upload.sh
+          ./custom_scripts/collect_upload.sh > "${{env.LOG_ROOT}}/collect_upload.log" 2>&1
 
       - name: 上传固件到Artifacts
         if: steps.compile.outputs.status == 'success' && env.UPLOAD_ARTIFACT == 'true'
