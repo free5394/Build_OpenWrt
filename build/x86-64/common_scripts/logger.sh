@@ -169,8 +169,8 @@ LOG_FILE="${LOG_DIR:-./logs}/$(cur_script_name).log"
 # =============================================
 # 统一日志输出重定向（追加模式，按需启用）
 # =============================================
+mkdir -p "$(dirname -- "$LOG_FILE")"
 if [ "$LOG_REDIRECTION_ENABLE" -eq 1 ]; then
-	mkdir -p "$(dirname -- "$LOG_FILE")"
 	exec exec >>"$LOG_FILE" 2>&1
 fi
 
