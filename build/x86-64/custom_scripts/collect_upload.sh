@@ -140,8 +140,8 @@ compress_logs() {
 
 # 校验关键环境变量
 verify_params() {
-	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ]; then
-		log_error "缺少必环境变量: GITHUB_WORKSPACE UPLOAD_DIR"
+	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ] || [ -z "$CUSTOM_CONFIG" ]; then
+		log_error "缺少必环境变量: GITHUB_WORKSPACE、UPLOAD_DIR、CUSTOM_CONFIG"
 		return 2
 	fi
 	if [ ! -d "$GITHUB_WORKSPACE" ]; then
@@ -204,11 +204,14 @@ main() {
 	# 设置清理目标，供 EXIT trap 在异常退出时使用
 	_CLEANUP_DEST_DIR="$dest_dir"
 
-	cp_img "$src_dir" "$dest_dir" "$NAME_SUFFIX" || log_warn "镜像上传失败，继续上传"
+	file_name=$(basename "$CUSTOM_CONFIG")
+	name="${file_name%.*}"
 
-	compress_logs "$dest_dir" "$NAME_SUFFIX" || log_warn "日志压缩失败，继续上传"
+	cp_img "$src_dir" "$dest_dir" "$name" || log_warn "镜像上传失败，继续上传"
 
-	cp_config "$CUSTOM_CONFIG" "$dest_dir" || log_warn "配置文件上传失败，继续上传"
+	compress_logs "$dest_dir" "$name" || log_warn "日志压缩失败，继续上传"
+
+	cp_config "$file_name" "$dest_dir" || log_warn "配置文件上传失败，继续上传"
 
 	generate_checksums "$dest_dir" || log_warn "校验文件生成失败，继续上传"
 
