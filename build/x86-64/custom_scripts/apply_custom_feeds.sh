@@ -42,8 +42,8 @@ find_sub_dirs() {
 	_base_dir="$1"
 
 	if [ ! -d "$_base_dir" ]; then
-		printf "错误: 基准目录 %s 不存在或不是有效的目录！\n" "$_base_dir" >&2
-		return 1
+		log_error "基准目录 '%s' 不存在或不是有效的目录！" "$_base_dir"
+		return 2
 	fi
 
 	for _full_path in "$_base_dir"/*; do
@@ -52,6 +52,7 @@ find_sub_dirs() {
 			printf "%s\n" "$_dir_name"
 		fi
 	done
+	return 0
 }
 
 # ==============================================================================
@@ -64,8 +65,8 @@ search_single_target() {
 	_kw_file="$2"
 
 	if [ ! -d "$_target_dir" ]; then
-		printf "警告: 目标目录 '%s' 不存在，已跳过。\n" "$_target_dir" >&2
-		return 1
+		log_error "目标目录 '%s' 不存在或不是有效的目录！" "$_target_dir"
+		return 2
 	fi
 
 	find "$_target_dir" -mindepth 1 -maxdepth 3 -type d 2>/dev/null | awk -F/ '
@@ -82,6 +83,7 @@ search_single_target() {
             }
         }
     ' "$_kw_file" -
+	return 0
 }
 
 # ==============================================================================
@@ -91,17 +93,16 @@ search_single_target() {
 # ==============================================================================
 find_matching_dirs() {
 	if [ $# -lt 2 ]; then
-		echo "错误: 参数不足！" >&2
-		echo "用法: $0 <基准目录路径> <目标目录1> [目标目录2 ...]" >&2
-		return 1
+		log_error "参数不足，至少需要2个参数！用法: %s <基准目录> <目标目录1> [目标目录2 ...]" "$0"
+		return 2
 	fi
 
 	_base_dir="$1"
 	shift
 
 	if [ ! -d "$_base_dir" ]; then
-		echo "错误: 基准目录 '$_base_dir' 不存在或不是有效的目录！" >&2
-		return 1
+		log_error "基准目录 '%s' 不存在或不是有效的目录！" "$_base_dir"
+		return 2
 	fi
 
 	_tmp_sub_dirs=$(mktemp)
@@ -109,8 +110,9 @@ find_matching_dirs() {
 	_ret=$?
 
 	if [ $_ret -ne 0 ]; then
+		log_warn "基准目录 '%s' 下没有子目录！" "$_base_dir"
 		rm -f "$_tmp_sub_dirs"
-		return 1
+		return 0
 	fi
 
 	if [ ! -s "$_tmp_sub_dirs" ]; then
@@ -127,11 +129,13 @@ find_matching_dirs() {
 
 # ==============================================================================
 # 子函数 4: 覆盖匹配的目录 (支持回滚，成功后删除源文件)
+# 参数: $1 - 基准目录路径
+#       $2及后续 - 目标目录路径列表
 # ==============================================================================
 update_matching_dirs() {
 	if [ $# -lt 2 ]; then
-		log_error "参数不足，至少需要2个参数！用法: $0 <基准目录路径> <目标目录1> [目标目录2 ...]" >&2
-		return 1
+		log_error "参数不足，至少需要2个参数！用法: %s <基准目录> <目标目录1> [目标目录2 ...]" "$0"
+		return 2
 	fi
 
 	_base_dir="$1"
@@ -140,7 +144,7 @@ update_matching_dirs() {
 	find_matching_dirs "$@" >"$_match_list"
 
 	if [ ! -s "$_match_list" ]; then
-		log_info "没有找到匹配的目录，无需更新。"
+		log_info "基准目录 %s 没有找到匹配的目录，无需更新。" "$_base_dir"
 		rm -f "$_match_list"
 		return 0
 	fi
@@ -196,7 +200,7 @@ update_feeds() {
 
 	# 检查是否启用备份功能 并且备份目录存在
 	if [ "${BAK_ENABLED:-0}" -eq "1" ] && [ -d "$bak_dir" ]; then
-		log_info "feeds备份存在，恢复备份 $bak_dir 到当前目录"
+		log_info "feeds备份存在，恢复备份 %s 到 %s" "$bak_dir" "$target_dir"
 		mkdir -p "$bak_dir" "$target_dir"
 		rsync -aq --delete "$bak_dir/" "$target_dir/"
 	fi
@@ -204,7 +208,7 @@ update_feeds() {
 	./scripts/feeds update -a
 	# 检查是否启用备份功能
 	if [ "${BAK_ENABLED:-0}" -eq "1" ]; then
-		log_info "feeds备份，备份 feeds 到 $bak_dir"
+		log_info "feeds备份，备份 %s 到 %s" "$target_dir" "$bak_dir"
 		mkdir -p "$bak_dir" "$target_dir"
 		# 只备份 feeds 目录下第一层目录，不备份 .tmp 文件目录
 		rsync -aq --delete --exclude='/*.tmp/' --include='/*/' --exclude='/*' "$target_dir/" "$bak_dir/"
