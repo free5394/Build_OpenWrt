@@ -17,6 +17,20 @@ esac
 [ -n "$_SCRIPT_BUILD_COMMON_LOADED" ] && return 0
 _SCRIPT_BUILD_COMMON_LOADED=1
 
+build_env_info() {
+	log_info "环境变量信息："
+	log_info "GITHUB_WORKSPACE: %s" "$GITHUB_WORKSPACE"
+	log_info "OPENWRT_DIR: %s" "$OPENWRT_DIR"
+	log_info "UPLOAD_DIR: %s" "$UPLOAD_DIR"
+	log_info "CUSTOM_CONFIG: %s" "$CUSTOM_CONFIG"
+
+	log_info "OPENWRT_REPO: %s" "$OPENWRT_REPO"
+	log_info "OPENWRT_BRANCH: %s" "$OPENWRT_BRANCH"
+
+	log_info "BAK_ENABLED: %s" "$BAK_ENABLED"
+	log_info "CUSTOM_BAK: %s" "$CUSTOM_BAK"
+}
+
 # 切换到工作空间目录
 build_enter_workspace() {
 	log_info "切换到工作目录..."
