@@ -25,8 +25,8 @@ export CCACHE_NOHASHDIR=true
 export CCACHE_NOCOMPRESS=true
 
 # 自定义备份目录
-export BAK_ENABLED=1 # 是否启用备份功能,0 不启用， 1 启用
-export CUSTOM_BAK="$GITHUB_WORKSPACE/custom_bak"
+export BAK_ENABLED=1           # 是否启用备份功能,0 不启用， 1 启用
+export CUSTOM_BAK="custom_bak" # 自定义备份目录,相对于 GITHUB_WORKSPACE
 
 # 抑制 common.sh/set-env.sh 的加载日志，减少 CI 噪声
 export LOG_SILENT=1
@@ -43,5 +43,6 @@ if [ "${LOG_SILENT:-0}" -eq "1" ]; then
 	printf 'UPLOAD_DIR: %s\n' "$UPLOAD_DIR"
 	printf 'OPENWRT_REPO: %s\n' "$OPENWRT_REPO"
 	printf 'OPENWRT_BRANCH: %s\n' "$OPENWRT_BRANCH"
+	printf 'CUSTOM_BAK: %s\n' "$CUSTOM_BAK"
 	printf '========= %s 脚本结束加载 ============\n' "set-env.sh"
 fi
