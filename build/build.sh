@@ -11,10 +11,6 @@ if (set -o pipefail 2>/dev/null); then
 	set -o pipefail
 fi
 
-# 工作目录
-export GITHUB_WORKSPACE="$(pwd)"
-export LOG_DIR="$GITHUB_WORKSPACE/logs"
-
 # =============================================
 # 引入环境变量模块
 # =============================================
