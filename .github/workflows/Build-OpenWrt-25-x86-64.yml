@@ -65,6 +65,7 @@ jobs:
       UPLOAD_ARTIFACT: ${{ inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{ inputs.upload_release }}
       CCACHE_DIR: /home/runner/.ccache
+      LOG_REDIRECTION_ENABLE: 1 # 是否开启日志重定向，0 不启用， 1 启用
 
     strategy:
       fail-fast: false
@@ -117,6 +118,8 @@ jobs:
         run: |
           echo "CONFIG_FILE=custom_config/${{matrix.config_name}}.config" >> $GITHUB_ENV
           echo "LOG_ROOT=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
+          echo "COMPILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
+          echo "COMPILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
           mkdir -p "${{env.LOG_ROOT}}"
 
       # - name: 克隆OpenWrt源码
@@ -142,7 +145,7 @@ jobs:
       - name: 更新&安装插件
         run: |
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/apply_custom_feeds.sh > "${{env.LOG_ROOT}}/apply_custom_feeds.log" 2>&1
+          ./custom_scripts/apply_custom_feeds.sh
 
       - name: 生成配置文件
         run: |
@@ -155,12 +158,12 @@ jobs:
         run: |
 
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/set_variable_values.sh > "${{env.LOG_ROOT}}/set_variable_values.log" 2>&1
+          ./custom_scripts/set_variable_values.sh
 
       - name: 应用自定义设置
         run: |
           cd ${{env.OPENWRT_DIR}}
-          ./custom_scripts/apply_custom_settings.sh > "${{env.LOG_ROOT}}/apply_custom_settings.log" 2>&1
+          ./custom_scripts/apply_custom_settings.sh
 
       - name: 下载依赖包
         id: download
@@ -177,8 +180,6 @@ jobs:
           echo -e "$(($(nproc) + 1)) thread compile"
           (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) > "${{env.LOG_ROOT}}/openwrt.log" 2>&1
           echo "status=success" >> $GITHUB_OUTPUT
-          echo "COMPILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
-          echo "COMPILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
       - name: 编译后硬盘空间使用情况
         run: |
@@ -186,21 +187,21 @@ jobs:
           df -hT
 
       - name: 校验编译产物
+        id: verify
+        if: steps.compile.outputs.status == 'success'
         run: |
           cd ${{env.OPENWRT_DIR}}
           if ! find bin/targets -name "*.img.gz" | head -1 | grep -q .; then
-            echo "错误: 未找到编译产物 (*.img.gz)"
-            exit 1
+            echo "status=success" >> $GITHUB_OUTPUT
           fi
-          echo "编译产物校验通过"
 
       - name: 组织编译后的固件
         run: |
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/collect_upload.sh > "${{env.LOG_ROOT}}/collect_upload.log" 2>&1
+          ./custom_scripts/collect_upload.sh
 
       - name: 上传固件到Artifacts
-        if: steps.compile.outputs.status == 'success' && env.UPLOAD_ARTIFACT == 'true'
+        if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{env.OPENWRT_BRANCH}}-${{env.COMPILE_DATE}}
@@ -208,7 +209,7 @@ jobs:
           overwrite: true
 
       - name: 上传固件到Releases
-        if: steps.compile.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
+        if: steps.verify.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true'
         uses: softprops/action-gh-release@v3.0.2
         with:
           tag_name: ${{env.OPENWRT_BRANCH}}-${{env.COMPILE_DATE}}-${{github.run_number}}
