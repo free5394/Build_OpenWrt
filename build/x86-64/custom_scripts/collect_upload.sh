@@ -142,8 +142,20 @@ compress_dir() {
 
 # 校验关键环境变量
 verify_params() {
-	if [ -z "$GITHUB_WORKSPACE" ] || [ -z "$UPLOAD_DIR" ] || [ -z "$LOG_DIR" ] || [ -z "$CUSTOM_CONFIG" ]; then
-		log_error "缺少必环境变量: GITHUB_WORKSPACE、UPLOAD_DIR、LOG_DIR、CUSTOM_CONFIG"
+	if [ -z "$GITHUB_WORKSPACE" ]; then
+		log_error "缺少必环境变量: GITHUB_WORKSPACE"
+		return 2
+	fi
+	if [ -z "$UPLOAD_DIR" ]; then
+		log_error "缺少必环境变量: UPLOAD_DIR"
+		return 2
+	fi
+	if [ -z "$LOG_DIR" ]; then
+		log_error "缺少必环境变量: LOG_DIR"
+		return 2
+	fi
+	if [ -z "$CUSTOM_CONFIG" ]; then
+		log_error "缺少必环境变量: CUSTOM_CONFIG"
 		return 2
 	fi
 	if [ ! -d "$GITHUB_WORKSPACE" ]; then
@@ -211,6 +223,7 @@ main() {
 	# 去除后缀
 	name="${file_name%.*}"
 
+	mkdir -p "$dest_dir" "$log_dir"
 	cp_img "$src_dir" "$dest_dir" "$name" || log_warn "镜像上传失败，继续上传"
 	compress_dir "$log_dir" "$dest_dir" "$name" || log_warn "日志压缩失败，继续上传"
 	cp_config "$file_name" "$dest_dir" || log_warn "配置文件上传失败，继续上传"
