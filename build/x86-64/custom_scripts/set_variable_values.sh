@@ -32,6 +32,19 @@ fi
 # =============================================
 # 业务逻辑开始
 # =============================================
+set_repo_info() {
+	# 源码更新信息（使用 heredoc 写入多行环境变量，符合 GitHub 推荐格式）
+	current_dir=$(pwd)
+	cd "$GITHUB_WORKSPACE"
+	cat >>"$GITHUB_ENV" <<EOF
+COMMIT_AUTHOR=$(git show -s --date=short --format='作者: %an')
+COMMIT_DATE=$(git show -s --date=short --format='时间: %ci')
+COMMIT_MESSAGE=$(git show -s --date=short --format='内容: %s')
+COMMIT_HASH=$(git show -s --date=short --format='hash: %H')
+EOF
+	cd "$current_dir"
+	return 0
+}
 
 # 主函数
 main() {
@@ -64,13 +77,15 @@ EOF
 	KERNEL_VERSION=$(sed -nE 's/^LINUX_KERNEL_HASH-([0-9.]+)$/\1/p' "$KERNEL_FILE" | head -n1)
 	echo "KERNEL_VERSION=$KERNEL_VERSION" >>"$GITHUB_ENV"
 
-	# 源码更新信息（使用 heredoc 写入多行环境变量，符合 GitHub 推荐格式）
-	cat >>"$GITHUB_ENV" <<EOF
-COMMIT_AUTHOR=$(git show -s --date=short --format='作者: %an')
-COMMIT_DATE=$(git show -s --date=short --format='时间: %ci')
-COMMIT_MESSAGE=$(git show -s --date=short --format='内容: %s')
-COMMIT_HASH=$(git show -s --date=short --format='hash: %H')
-EOF
+	log_info "SOURCE_REPO=%s" "$SOURCE_REPO"
+	log_info "TARGET_NAME=%s" "$TARGET_NAME"
+	log_info "SUBTARGET_NAME=%s" "$SUBTARGET_NAME"
+	log_info "DEVICE_TARGET=%s" "$DEVICE_TARGET"
+	log_info "KERNEL=%s" "$KERNEL"
+	log_info "KERNEL_FILE=%s" "$KERNEL_FILE"
+	log_info "KERNEL_VERSION=%s" "$KERNEL_VERSION"
+
+	set_repo_info || true
 
 	log_info "$SCRIPT_NAME 脚本执行完成"
 	return 0
