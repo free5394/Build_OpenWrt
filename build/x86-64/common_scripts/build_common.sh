@@ -110,6 +110,13 @@ build_custom_config_patch() {
 	return 0
 }
 
+# 设置环境变量
+build_set_variable_values() {
+	log_info "设置环境变量..."
+	./custom_scripts/set_variable_values.sh
+	return 0
+}
+
 # 应用自定义设置
 build_apply_custom_settings() {
 	log_info "应用自定义设置..."
@@ -147,6 +154,7 @@ pre_build_process() {
 
 # 构建后流程
 post_build_process() {
+	build_set_variable_values
 	build_apply_custom_settings
 	build_download
 	build_compile
