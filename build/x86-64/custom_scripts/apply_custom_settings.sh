@@ -33,7 +33,7 @@ fi
 # 业务逻辑开始
 # =============================================
 CUSTOM_SETTINGS="files/etc/uci-defaults/99-custom-settings.sh"
-CONFIG_FILE="${CONFIG_FILE:-.config}"
+CONFIG_FILE=".config"
 MODIFY_LAN_IP_TYPE=2 # 默认 方案二, 修改默认LAN IP地址
 MODIFY_THEME_TYPE=2  # 默认 方案二, 修改默认主题
 
