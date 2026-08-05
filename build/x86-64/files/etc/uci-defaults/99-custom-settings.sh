@@ -27,7 +27,8 @@ command -v uci >/dev/null 2>&1 || {
 # 业务变量（按需修改）
 # =============================================
 # 根密码（已加密的哈希字符串，若为空则跳过密码修改）
-root_password='$6$eAx0vGeWLH768Ag.$4jKvsP1IeRyDhVnGnLD87XtGL.yTtf9chz3OAvXOMNSi.cFEGvywcrlL5vmC3URhyGUcKboWHpcUJK.o.cYP0.'
+# root_password='$6$eAx0vGeWLH768Ag.$4jKvsP1IeRyDhVnGnLD87XtGL.yTtf9chz3OAvXOMNSi.cFEGvywcrlL5vmC3URhyGUcKboWHpcUJK.o.cYP0.'
+root_password=""
 
 # PPPoE 用户名和密码（均非空时才会配置 PPPoE）
 pppoe_username=""
