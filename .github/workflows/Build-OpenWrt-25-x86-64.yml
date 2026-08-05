@@ -65,7 +65,7 @@ jobs:
       UPLOAD_ARTIFACT: ${{ inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{ inputs.upload_release }}
       CCACHE_DIR: /home/runner/.ccache
-      LOG_REDIRECTION_ENABLE: 1 # 是否开启日志重定向，0 不启用， 1 启用
+      # LOG_REDIRECTION_ENABLE: 0 # 是否开启日志重定向，0 不启用， 1 启用
 
     strategy:
       fail-fast: false
@@ -146,7 +146,7 @@ jobs:
       - name: 更新&安装插件
         run: |
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/apply_custom_feeds.sh
+          ./custom_scripts/apply_custom_feeds.sh 2>&1 | tee -a "$LOG_ROOT/apply_custom_feeds.log"
 
       - name: 生成配置文件
         run: |
@@ -158,19 +158,19 @@ jobs:
       - name: 设置环境变量
         run: |
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/set_variable_values.sh
+          ./custom_scripts/set_variable_values.sh 2>&1 | tee -a "$LOG_ROOT/set_variable_values.log"
 
       - name: 应用自定义设置
         run: |
           cd ${{env.OPENWRT_DIR}}
-          ./custom_scripts/apply_custom_settings.sh
+          ./custom_scripts/apply_custom_settings.sh 2>&1 | tee -a "$LOG_ROOT/apply_custom_settings.log"
 
       - name: 下载依赖包
         id: download
         if: success()
         run: |
           cd ${{env.OPENWRT_DIR}}
-          (make download -j $(($(nproc)+1)) V=s || make download -j1 V=s) > "${{env.LOG_ROOT}}/download.log" 2>&1
+          (make download -j $(($(nproc)+1)) V=s || make download -j1 V=s) 2>&1 | tee -a "$LOG_ROOT/download.log"
 
       - name: 编译固件
         id: compile
@@ -178,7 +178,7 @@ jobs:
         run: |
           cd ${{env.OPENWRT_DIR}}
           echo -e "$(($(nproc) + 1)) thread compile"
-          (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) > "${{env.LOG_ROOT}}/openwrt.log" 2>&1
+          (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) 2>&1 | tee -a "$LOG_ROOT/openwrt.log"
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 编译后硬盘空间使用情况
@@ -200,7 +200,7 @@ jobs:
       - name: 组织编译后的固件
         run: |
           cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/collect_upload.sh
+          ./custom_scripts/collect_upload.sh 2>&1 | tee -a "$LOG_ROOT/collect_upload.log"
 
       - name: 上传固件到Artifacts
         if: env.UPLOAD_ARTIFACT == 'true'
