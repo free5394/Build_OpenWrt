@@ -237,6 +237,9 @@ update_package() {
 	update_matching_dirs "$community_dir/kenzo" "feeds"
 	update_matching_dirs "$community_dir/small" "feeds"
 
+	clone_repo "https://github.com/timsaya/luci-app-bandix-plus" "$community_dir/luci-app-bandix-plus"
+	clone_repo "https://github.com/timsaya/openwrt-bandix-plus" "$community_dir/openwrt-bandix-plus"
+
 	log_info "更新package完成"
 	return 0
 }
