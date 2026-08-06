@@ -75,7 +75,7 @@ fi
 
 # 克隆 OpenWrt 仓库
 build_clone_openwrt() {
-	clone_repo "https://github.com/$OPENWRT_REPO.git" "${OPENWRT_DIR%/}"
+	clone_repo "https://github.com/$OPENWRT_REPO.git" "${OPENWRT_DIR%/}" "$OPENWRT_BRANCH"
 }
 
 time_it build_clone_openwrt
