@@ -10,7 +10,7 @@ SCRIPT_FULLNAME="${0##*/}"
 # 脚本名（不含后缀）
 SCRIPT_NAME="${SCRIPT_FULLNAME%.*}"
 # 日志文件路径
-LOG_FILE="/tmp/$SCRIPT_NAME.log"
+LOG_FILE="./$SCRIPT_NAME.log"
 
 # =============================================
 # 统一日志输出重定向（追加模式）
