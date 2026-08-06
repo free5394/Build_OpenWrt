@@ -138,10 +138,10 @@ clone_repo() {
 	# 规范化路径
 	bak_dir=$(norm_path "$bak_dir")
 	target_dir=$(norm_path "$target_dir")
-	log_info "克隆仓库 $repo_url 到 $target_dir"
+	log_info "克隆仓库 %s 到 %s" "$repo_url" "$target_dir"
 	# 检查备份目录是否存在
 	if [ "${BAK_ENABLED:-0}" -eq 1 ] && [ -d "$bak_dir" ]; then
-		log_info "仓库备份存在，恢复备份 $bak_dir 到 $target_dir"
+		log_info "仓库备份存在，恢复备份 %s 到 %s" "$bak_dir" "$target_dir"
 		mkdir -p "$bak_dir" "$target_dir"
 		rsync -aq --delete "$bak_dir/" "$target_dir/"
 		return 0
@@ -149,21 +149,22 @@ clone_repo() {
 
 	if [ -n "$branch" ]; then
 		git clone --depth 1 -b "$branch" "$repo_url" "$target_dir" || {
-			log_error "克隆失败: $repo_url (分支: $branch)"
+			log_error "克隆失败: %s (分支: %s)" "$repo_url" "$branch"
 			return 1
 		}
+		log_info "克隆仓库 %s (分支: %s) 到 %s 完成" "$repo_url" "$branch" "$target_dir"
 	else
 		git clone --depth 1 "$repo_url" "$target_dir" || {
-			log_error "克隆失败: $repo_url"
+			log_error "克隆失败: %s" "$repo_url"
 			return 1
 		}
+		log_info "克隆仓库 %s 到 %s 完成" "$repo_url" "$target_dir"
 	fi
 	if [ "${BAK_ENABLED:-0}" -eq 1 ]; then
-		log_info "仓库备份，备份 $target_dir 到 $bak_dir"
+		log_info "仓库备份，备份 %s 到 %s" "$target_dir" "$bak_dir"
 		mkdir -p "$bak_dir" "$target_dir"
 		rsync -aq --delete "$target_dir/" "$bak_dir/"
 	fi
-	log_info "克隆仓库 $repo_url 到 $target_dir 完成"
 	return 0
 }
 
