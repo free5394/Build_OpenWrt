@@ -199,7 +199,7 @@ build_make_clean() {
 # 上传产物
 build_upload() {
 	log_info "开始上传..."
-	./custom_scripts/collect_upload.sh
+	./scripts/custom/collect_upload.sh
 	return 0
 }
 
