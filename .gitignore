@@ -2,9 +2,8 @@
 .idea/
 .history/
 
-# claude
-.claude/settings.local.json
-.claude/worktree/
+# claude（整体排除，避免 scheduled_tasks.lock、plans/、skills/ 等本地状态误提交）
+.claude/
 
 
 # 锁文件
