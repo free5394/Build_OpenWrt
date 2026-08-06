@@ -121,10 +121,6 @@ jobs:
           echo "COMPILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
           mkdir -p "$LOG_DIR" "$UPLOAD_DIR"
 
-      # - name: 克隆OpenWrt源码
-      #   run: |
-      #     git clone -b ${{env.OPENWRT_BRANCH}} --single-branch --depth 1 https://github.com/${{env.OPENWRT_REPO}}.git ${{env.OPENWRT_DIR}}
-
       - name: 克隆OpenWrt源码
         uses: actions/checkout@v7.0.1
         with:
@@ -136,32 +132,28 @@ jobs:
 
       - name: 复制自定义文件
         run: |
-          cd ${{env.OPENWRT_DIR}}
-          cp -rf ../build/x86-64/* .
-          chmod +x files/etc/uci-defaults/*.sh
-          chmod +x custom_scripts/*.sh
+          cp -rf target/x86-64/* "${{env.OPENWRT_DIR}}"
+          chmod +x "${{env.OPENWRT_DIR}}"/files/etc/uci-defaults/*.sh
+          chmod +x scripts/custom/*.sh
 
       - name: 更新&安装插件
         run: |
-          cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/apply_custom_feeds.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/apply_custom_feeds.log"
+          ./scripts/custom/apply_custom_feeds.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/apply_custom_feeds.log"
 
       - name: 生成配置文件
         run: |
-          cd ${{env.OPENWRT_DIR}}
+          cd "${{env.OPENWRT_DIR}}"
           [ -f "${{env.CUSTOM_CONFIG}}" ] && cp -f "${{env.CUSTOM_CONFIG}}" .config
           make defconfig V=s
           ./scripts/diffconfig.sh >"$(basename ${{env.CUSTOM_CONFIG}})"
 
       - name: 设置环境变量
         run: |
-          cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/set_variable_values.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/set_variable_values.log"
+          ./scripts/custom/set_variable_values.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/set_variable_values.log"
 
       - name: 应用自定义设置
         run: |
-          cd ${{env.OPENWRT_DIR}}
-          ./custom_scripts/apply_custom_settings.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/apply_custom_settings.log"
+          ./scripts/custom/apply_custom_settings.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/apply_custom_settings.log"
 
       - name: 下载依赖包
         id: download
@@ -176,7 +168,7 @@ jobs:
         run: |
           cd ${{env.OPENWRT_DIR}}
           echo -e "$(($(nproc) + 1)) thread compile"
-          (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/openwrt.log"
+          (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/compile.log"
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 编译后硬盘空间使用情况
@@ -197,8 +189,7 @@ jobs:
 
       - name: 组织编译后的固件
         run: |
-          cd ${{env.OPENWRT_DIR}} 
-          ./custom_scripts/collect_upload.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/collect_upload.log"
+          ./scripts/custom/collect_upload.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/collect_upload.log"
 
       - name: 上传固件到Artifacts
         if: env.UPLOAD_ARTIFACT == 'true'
@@ -218,6 +209,7 @@ jobs:
           working_directory: ${{env.UPLOAD_DIR}}
           files: |
             *.img.gz
+            *.config
             sha256sums
           body: |
             ## 📒 固件信息
