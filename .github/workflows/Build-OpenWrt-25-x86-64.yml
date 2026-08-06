@@ -84,7 +84,7 @@ jobs:
 
       - name: 当前环境信息
         run: |
-          chmod +x scripts/check.sh && ./scripts/check.sh
+          chmod +x scripts/init/check.sh && ./scripts/init/check.sh
 
       - name: 清理磁盘空间
         uses: jlumbroso/free-disk-space@v1.3.1
@@ -104,7 +104,7 @@ jobs:
 
       - name: 初始化环境
         run: |
-          chmod +x scripts/init-env.sh && ./scripts/init-env.sh
+          chmod +x scripts/init/init-env.sh && ./scripts/init/init-env.sh
 
       - name: 恢复 ccache 缓存
         uses: actions/cache@v6.1.0
