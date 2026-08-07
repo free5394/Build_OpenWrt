@@ -252,6 +252,7 @@ modify_network() {
 		uci set network.wan6.reqaddress='try'
 		uci set network.wan6.reqprefix='auto'
 		uci set network.wan6.norelease='1'
+		uci set network.wan6.ip6ifaceid='eui64'
 
 		uci -q del network.wan6.disabled 2>/dev/null || true
 		need_commit=1
