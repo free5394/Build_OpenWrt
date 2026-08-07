@@ -87,6 +87,7 @@ cp -rf target/x86-64/* "$OPENWRT_DIR/"
 build_make_custom_config() {
 	pre_build_process
 	build_custom_config
+	# build_custom_config_patch
 	post_build_process
 
 	log_info "全部完成"
