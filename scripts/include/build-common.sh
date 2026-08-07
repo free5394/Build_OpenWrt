@@ -115,7 +115,7 @@ _new_config() {
 	log_info "生成配置文件..."
 	rm -rf .config
 	make menuconfig
-	./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
+	./scripts/diffconfig.sh >"$(basename "$CUSTOM_CONFIG")"
 	return 0
 }
 
@@ -132,7 +132,7 @@ _custom_config_patch() {
 	make defconfig V=s
 	log_info "调整配置文件..."
 	make menuconfig
-	./scripts/diffconfig.sh >"$CUSTOM_CONFIG"
+	./scripts/diffconfig.sh >"$(basename "$CUSTOM_CONFIG")"
 	return 0
 }
 
