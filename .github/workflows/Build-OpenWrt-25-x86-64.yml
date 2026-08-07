@@ -71,9 +71,9 @@ jobs:
       fail-fast: false
       matrix:
         config_name:
-          # - minimal
+          - minimal
           # - standard
-          - full
+          # - full
 
     steps:
       - name: 克隆仓库
