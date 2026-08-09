@@ -11,6 +11,7 @@ export UPLOAD_DIR=upload
 export LOG_DIR=logs
 
 # 自定义配置文件
+# export CUSTOM_CONFIG="custom_config/minimal.config"
 # export CUSTOM_CONFIG="custom_config/standard.config"
 export CUSTOM_CONFIG="custom_config/full.config"
 

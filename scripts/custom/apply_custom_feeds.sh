@@ -11,11 +11,18 @@ if (set -o pipefail 2>/dev/null); then
 	set -o pipefail
 fi
 
+# 获取当前脚本所在目录
+SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) ||
+	SCRIPT_DIR=$(dirname -- "$0")
+
+# 获取scripts目录所在路径
+SCRIPT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd -P)
+
 # =============================================
 # 引入日志模块
 # =============================================
 # shellcheck source=/dev/null
-. "$(dirname -- "$0")"/../common_scripts/logger.sh || {
+. "$SCRIPT_ROOT/include/logger.sh" || {
 	printf '错误: 无法加载日志模块 logger.sh\n' >&2
 	exit 1
 }
@@ -24,7 +31,7 @@ fi
 # 引入公共模块（强制依赖，最佳实践）
 # =============================================
 # shellcheck source=/dev/null
-. "$(dirname -- "$0")"/../common_scripts/common.sh || {
+. "$SCRIPT_ROOT/include/common.sh" || {
 	printf '错误: 无法加载公共模块 common.sh\n' >&2
 	exit 1
 }
@@ -269,16 +276,51 @@ update_golang() {
 	return 0
 }
 
-# 主函数
-main() {
-	log_info "$SCRIPT_NAME 脚本开始执行"
+# 校验关键环境变量
+verify_env() {
+	if [ -z "$GITHUB_WORKSPACE" ]; then
+		log_error "缺少必环境变量: GITHUB_WORKSPACE"
+		return 2
+	fi
+	if [ ! -d "$GITHUB_WORKSPACE" ]; then
+		log_warn "工作空间目录 %s 不存在，无文件可处理。" "$GITHUB_WORKSPACE"
+		return 2
+	fi
+	return 0
+}
 
+# 工作流
+work_flow() {
 	# 添加自定义Feeds
 	update_feeds
 	update_package
 	update_golang
 	install_feeds
+}
 
+# 处理任务
+process_task() {
+	# 记录当前目录
+	current_dir="$(pwd)"
+	# 切换到 OpenWrt 根目录
+	cd "$OPENWRT_DIR"
+
+	"$@" || {
+		log_error "任务 %s 失败" "$*"
+		cd "$current_dir"
+		return 1
+	}
+
+	# 切换回当前目录
+	cd "$current_dir"
+	return 0
+}
+
+# 主函数
+main() {
+	log_info "$SCRIPT_NAME 脚本开始执行"
+	verify_env "$@" || exit 1
+	process_task work_flow
 	log_info "$SCRIPT_NAME 脚本执行完成"
 }
 
