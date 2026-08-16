@@ -1,22 +1,27 @@
-# idea
+# ide
 .idea/
+
+# vscode
+.vscode/
+.trae/
 .history/
 
-# claude（整体排除，避免 scheduled_tasks.lock、plans/、skills/ 等本地状态误提交）
+# claude
 .claude/
 
-
-# 锁文件
-*.lock
-
-# trae
-.trae/
+# opencode
+.opencode/
+.omo/
 
 # 临时文件
 tmp/
 
 # 日志
 logs/
+*.log
+
+# 锁文件
+*.lock
 
 # OpenWrt 源码（本地构建克隆的上游源码树）
 openwrt/
