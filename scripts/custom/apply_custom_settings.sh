@@ -8,12 +8,12 @@ set -e
 # 不再调用 `set -o | grep pipefail` 验证：若 grep 未匹配，
 # 在 set -e 下会误终止脚本
 if (set -o pipefail 2>/dev/null); then
-	set -o pipefail
+    set -o pipefail
 fi
 
 # 获取当前脚本所在目录
 SCRIPT_DIR=$(cd -P -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) ||
-	SCRIPT_DIR=$(dirname -- "$0")
+    SCRIPT_DIR=$(dirname -- "$0")
 
 # 获取scripts目录所在路径
 SCRIPT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd -P)
@@ -23,8 +23,8 @@ SCRIPT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd -P)
 # =============================================
 # shellcheck source=/dev/null
 . "$SCRIPT_ROOT/include/logger.sh" || {
-	printf '错误: 无法加载日志模块 logger.sh\n' >&2
-	exit 1
+    printf '错误: 无法加载日志模块 logger.sh\n' >&2
+    exit 1
 }
 
 # =============================================
@@ -32,8 +32,8 @@ SCRIPT_ROOT=$(cd "$SCRIPT_DIR/.." && pwd -P)
 # =============================================
 # shellcheck source=/dev/null
 . "$SCRIPT_ROOT/include/common.sh" || {
-	printf '错误: 无法加载公共模块 common.sh\n' >&2
-	exit 1
+    printf '错误: 无法加载公共模块 common.sh\n' >&2
+    exit 1
 }
 
 # =============================================
@@ -46,144 +46,144 @@ MODIFY_THEME_TYPE=2  # 默认 方案二, 修改默认主题
 
 # 修补配置文件
 patch_config() {
-	if [ -z "$PART_SIZE" ]; then
-		log_warn "PART_SIZE 为空，跳过设置固件rootfs大小"
-		return 0
-	fi
-	if [ ! -f "$CONFIG_FILE" ]; then
-		log_error "配置文件 %s 不存在" "$CONFIG_FILE"
-		return 1
-	fi
-	sed -i -e '/^CONFIG_TARGET_ROOTFS_PARTSIZE=/d' \
-		-e '$a CONFIG_TARGET_ROOTFS_PARTSIZE='"$PART_SIZE" \
-		"$CONFIG_FILE"
-	log_info "已设置固件rootfs大小为: %s" "$PART_SIZE"
-	return 0
+    if [ -z "$PART_SIZE" ]; then
+        log_warn "PART_SIZE 为空，跳过设置固件rootfs大小"
+        return 0
+    fi
+    if [ ! -f "$CONFIG_FILE" ]; then
+        log_error "配置文件 %s 不存在" "$CONFIG_FILE"
+        return 1
+    fi
+    sed -i -e '/^CONFIG_TARGET_ROOTFS_PARTSIZE=/d' \
+        -e '$a CONFIG_TARGET_ROOTFS_PARTSIZE='"$PART_SIZE" \
+        "$CONFIG_FILE"
+    log_info "已设置固件rootfs大小为: %s" "$PART_SIZE"
+    return 0
 }
 
 # 方案一, 修改默认LAN IP地址
 modify_lan_ip_address_1() {
-	CONFIG_GENERATE="package/base-files/files/bin/config_generate"
-	if [ -z "$IP_ADDRESS" ]; then
-		log_warn "未配置 IP地址，跳过 IP地址配置"
-		return 0
-	fi
-	if [ ! -f "$CONFIG_GENERATE" ]; then
-		log_error "配置生成文件 %s 不存在" "$CONFIG_GENERATE"
-		return 1
-	fi
-	sed -i '/lan) ipad/s/"[0-9.]*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
-	# 校验 IP 是否成功写入，防止上游 config_generate 格式变更导致静默失败
-	if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
-		log_info "已修改默认LAN IP地址为: %s" "$IP_ADDRESS"
-		return 0
-	fi
-	log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 %s" "$CONFIG_GENERATE"
-	return 0
+    CONFIG_GENERATE="package/base-files/files/bin/config_generate"
+    if [ -z "$IP_ADDRESS" ]; then
+        log_warn "未配置 IP地址，跳过 IP地址配置"
+        return 0
+    fi
+    if [ ! -f "$CONFIG_GENERATE" ]; then
+        log_error "配置生成文件 %s 不存在" "$CONFIG_GENERATE"
+        return 1
+    fi
+    sed -i '/lan) ipad/s/"[0-9.]*"/"'"$IP_ADDRESS"'"/' "$CONFIG_GENERATE"
+    # 校验 IP 是否成功写入，防止上游 config_generate 格式变更导致静默失败
+    if grep -q "lan) ipad.*\"$IP_ADDRESS\"" "$CONFIG_GENERATE"; then
+        log_info "已修改默认LAN IP地址为: %s" "$IP_ADDRESS"
+        return 0
+    fi
+    log_warn "LAN IP 修改后校验未通过，可能上游 config_generate 格式已变更，请检查 %s" "$CONFIG_GENERATE"
+    return 0
 }
 
 # 方案二, 修改默认LAN IP地址
 modify_lan_ip_address_2() {
-	if [ -z "$IP_ADDRESS" ]; then
-		log_warn "未配置 IP地址，跳过 IP地址配置"
-		return 0
-	fi
-	if [ ! -f "$CUSTOM_SETTINGS" ]; then
-		log_error "自设置文件 %s 不存在" "$CUSTOM_SETTINGS"
-		return 1
-	fi
-	log_info "设置 IP地址为: %s" "$IP_ADDRESS"
-	awk -v ip_address="$IP_ADDRESS" '
+    if [ -z "$IP_ADDRESS" ]; then
+        log_warn "未配置 IP地址，跳过 IP地址配置"
+        return 0
+    fi
+    if [ ! -f "$CUSTOM_SETTINGS" ]; then
+        log_error "自设置文件 %s 不存在" "$CUSTOM_SETTINGS"
+        return 1
+    fi
+    log_info "设置 IP地址为: %s" "$IP_ADDRESS"
+    awk -v ip_address="$IP_ADDRESS" '
     /^lan_ip_addr=/ { printf "lan_ip_addr=\"%s\"\n", ip_address; next }
     { print }
 	' "$CUSTOM_SETTINGS" >"$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
-		log_error "脚本 %s IP地址写入失败" "$CUSTOM_SETTINGS"
-		return 1
-	}
-	return 0
+        log_error "脚本 %s IP地址写入失败" "$CUSTOM_SETTINGS"
+        return 1
+    }
+    return 0
 }
 
 # 修改默认LAN IP地址
 modify_lan_ip_address() {
-	if [ "${MODIFY_LAN_IP_TYPE}" = "0" ]; then
-		log_info "跳过修改默认LAN IP地址"
-		return 0
-	fi
-	if [ "${MODIFY_LAN_IP_TYPE}" = "1" ]; then
-		modify_lan_ip_address_1
-		return 0
-	fi
-	modify_lan_ip_address_2
-	return 0
+    if [ "${MODIFY_LAN_IP_TYPE}" = "0" ]; then
+        log_info "跳过修改默认LAN IP地址"
+        return 0
+    fi
+    if [ "${MODIFY_LAN_IP_TYPE}" = "1" ]; then
+        modify_lan_ip_address_1
+        return 0
+    fi
+    modify_lan_ip_address_2
+    return 0
 }
 
 # 方案一, 修改默认主题为 luci-theme-argon
 modify_theme_1() {
-	sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile 2>/dev/null || {
-		log_warn "luci-theme-argon 替换失败，可能 feeds 未安装"
-		return 1
-	}
-	return 0
+    sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile 2>/dev/null || {
+        log_warn "luci-theme-argon 替换失败，可能 feeds 未安装"
+        return 1
+    }
+    return 0
 }
 
 # 方案二, 修改默认主题为 luci-theme-argon
 modify_theme_2() {
-	if [ ! -f "$CUSTOM_SETTINGS" ]; then
-		log_error "自设置文件 %s 不存在" "$CUSTOM_SETTINGS"
-		return 1
-	fi
-	log_info "设置默认主题为: argon"
-	awk -v theme="argon" '
+    if [ ! -f "$CUSTOM_SETTINGS" ]; then
+        log_error "自设置文件 %s 不存在" "$CUSTOM_SETTINGS"
+        return 1
+    fi
+    log_info "设置默认主题为: argon"
+    awk -v theme="argon" '
     /^default_theme=/ { printf "default_theme=\"%s\"\n", theme; next }
     { print }
 	' "$CUSTOM_SETTINGS" >"$CUSTOM_SETTINGS.tmp" && mv -f "$CUSTOM_SETTINGS.tmp" "$CUSTOM_SETTINGS" || {
-		log_error "脚本 %s 主题写入失败" "$CUSTOM_SETTINGS"
-		return 1
-	}
-	return 0
+        log_error "脚本 %s 主题写入失败" "$CUSTOM_SETTINGS"
+        return 1
+    }
+    return 0
 }
 
 # 修改默认主题为 luci-theme-argon
 modify_theme() {
-	if [ "${MODIFY_THEME_TYPE}" = "0" ]; then
-		log_info "跳过修改默认主题"
-		return 0
-	fi
-	if [ "${MODIFY_THEME_TYPE}" = "1" ]; then
-		modify_theme_1
-		return 0
-	fi
-	modify_theme_2
-	return 0
+    if [ "${MODIFY_THEME_TYPE}" = "0" ]; then
+        log_info "跳过修改默认主题"
+        return 0
+    fi
+    if [ "${MODIFY_THEME_TYPE}" = "1" ]; then
+        modify_theme_1
+        return 0
+    fi
+    modify_theme_2
+    return 0
 }
 
 # 替换argon主题背景
 cp_background_img() {
-	BG_SRC="$GITHUB_WORKSPACE/images/bg1.jpg"
-	BG_DST=$(find feeds -type f -path "*/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg" 2>/dev/null | head -n 1)
-	# 替换默认主题背景
-	if [ ! -f "$BG_SRC" ]; then
-		log_warn "背景文件 %s 不存在" "$BG_SRC"
-		return 0
-	fi
-	if [ ! -f "$BG_DST" ]; then
-		log_warn "背景文件 %s 不存在" "$BG_DST"
-		return 0
-	fi
-	cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
-	return 0
+    BG_SRC="$GITHUB_WORKSPACE/images/bg1.jpg"
+    BG_DST=$(find feeds -type f -path "*/luci-theme-argon/htdocs/luci-static/argon/img/bg1.jpg" 2>/dev/null | head -n 1)
+    # 替换默认主题背景
+    if [ ! -f "$BG_SRC" ]; then
+        log_warn "背景文件 %s 不存在" "$BG_SRC"
+        return 0
+    fi
+    if [ ! -f "$BG_DST" ]; then
+        log_warn "背景文件 %s 不存在" "$BG_DST"
+        return 0
+    fi
+    cp -f "$BG_SRC" "$BG_DST" && log_info "已替换 Argon 主题背景" || log_warn "Argon 主题背景替换失败"
+    return 0
 }
 
 # 配置 ttyd 免登录
 apply_ttyd_auto_login() {
-	# ttyd 免登录（默认关闭，设置 TTYD_AUTOLOGIN=1 开启；免登录有安全风险，禁止在公网暴露 ttyd）
-	if [ "${TTYD_AUTOLOGIN:-0}" = "0" ]; then
-		log_info "TTYD_AUTOLOGIN=0，跳过 ttyd 免登录配置"
-		return 0
-	fi
-	sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
-	log_info "已启用 ttyd root 免登录"
-	return 0
+    # ttyd 免登录（默认关闭，设置 TTYD_AUTOLOGIN=1 开启；免登录有安全风险，禁止在公网暴露 ttyd）
+    if [ "${TTYD_AUTOLOGIN:-0}" = "0" ]; then
+        log_info "TTYD_AUTOLOGIN=0，跳过 ttyd 免登录配置"
+        return 0
+    fi
+    sed -i 's|/bin/login|/bin/login -f root|g' feeds/packages/utils/ttyd/files/ttyd.config
+    log_info "已启用 ttyd root 免登录"
+    return 0
 }
 
 # ==========================================
@@ -191,112 +191,112 @@ apply_ttyd_auto_login() {
 # 功能：配置 OpenClash 核心文件
 # ==========================================
 preset_openclash_core() {
-	if [ ! -f "$CONFIG_FILE" ]; then
-		log_error "配置文件 %s 不存在" "$CONFIG_FILE"
-		return 1
-	fi
-	# 精确判断 .config 中是否选中 luci-app-openclash
-	if ! grep -q '^CONFIG_PACKAGE_luci-app-openclash=y$' "$CONFIG_FILE"; then
-		log_info "未选择 luci-app-openclash，跳过 openclash core 配置"
-		return 0
-	fi
-	log_info "✅ 已选择 luci-app-openclash，添加 openclash core"
+    if [ ! -f "$CONFIG_FILE" ]; then
+        log_error "配置文件 %s 不存在" "$CONFIG_FILE"
+        return 1
+    fi
+    # 精确判断 .config 中是否选中 luci-app-openclash
+    if ! grep -q '^CONFIG_PACKAGE_luci-app-openclash=y$' "$CONFIG_FILE"; then
+        log_info "未选择 luci-app-openclash，跳过 openclash core 配置"
+        return 0
+    fi
+    log_info "✅ 已选择 luci-app-openclash，添加 openclash core"
 
-	# 2. 下载 Clash Meta 核心 (致命错误)
-	_core_ver="${OPENCLASH_CORE_VERSION:-v2}"
-	meta_url="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-amd64-$_core_ver.tar.gz"
+    # 2. 下载 Clash Meta 核心 (致命错误)
+    _core_ver="${OPENCLASH_CORE_VERSION:-v2}"
+    meta_url="https://raw.githubusercontent.com/vernesong/OpenClash/core/master/meta/clash-linux-amd64-$_core_ver.tar.gz"
 
-	# 调用下载函数，失败立即返回 1，无需 if 嵌套
-	_clash_tae_file="/tmp/clash_meta.tar.gz"
-	download_file "$meta_url" "$_clash_tae_file" || return 1
+    # 调用下载函数，失败立即返回 1，无需 if 嵌套
+    _clash_tae_file="/tmp/clash_meta.tar.gz"
+    download_file "$meta_url" "$_clash_tae_file" || return 1
 
-	# 3. 安全解压核心
-	_tmp_dir=$(mktemp -d)
-	# 解压失败处理
-	if ! tar xzf "$_clash_tae_file" -C "$_tmp_dir"; then
-		log_error "OpenClash 核心解压失败"
-		rm -rf "$_tmp_dir" "$_clash_tae_file"
-		return 1
-	fi
+    # 3. 安全解压核心
+    _tmp_dir=$(mktemp -d)
+    # 解压失败处理
+    if ! tar xzf "$_clash_tae_file" -C "$_tmp_dir"; then
+        log_error "OpenClash 核心解压失败"
+        rm -rf "$_tmp_dir" "$_clash_tae_file"
+        return 1
+    fi
 
-	# 查找并移动二进制文件
-	_core_bin=$(find "$_tmp_dir" -type f -name "clash*" | head -1)
-	if [ -z "$_core_bin" ]; then
-		log_error "解压后未找到 clash_meta 二进制文件"
-		rm -rf "$_tmp_dir" "$_clash_tae_file"
-		return 1
-	fi
+    # 查找并移动二进制文件
+    _core_bin=$(find "$_tmp_dir" -type f -name "clash*" | head -1)
+    if [ -z "$_core_bin" ]; then
+        log_error "解压后未找到 clash_meta 二进制文件"
+        rm -rf "$_tmp_dir" "$_clash_tae_file"
+        return 1
+    fi
 
-	_clash_bin="files/etc/openclash/core/clash_meta"
-	mkdir -p "$(dirname "$_clash_bin")"
-	mv -f "$_core_bin" "$_clash_bin" && chmod +x "$_clash_bin"
-	rm -rf "$_tmp_dir" "$_clash_tae_file"
+    _clash_bin="files/etc/openclash/core/clash_meta"
+    mkdir -p "$(dirname "$_clash_bin")"
+    mv -f "$_core_bin" "$_clash_bin" && chmod +x "$_clash_bin"
+    rm -rf "$_tmp_dir" "$_clash_tae_file"
 
-	# 4. 下载 GeoIP/GeoSite 数据 (非致命错误)
-	# 失败时 download_file 会记录 error，此处补充 warn 日志并允许脚本继续
-	log_info "下载 GeoIP 规则数据..."
-	download_file "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" \
-		"files/etc/openclash/GeoIP.dat" || {
-		log_warn "GeoIP.dat 下载失败，OpenClash 可运行但 GeoIP 规则不可用"
-	}
+    # 4. 下载 GeoIP/GeoSite 数据 (非致命错误)
+    # 失败时 download_file 会记录 error，此处补充 warn 日志并允许脚本继续
+    log_info "下载 GeoIP 规则数据..."
+    download_file "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat" \
+        "files/etc/openclash/GeoIP.dat" || {
+        log_warn "GeoIP.dat 下载失败，OpenClash 可运行但 GeoIP 规则不可用"
+    }
 
-	log_info "下载 GeoSite 规则数据..."
-	download_file "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" \
-		"files/etc/openclash/GeoSite.dat" || {
-		log_warn "GeoSite.dat 下载失败，OpenClash 可运行但 GeoSite 规则不可用"
-	}
+    log_info "下载 GeoSite 规则数据..."
+    download_file "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat" \
+        "files/etc/openclash/GeoSite.dat" || {
+        log_warn "GeoSite.dat 下载失败，OpenClash 可运行但 GeoSite 规则不可用"
+    }
 
-	log_info "已添加 openclash 核心配置"
-	return 0
+    log_info "已添加 openclash 核心配置"
+    return 0
 }
 
 # 校验关键环境变量
 verify_env() {
-	if [ -z "$GITHUB_WORKSPACE" ]; then
-		log_error "缺少必环境变量: GITHUB_WORKSPACE"
-		return 2
-	fi
-	if [ ! -d "$GITHUB_WORKSPACE" ]; then
-		log_warn "工作空间目录 %s 不存在，无文件可处理。" "$GITHUB_WORKSPACE"
-		return 2
-	fi
-	return 0
+    if [ -z "$GITHUB_WORKSPACE" ]; then
+        log_error "缺少必环境变量: GITHUB_WORKSPACE"
+        return 2
+    fi
+    if [ ! -d "$GITHUB_WORKSPACE" ]; then
+        log_warn "工作空间目录 %s 不存在，无文件可处理。" "$GITHUB_WORKSPACE"
+        return 2
+    fi
+    return 0
 }
 
 # 工作流
 work_flow() {
-	patch_config
-	modify_lan_ip_address
-	modify_theme
-	cp_background_img
-	apply_ttyd_auto_login
-	preset_openclash_core
+    patch_config
+    modify_lan_ip_address
+    modify_theme
+    cp_background_img
+    apply_ttyd_auto_login
+    preset_openclash_core
 }
 
 # 处理任务
 process_task() {
-	# 记录当前目录
-	current_dir="$(pwd)"
-	# 切换到 OpenWrt 根目录
-	cd "$OPENWRT_DIR"
+    # 记录当前目录
+    current_dir="$(pwd)"
+    # 切换到 OpenWrt 根目录
+    cd "$OPENWRT_DIR"
 
-	"$@" || {
-		log_error "任务 %s 失败" "$*"
-		cd "$current_dir"
-		return 1
-	}
+    "$@" || {
+        log_error "任务 %s 失败" "$*"
+        cd "$current_dir"
+        return 1
+    }
 
-	# 切换回当前目录
-	cd "$current_dir"
-	return 0
+    # 切换回当前目录
+    cd "$current_dir"
+    return 0
 }
 
 # 主函数
 main() {
-	log_info "$SCRIPT_NAME 脚本开始执行"
-	verify_env "$@" || exit 1
-	process_task work_flow
-	log_info "$SCRIPT_NAME 脚本执行完成"
+    log_info "$SCRIPT_NAME 脚本开始执行"
+    verify_env "$@" || exit 1
+    process_task work_flow
+    log_info "$SCRIPT_NAME 脚本执行完成"
 }
 
 # 调用主函数
