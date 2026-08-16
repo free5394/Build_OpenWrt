@@ -4,7 +4,7 @@
 
 ## 报告问题
 
-提交 [Issue](https://github.com/walk6834/Build_OpenWrt/issues) 时请包含：
+提交 [Issue](https://github.com/free5394/Build_OpenWrt/issues) 时请包含：
 
 - 复现步骤（触发方式、参数配置）
 - 预期行为与实际行为
@@ -22,18 +22,18 @@
 
 提交信息使用**中文**编写，遵循 `<类型>(<范围>): <描述>` 格式：
 
-| 类型     | 说明           | 示例                              |
-| -------- | -------------- | --------------------------------- |
-| feat     | 新功能         | `feat(脚本): 增加 minimal 配置`   |
-| fix      | 修复 bug       | `fix(工作流): 修复 Release 权限`  |
-| refactor | 重构（非功能） | `refactor(构建): 抽取公共函数`    |
-| docs     | 文档           | `docs: 更新 README`               |
-| style    | 代码格式       | `style: 统一缩进风格`             |
-| test     | 测试           | `test: 添加单元测试`              |
-| chore    | 构建/工具      | `chore: 升级上游分支版本`         |
-| perf     | 性能优化       | `perf(编译): 启用 ccache 加速`    |
-| ci       | CI/CD 配置     | `ci: 添加 macOS 构建流水线`       |
-| security | 安全修复       | `security(脚本): 修复注入风险`    |
+| 类型     | 说明           | 示例                             |
+| -------- | -------------- | -------------------------------- |
+| feat     | 新功能         | `feat(脚本): 增加 minimal 配置`  |
+| fix      | 修复 bug       | `fix(工作流): 修复 Release 权限` |
+| refactor | 重构（非功能） | `refactor(构建): 抽取公共函数`   |
+| docs     | 文档           | `docs: 更新 README`              |
+| style    | 代码格式       | `style: 统一缩进风格`            |
+| test     | 测试           | `test: 添加单元测试`             |
+| chore    | 构建/工具      | `chore: 升级上游分支版本`        |
+| perf     | 性能优化       | `perf(编译): 启用 ccache 加速`   |
+| ci       | CI/CD 配置     | `ci: 添加 macOS 构建流水线`      |
+| security | 安全修复       | `security(脚本): 修复注入风险`   |
 
 要求：
 

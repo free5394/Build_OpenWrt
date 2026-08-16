@@ -1,10 +1,10 @@
 # Build_OpenWrt
 
-[![License](https://img.shields.io/github/license/walk6834/Build_OpenWrt?style=flat-square)](./LICENSE)
+[![License](https://img.shields.io/github/license/free5394/Build_OpenWrt?style=flat-square)](./LICENSE)
 [![ImmortalWrt](https://img.shields.io/badge/ImmortalWrt-25.12-orange?style=flat-square&logo=openwrt)](https://github.com/immortalwrt/immortalwrt)
 [![Build](https://img.shields.io/badge/build-Manual%20workflow-lightgrey?style=flat-square&logo=github-actions)](.github/workflows/Build-OpenWrt-25-x86-64.yml)
-[![Latest Release](https://img.shields.io/github/v/release/walk6834/Build_OpenWrt?style=flat-square)](https://github.com/walk6834/Build_OpenWrt/releases)
-![Stars](https://img.shields.io/github/stars/walk6834/Build_OpenWrt?style=flat-square)
+[![Latest Release](https://img.shields.io/github/v/release/free5394/Build_OpenWrt?style=flat-square)](https://github.com/free5394/Build_OpenWrt/releases)
+![Stars](https://img.shields.io/github/stars/free5394/Build_OpenWrt?style=flat-square)
 
 基于 [ImmortalWrt](https://github.com/immortalwrt/immortalwrt) `v25.12.1` 的 x86-64 软路由固件自定义构建仓库。
 
@@ -90,27 +90,27 @@ Build_OpenWrt/
 
 进入仓库 **Actions** → 选择 **Build-OpenWrt-25-x86-64** → **Run workflow**，按需调整以下输入参数：
 
-| 名称                | 类型      | 必填  | 默认值                       | 说明                           |
-| ----------------- | ------- | --- | ------------------------- | ---------------------------- |
-| `repo_name`       | string  | ✅   | `immortalwrt/immortalwrt` | 上游源码仓库                       |
-| `repo_branch`     | string  | ✅   | `v25.12.1`                | 上游源码分支                       |
-| `part_size`       | number  | ✅   | `1024`                    | rootfs 分区大小（MB）              |
-| `ip_address`      | string  | ✅   | `192.168.10.1`            | 默认 LAN 口 IP                  |
-| `upload_artifact` | boolean |     | `true`                    | 是否上传 GitHub Actions Artifact |
-| `upload_release`  | boolean |     | `true`                    | 是否发布 GitHub Release          |
+| 名称              | 类型    | 必填 | 默认值                    | 说明                             |
+| ----------------- | ------- | ---- | ------------------------- | -------------------------------- |
+| `repo_name`       | string  | ✅   | `immortalwrt/immortalwrt` | 上游源码仓库                     |
+| `repo_branch`     | string  | ✅   | `v25.12.1`                | 上游源码分支                     |
+| `part_size`       | number  | ✅   | `1024`                    | rootfs 分区大小（MB）            |
+| `ip_address`      | string  | ✅   | `192.168.10.1`            | 默认 LAN 口 IP                   |
+| `upload_artifact` | boolean |      | `true`                    | 是否上传 GitHub Actions Artifact |
+| `upload_release`  | boolean |      | `true`                    | 是否发布 GitHub Release          |
 
 ### 2. 矩阵配置
 
 工作流 `strategy.matrix.config_name` 当前启用 **`minimal`**（`standard` 与 `full` 已在 [.github/workflows/Build-OpenWrt-25-x86-64.yml](.github/workflows/Build-OpenWrt-25-x86-64.yml) 中注释，可按需启用）。
 
-| 配置         | 说明                                                                                                                                                                         |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minimal`  | 精简配置：PassWall（含 SingBox/Xray/Shadowsocks/SSR/Simple-Obfs/V2ray-Plugin/Haproxy/Geoview）、nikki、momo、bandix-plus、SQM、ttyd、timewol、chinadns-ng、Argon 主题                        |
-| `standard` | 在 `minimal` 基础上增加 bash、AdGuard Home、OpenClash、eqos、ruby（含 YJIT）等                                                                                                           |
+| 配置       | 说明                                                                                                                                                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minimal`  | 精简配置：PassWall（含 SingBox/Xray/Shadowsocks/SSR/Simple-Obfs/V2ray-Plugin/Haproxy/Geoview）、nikki、momo、bandix-plus、SQM、ttyd、timewol、chinadns-ng、Argon 主题                                    |
+| `standard` | 在 `minimal` 基础上增加 bash、AdGuard Home、OpenClash、eqos、ruby（含 YJIT）等                                                                                                                           |
 | `full`     | 全功能配置：在 `standard` 基础上扩展 Docker/containerd/runc、qBittorrent、Syncthing、MiniDLNA、SmartDNS、MosDNS、HomeProxy、PassWall2、SSR-Plus、Lucky、rclone、rustdesk-server、nginx/uwsgi、磁盘工具等 |
 
 > **三套配置独立维护**：并非严格增量关系，各 `.config` 文件均完整声明所需选项，可单独切换。`make defconfig` 会自动补全依赖项。
-> 
+>
 > **扩展配置**：如需启用其他配置，在工作流中取消对应行注释，并在 [target/x86-64/custom_config/](./target/x86-64/custom_config/) 下创建同名 `.config` 文件。产物文件名会自动以 config 名作为后缀。
 
 ### 3. 获取产物
@@ -122,28 +122,28 @@ Build_OpenWrt/
 
 上传目录包含以下文件：
 
-| 文件                      | 说明                  |
-| ----------------------- | ------------------- |
+| 文件                    | 说明                           |
+| ----------------------- | ------------------------------ |
 | `*wrt*-<config>.img.gz` | 固件镜像（以 config 名为后缀） |
-| `<config>.config`       | 实际生效的 `.config` 配置  |
-| `logs-<config>.tar.gz`  | 构建日志压缩包             |
-| `sha256sums`            | 全部文件的 SHA-256 校验值   |
+| `<config>.config`       | 实际生效的 `.config` 配置      |
+| `logs-<config>.tar.gz`  | 构建日志压缩包                 |
+| `sha256sums`            | 全部文件的 SHA-256 校验值      |
 
 工作流末尾还会自动清理旧的 workflow 运行记录（保留最近 2 次，7 天前的全部清理）。
 
 ## 默认固件参数（CI 默认）
 
-| 项         | 默认值                                              |
-| --------- | ------------------------------------------------ |
-| 目标平台      | x86-64 generic                                   |
-| 上游源码      | `immortalwrt/immortalwrt` @ `v25.12.1`           |
-| Rootfs 分区 | 1024 MB（`PART_SIZE`，可通过工作流 `part_size` 覆盖）       |
-| LAN IP    | `192.168.10.1`（`IP_ADDRESS`）                     |
-| Root 密码   | 无（`root_password` 默认为空，跳过修改；使用上游默认密码）            |
-| 时区        | `Asia/Shanghai` (`CST-8`)                        |
-| LuCI 主题   | Argon（自定义背景图 [images/bg1.jpg](./images/bg1.jpg)） |
-| IPv6      | 启用独立 wan6 接口（DHCPv6，`ipv6_type=2`）               |
-| ttyd      | 默认不启用免登录（`TTYD_AUTOLOGIN=1` 可开启）                 |
+| 项          | 默认值                                                     |
+| ----------- | ---------------------------------------------------------- |
+| 目标平台    | x86-64 generic                                             |
+| 上游源码    | `immortalwrt/immortalwrt` @ `v25.12.1`                     |
+| Rootfs 分区 | 1024 MB（`PART_SIZE`，可通过工作流 `part_size` 覆盖）      |
+| LAN IP      | `192.168.10.1`（`IP_ADDRESS`）                             |
+| Root 密码   | 无（`root_password` 默认为空，跳过修改；使用上游默认密码） |
+| 时区        | `Asia/Shanghai` (`CST-8`)                                  |
+| LuCI 主题   | Argon（自定义背景图 [images/bg1.jpg](./images/bg1.jpg)）   |
+| IPv6        | 启用独立 wan6 接口（DHCPv6，`ipv6_type=2`）                |
+| ttyd        | 默认不启用免登录（`TTYD_AUTOLOGIN=1` 可开启）              |
 
 > [target/x86-64/custom_config/minimal.config](./target/x86-64/custom_config/minimal.config) 是工作流矩阵实际加载的种子配置；本地构建默认使用 `full.config`，可按需切换。
 
@@ -162,16 +162,16 @@ Build_OpenWrt/
 
 ## 技术选型说明
 
-| 领域       | 选型                              | 说明                                                               |
-| -------- | ------------------------------- | ---------------------------------------------------------------- |
-| 上游源码     | ImmortalWrt `v25.12.1`          | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                      |
-| Shell 规范 | POSIX `/bin/sh`                 | 兼容 `sh` / `dash` / `ash`，可在 CI 与 OpenWrt 目标机一致运行                 |
-| 日志系统     | 自研 `logger.sh`                  | 分级日志（DEBUG/INFO/WARN/ERROR）+ 可选重定向到文件                            |
-| CI 平台    | GitHub Actions                  | `ubuntu-latest`，180 分钟超时，ccache 缓存加速                             |
-| 缓存策略     | ccache + feeds 备份               | CI 用 actions/cache 缓存 ccache；本地用 `BAK_ENABLED` 备份 feeds/源码       |
-| 配置注入     | 种子 `.config` + `make defconfig` | 不走交互式 menuconfig，保证可复现                                           |
-| 产物校验     | `sha256sums`                    | 自动为上传目录所有文件生成 SHA-256 校验                                         |
-| 错误处理     | 严格模式 + trap 清理                  | `set -e` + `pipefail`（如支持）；`collect_upload.sh` 用 EXIT trap 清理半成品 |
+| 领域       | 选型                              | 说明                                                                         |
+| ---------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| 上游源码   | ImmortalWrt `v25.12.1`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
+| Shell 规范 | POSIX `/bin/sh`                   | 兼容 `sh` / `dash` / `ash`，可在 CI 与 OpenWrt 目标机一致运行                |
+| 日志系统   | 自研 `logger.sh`                  | 分级日志（DEBUG/INFO/WARN/ERROR）+ 可选重定向到文件                          |
+| CI 平台    | GitHub Actions                    | `ubuntu-latest`，180 分钟超时，ccache 缓存加速                               |
+| 缓存策略   | ccache + feeds 备份               | CI 用 actions/cache 缓存 ccache；本地用 `BAK_ENABLED` 备份 feeds/源码        |
+| 配置注入   | 种子 `.config` + `make defconfig` | 不走交互式 menuconfig，保证可复现                                            |
+| 产物校验   | `sha256sums`                      | 自动为上传目录所有文件生成 SHA-256 校验                                      |
+| 错误处理   | 严格模式 + trap 清理              | `set -e` + `pipefail`（如支持）；`collect_upload.sh` 用 EXIT trap 清理半成品 |
 
 ## 本地构建（Ubuntu / WSL）
 
@@ -202,14 +202,14 @@ sudo bash scripts/init/init-env.sh
 
 本地构建的默认值定义在 [scripts/build/set-env.sh](./scripts/build/set-env.sh) 中：
 
-| 项        | 本地默认（set-env.sh）                     | CI 默认（工作流）                           |
-| -------- | ------------------------------------ | ------------------------------------ |
-| LAN IP   | `192.168.10.1`                       | `192.168.10.1`                       |
-| 种子配置     | `custom_config/full.config`          | `custom_config/<config_name>.config` |
-| 上游分支     | `v25.12.1`                           | `v25.12.1`                           |
-| feeds 备份 | 启用（`BAK_ENABLED=1`，目录 `custom_bak/`） | 未启用                                  |
-| ccache   | 启用（`USE_CCACHE=1`，`$HOME/ccache`）    | 启用（`/home/runner/.ccache`）           |
-| 日志重定向    | 关闭（`LOG_REDIRECTION_ENABLE=0`）       | 关闭（工作流中注释，默认 0）                      |
+| 项         | 本地默认（set-env.sh）                      | CI 默认（工作流）                    |
+| ---------- | ------------------------------------------- | ------------------------------------ |
+| LAN IP     | `192.168.10.1`                              | `192.168.10.1`                       |
+| 种子配置   | `custom_config/full.config`                 | `custom_config/<config_name>.config` |
+| 上游分支   | `v25.12.1`                                  | `v25.12.1`                           |
+| feeds 备份 | 启用（`BAK_ENABLED=1`，目录 `custom_bak/`） | 未启用                               |
+| ccache     | 启用（`USE_CCACHE=1`，`$HOME/ccache`）      | 启用（`/home/runner/.ccache`）       |
+| 日志重定向 | 关闭（`LOG_REDIRECTION_ENABLE=0`）          | 关闭（工作流中注释，默认 0）         |
 
 如需切换配置，编辑 [scripts/build/set-env.sh](./scripts/build/set-env.sh) 中的 `CUSTOM_CONFIG` 变量（如改为 `custom_config/minimal.config` 或 `custom_config/standard.config`）。其他环境变量（IP、分区大小、PPPoE 凭据等）也可直接在该文件调整。
 
@@ -228,11 +228,11 @@ sudo bash scripts/init/init-env.sh
 
 公共模块遵循"防重复加载 + 显式 source"原则：
 
-| 模块                | 路径                                                                   | 职责                                                                          |
-| ----------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `logger.sh`       | [scripts/include/logger.sh](./scripts/include/logger.sh)             | 分级日志、颜色输出、脚本路径解析、日志重定向                                                      |
+| 模块              | 路径                                                                 | 职责                                                                                                    |
+| ----------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `logger.sh`       | [scripts/include/logger.sh](./scripts/include/logger.sh)             | 分级日志、颜色输出、脚本路径解析、日志重定向                                                            |
 | `common.sh`       | [scripts/include/common.sh](./scripts/include/common.sh)             | 路径规范化（`norm_path`）、仓库克隆（`clone_repo`）、通用下载（`download_file`）、耗时统计（`time_it`） |
-| `build-common.sh` | [scripts/include/build-common.sh](./scripts/include/build-common.sh) | 构建流程编排（下载/编译/清理/上传）、`pre_build_process` / `post_build_process` 流程钩子         |
+| `build-common.sh` | [scripts/include/build-common.sh](./scripts/include/build-common.sh) | 构建流程编排（下载/编译/清理/上传）、`pre_build_process` / `post_build_process` 流程钩子                |
 
 每个模块顶部通过 `case "$0"` 防止直接执行，并通过 `_SCRIPT_*_LOADED` 标志位防止重复 source。入口脚本（`build.sh` / `rebuild.sh` / `apply_custom_*.sh`）显式 `set -e` 并在子 shell 中探测 `pipefail` 支持。
 
