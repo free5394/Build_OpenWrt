@@ -6,7 +6,7 @@
 [![Latest Release](https://img.shields.io/github/v/release/free5394/Build_OpenWrt?style=flat-square)](https://github.com/free5394/Build_OpenWrt/releases)
 ![Stars](https://img.shields.io/github/stars/free5394/Build_OpenWrt?style=flat-square)
 
-基于 [ImmortalWrt](https://github.com/immortalwrt/immortalwrt) `v25.12.1` 的 x86-64 软路由固件自定义构建仓库。
+基于 [ImmortalWrt](https://github.com/immortalwrt/immortalwrt) `v25.12.2` 的 x86-64 软路由固件自定义构建仓库。
 
 仓库本身**不包含 OpenWrt 源码**，只保存默认配置、自定义 feeds、首次启动脚本与主题资源；构建时浅克隆上游源码，将 `target/x86-64/` 内容注入后再编译。生产构建运行在 GitHub Actions 的 `ubuntu-latest` runner 上，本地可在 Ubuntu / WSL 中复现。
 
