@@ -12,7 +12,7 @@ on:
       repo_branch:
         description: "选择要编译的分支"
         required: true
-        default: "v25.12.1"
+        default: "v25.12.2"
         type: string
 
       part_size:
