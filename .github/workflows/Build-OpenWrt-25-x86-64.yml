@@ -55,7 +55,7 @@ concurrency:
 jobs:
   Build_OpenWrt:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 300
     defaults:
       run:
         shell: bash

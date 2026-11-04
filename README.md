@@ -167,7 +167,7 @@ Build_OpenWrt/
 | 上游源码   | ImmortalWrt `v25.12.1`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
 | Shell 规范 | POSIX `/bin/sh`                   | 兼容 `sh` / `dash` / `ash`，可在 CI 与 OpenWrt 目标机一致运行                |
 | 日志系统   | 自研 `logger.sh`                  | 分级日志（DEBUG/INFO/WARN/ERROR）+ 可选重定向到文件                          |
-| CI 平台    | GitHub Actions                    | `ubuntu-latest`，180 分钟超时，ccache 缓存加速                               |
+| CI 平台    | GitHub Actions                    | `ubuntu-latest`，300 分钟超时，ccache 缓存加速                               |
 | 缓存策略   | ccache + feeds 备份               | CI 用 actions/cache 缓存 ccache；本地用 `BAK_ENABLED` 备份 feeds/源码        |
 | 配置注入   | 种子 `.config` + `make defconfig` | 不走交互式 menuconfig，保证可复现                                            |
 | 产物校验   | `sha256sums`                      | 自动为上传目录所有文件生成 SHA-256 校验                                      |
