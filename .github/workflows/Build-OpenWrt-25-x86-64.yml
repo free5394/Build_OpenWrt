@@ -147,6 +147,12 @@ jobs:
         run: |
           cd "${{env.OPENWRT_DIR}}"
           [ -f "${{env.CUSTOM_CONFIG}}" ] && cp -f "${{env.CUSTOM_CONFIG}}" .config
+          # 启用 ccache：CONFIG_CCACHE 的提示受 CONFIG_DEVEL 门控，缓存目录需与 actions/cache 的 path 一致
+          {
+            echo 'CONFIG_DEVEL=y'
+            echo 'CONFIG_CCACHE=y'
+            echo 'CONFIG_CCACHE_DIR="/home/runner/.ccache"'
+          } >> .config
           make defconfig V=s
           ./scripts/diffconfig.sh >"$(basename ${{env.CUSTOM_CONFIG}})"
 
