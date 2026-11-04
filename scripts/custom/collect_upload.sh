@@ -70,14 +70,21 @@ cp_img() {
         return 2
     fi
 
-    # 检查源目录是否存在
+    # 检查源目录是否存在：不存在即视为没有固件产物，直接失败
     if [ ! -d "$src_dir" ]; then
-        log_warn "源目录 %s 不存在，无文件可处理。" "$src_dir"
-        return 0
+        log_error "源目录 %s 不存在，未找到固件产物" "$src_dir"
+        return 1
     fi
 
     # 创建目标目录（若不存在）
     mkdir -p "$dest_dir"
+
+    # 校验是否存在固件镜像，避免无产物时仍判定成功
+    _img_count=$(find "$src_dir" -type f -name "*wrt*.img.gz" | wc -l)
+    if [ "$_img_count" -eq 0 ]; then
+        log_error "未在 %s 找到固件镜像（*wrt*.img.gz）" "$src_dir"
+        return 1
+    fi
 
     # 处理名称后缀
     if [ -z "$name_suffix" ]; then
@@ -227,7 +234,7 @@ work_flow() {
     name="${file_name%.*}"
 
     mkdir -p "$dest_dir" "$log_dir"
-    cp_img "$src_dir" "$dest_dir" "$name" || log_warn "镜像上传失败，继续上传"
+    cp_img "$src_dir" "$dest_dir" "$name" || return 1
     compress_dir "$log_dir" "$dest_dir" "$name" || log_warn "日志压缩失败，继续上传"
     cp_config "$file_name" "$dest_dir" || log_warn "配置文件上传失败，继续上传"
     generate_checksums "$dest_dir" || log_warn "校验文件生成失败，继续上传"
