@@ -62,7 +62,7 @@ jobs:
 
     env:
       OPENWRT_REPO: ${{ inputs.repo_name || 'immortalwrt/immortalwrt' }}
-      OPENWRT_BRANCH: ${{ inputs.repo_branch || 'v25.12.1' }}
+      OPENWRT_BRANCH: ${{ inputs.repo_branch || 'v25.12.2' }}
       PART_SIZE: ${{ inputs.part_size || 1024 }}
       IP_ADDRESS: ${{ inputs.ip_address || '192.168.10.1' }}
       UPLOAD_ARTIFACT: ${{ inputs.upload_artifact}}

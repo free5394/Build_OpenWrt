@@ -5,7 +5,7 @@ echo "设置环境变量..."
 # 工作目录
 export GITHUB_WORKSPACE="$(pwd)"
 export OPENWRT_REPO=immortalwrt/immortalwrt
-export OPENWRT_BRANCH=v25.12.1
+export OPENWRT_BRANCH=v25.12.2
 export OPENWRT_DIR=openwrt
 export UPLOAD_DIR=upload
 export LOG_DIR=logs

@@ -93,7 +93,7 @@ Build_OpenWrt/
 | 名称              | 类型    | 必填 | 默认值                    | 说明                             |
 | ----------------- | ------- | ---- | ------------------------- | -------------------------------- |
 | `repo_name`       | string  | ✅   | `immortalwrt/immortalwrt` | 上游源码仓库                     |
-| `repo_branch`     | string  | ✅   | `v25.12.1`                | 上游源码分支                     |
+| `repo_branch`     | string  | ✅   | `v25.12.2`                | 上游源码分支                     |
 | `part_size`       | number  | ✅   | `1024`                    | rootfs 分区大小（MB）            |
 | `ip_address`      | string  | ✅   | `192.168.10.1`            | 默认 LAN 口 IP                   |
 | `upload_artifact` | boolean |      | `true`                    | 是否上传 GitHub Actions Artifact |
@@ -117,7 +117,7 @@ Build_OpenWrt/
 
 等待约 30–60 分钟构建完成后，可通过以下两种方式获取：
 
-- **Artifact**：文件名 `<repo_branch>-<YYYYMMDDHHMM>`，例如 `v25.12.1-202608041944`
+- **Artifact**：文件名 `<repo_branch>-<YYYYMMDDHHMM>`，例如 `v25.12.2-202608041944`
 - **Release**：Tag 同名（`make_latest: true`），Release 描述自动写入固件源码、分支、内核版本、默认 IP、默认密码
 
 上传目录包含以下文件：
@@ -136,7 +136,7 @@ Build_OpenWrt/
 | 项          | 默认值                                                     |
 | ----------- | ---------------------------------------------------------- |
 | 目标平台    | x86-64 generic                                             |
-| 上游源码    | `immortalwrt/immortalwrt` @ `v25.12.1`                     |
+| 上游源码    | `immortalwrt/immortalwrt` @ `v25.12.2`                     |
 | Rootfs 分区 | 1024 MB（`PART_SIZE`，可通过工作流 `part_size` 覆盖）      |
 | LAN IP      | `192.168.10.1`（`IP_ADDRESS`）                             |
 | Root 密码   | 无（`root_password` 默认为空，跳过修改；使用上游默认密码） |
@@ -164,7 +164,7 @@ Build_OpenWrt/
 
 | 领域       | 选型                              | 说明                                                                         |
 | ---------- | --------------------------------- | ---------------------------------------------------------------------------- |
-| 上游源码   | ImmortalWrt `v25.12.1`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
+| 上游源码   | ImmortalWrt `v25.12.2`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
 | Shell 规范 | POSIX `/bin/sh`                   | 兼容 `sh` / `dash` / `ash`，可在 CI 与 OpenWrt 目标机一致运行                |
 | 日志系统   | 自研 `logger.sh`                  | 分级日志（DEBUG/INFO/WARN/ERROR）+ 可选重定向到文件                          |
 | CI 平台    | GitHub Actions                    | `ubuntu-latest`，300 分钟超时，ccache 缓存加速                               |
@@ -206,7 +206,7 @@ sudo bash scripts/init/init-env.sh
 | ---------- | ------------------------------------------- | ------------------------------------ |
 | LAN IP     | `192.168.10.1`                              | `192.168.10.1`                       |
 | 种子配置   | `custom_config/full.config`                 | `custom_config/<config_name>.config` |
-| 上游分支   | `v25.12.1`                                  | `v25.12.1`                           |
+| 上游分支   | `v25.12.2`                                  | `v25.12.2`                           |
 | feeds 备份 | 启用（`BAK_ENABLED=1`，目录 `custom_bak/`） | 未启用                               |
 | ccache     | 启用（`USE_CCACHE=1`，`$HOME/ccache`）      | 启用（`/home/runner/.ccache`）       |
 | 日志重定向 | 关闭（`LOG_REDIRECTION_ENABLE=0`）          | 关闭（工作流中注释，默认 0）         |
