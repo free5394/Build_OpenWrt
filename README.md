@@ -152,7 +152,7 @@ Build_OpenWrt/
 [target/x86-64/files/etc/uci-defaults/99-custom-settings.sh](./target/x86-64/files/etc/uci-defaults/99-custom-settings.sh) 会在固件首次启动时自动执行（日志写入 `/tmp/99-custom-settings.log`）：
 
 1. **修改时区**：设置为 `Asia/Shanghai` (`CST-8`)
-2. **修补仓库源**：将 apk distfeeds 镜像源替换为 `mirrors.tuna.tsinghua.edu.cn`（清华源），替换失败自动回滚
+2. **修补仓库源**：将 apk distfeeds 镜像源替换为 `mirrors.pku.edu.cn/immortalwrt`（北大 ImmortalWrt 镜像），替换失败自动回滚
 3. **配置网络**：修改 LAN 口 IP（带 IPv4 格式校验）；若 PPPoE 凭据非空则将 WAN 口切换为 PPPoE 拨号
 4. **配置 IPv6**：`ipv6_type=2` 时启用独立 wan6 接口（DHCPv6）并加入 wan 防火墙区域；`ipv6_type=1` 时在 wan 接口启用 IPv6 委派；`ipv6_type=0` 时禁用
 5. **修改 LuCI 主题**：设置默认主题为 Argon 并清理缓存（`default_theme` 为空则跳过）
