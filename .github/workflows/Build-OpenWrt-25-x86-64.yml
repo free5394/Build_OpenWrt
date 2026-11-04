@@ -56,6 +56,9 @@ jobs:
   Build_OpenWrt:
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
 
     env:
       OPENWRT_REPO: ${{ inputs.repo_name || 'immortalwrt/immortalwrt' }}
@@ -169,7 +172,6 @@ jobs:
           cd ${{env.OPENWRT_DIR}}
           echo -e "$(($(nproc) + 1)) thread compile"
           (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/compile.log"
-          echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 编译后硬盘空间使用情况
         run: |
@@ -178,14 +180,15 @@ jobs:
 
       - name: 校验编译产物
         id: verify
-        if: steps.compile.outputs.status == 'success'
+        if: success()
         run: |
           cd ${{env.OPENWRT_DIR}}
-          if find bin/targets -name "*.img.gz" | head -1 | grep -q .; then
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
+          _img=$(find bin/targets -name "*.img.gz" -print -quit)
+          if [ -z "$_img" ]; then
             echo "::error::未找到编译产物 *.img.gz"
+            exit 1
           fi
+          echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 组织编译后的固件
         run: |
