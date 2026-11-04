@@ -251,31 +251,6 @@ update_package() {
     return 0
 }
 
-# 更新golang
-update_golang() {
-    golang_dir="feeds/packages/lang/golang"
-    golang_dir=$(norm_path "$golang_dir")
-    if [ ! -d "$golang_dir" ]; then
-        log_info "%s 目录不存在，跳过更新" "$golang_dir"
-        return 0
-    fi
-    golang_dir_tmp="$golang_dir.tmp"
-    bak_dir="$GITHUB_WORKSPACE/$CUSTOM_BAK/golang"
-
-    golang_dir_tmp=$(norm_path "$golang_dir_tmp")
-    bak_dir=$(norm_path "$bak_dir")
-
-    # 备份当前golang目录
-    log_info "%s 重命名 %s" "$golang_dir" "$golang_dir_tmp"
-    mv "$golang_dir" "$golang_dir_tmp"
-    clone_repo "https://github.com/kenzok8/golang" "$golang_dir" "1.26" || {
-        log_warn "更新golang失败,恢复原始版本"
-        log_info "%s 重命名 %s" "$golang_dir_tmp" "$golang_dir"
-        mv "$golang_dir_tmp" "$golang_dir"
-    }
-    return 0
-}
-
 # 校验关键环境变量
 verify_env() {
     if [ -z "$GITHUB_WORKSPACE" ]; then
@@ -294,7 +269,6 @@ work_flow() {
     # 添加自定义Feeds
     update_feeds
     update_package
-    update_golang
     install_feeds
 }
 
