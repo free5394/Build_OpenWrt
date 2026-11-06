@@ -42,7 +42,7 @@
 - **主题美化**：默认 Argon 主题，自定义背景图
 - **首次启动自动化**：通过 `uci-defaults` 脚本自动完成时区设置、仓库源切换、IPv6 配置、PPPoE 拨号、root 密码修改
 - **双分发渠道**：构建产物同时上传到 GitHub Actions Artifact 与 GitHub Release，并生成 `sha256sums` 校验文件
-- **本地可复现**：提供 `build.sh` / `rebuild.sh` 在 Ubuntu / WSL 中构建，支持 ccache 加速与 feeds 备份恢复
+- **本地可复现**：提供 `build.sh` / `rebuild.sh` 在 Ubuntu / WSL 中构建，本地启用 ccache 加速与 feeds 备份恢复
 
 ## 目录结构
 
@@ -67,7 +67,7 @@ Build_OpenWrt/
 │   │   └── collect_upload.sh         # 收集产物到上传目录，生成 sha256sums
 │   └── init/                        # 环境初始化
 │       ├── check.sh                 # 运行环境信息检查（CPU/内存/磁盘）
-│       └── init-env.sh              # 编译依赖安装 + ccache 配置
+│       └── init-env.sh              # 编译依赖安装 + ccache 初始化（本地与 CI 共用）
 ├── target/
 │   └── x86-64/                      # 注入到 OpenWrt 源码树的自定义内容
 │       ├── custom_config/           # 种子配置文件
@@ -167,8 +167,8 @@ Build_OpenWrt/
 | 上游源码   | ImmortalWrt `v25.12.2`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
 | Shell 规范 | POSIX `/bin/sh`                   | 兼容 `sh` / `dash` / `ash`，可在 CI 与 OpenWrt 目标机一致运行                |
 | 日志系统   | 自研 `logger.sh`                  | 分级日志（DEBUG/INFO/WARN/ERROR）+ 可选重定向到文件                          |
-| CI 平台    | GitHub Actions                    | `ubuntu-latest`，300 分钟超时，ccache 缓存加速                               |
-| 缓存策略   | ccache + feeds 备份               | CI 用 actions/cache 缓存 ccache；本地用 `BAK_ENABLED` 备份 feeds/源码        |
+| CI 平台    | GitHub Actions                    | `ubuntu-latest`，300 分钟超时                                               |
+| 缓存策略   | 本地 ccache + feeds 备份          | CI 不使用 actions/cache；本地用 ccache 与 `BAK_ENABLED` 备份 feeds/源码     |
 | 配置注入   | 种子 `.config` + `make defconfig` | 不走交互式 menuconfig，保证可复现                                            |
 | 产物校验   | `sha256sums`                      | 自动为上传目录所有文件生成 SHA-256 校验                                      |
 | 错误处理   | 严格模式 + trap 清理              | `set -e` + `pipefail`（如支持）；`collect_upload.sh` 用 EXIT trap 清理半成品 |
@@ -185,7 +185,7 @@ Build_OpenWrt/
 ### 构建步骤
 
 ```bash
-# 1. 安装编译依赖（一次性，含 ccache 配置）
+# 1. 安装编译依赖（一次性，启用 ccache）
 sudo apt update
 sudo bash scripts/init/init-env.sh
 
@@ -208,7 +208,7 @@ sudo bash scripts/init/init-env.sh
 | 种子配置   | `custom_config/full.config`                 | `custom_config/<config_name>.config` |
 | 上游分支   | `v25.12.2`                                  | `v25.12.2`                           |
 | feeds 备份 | 启用（`BAK_ENABLED=1`，目录 `custom_bak/`） | 未启用                               |
-| ccache     | 启用（`USE_CCACHE=1`，`$HOME/ccache`）      | 启用（`/home/runner/.ccache`）       |
+| ccache     | 启用（`.config` 中 `CONFIG_CCACHE`，目录 `$HOME/ccache`） | 不使用（每轮重建工具链，缓存命中极低） |
 | 日志重定向 | 关闭（`LOG_REDIRECTION_ENABLE=0`）          | 关闭（工作流中注释，默认 0）         |
 
 如需切换配置，编辑 [scripts/build/set-env.sh](./scripts/build/set-env.sh) 中的 `CUSTOM_CONFIG` 变量（如改为 `custom_config/minimal.config` 或 `custom_config/standard.config`）。其他环境变量（IP、分区大小、PPPoE 凭据等）也可直接在该文件调整。
@@ -249,7 +249,7 @@ sudo bash scripts/init/init-env.sh
 ## 常见问题
 
 **Q1：构建失败提示磁盘空间不足？**
-CI runner 默认磁盘空间有限，工作流已通过 `jlumbroso/free-disk-space` 清理 Android、Docker、.NET 等无用组件。本地构建请确保 ≥ 30 GB 可用空间，并可启用 ccache 减少重复编译。
+CI runner 默认磁盘空间有限，工作流已通过 `jlumbroso/free-disk-space` 清理 Android、Docker、.NET 等无用组件。本地构建请确保 ≥ 30 GB 可用空间；本地默认启用 ccache，可减少重复编译耗时。
 
 **Q2：如何修改默认 LAN IP？**
 
