@@ -166,28 +166,6 @@ jobs:
         run: |
           ./scripts/custom/apply_custom_settings.sh 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/apply_custom_settings.log"
 
-      - name: 计算工具链缓存 key
-        id: toolchain_cache
-        run: |
-          # 工具链内容由 .config（目标架构、GCC/libc/binutils 版本等）与上游源码版本共同决定，
-          # 二者一起做摘要，配置或源码变化时 key 必然变化，不会复用旧工具链
-          cfg_hash=$(sha256sum "${{env.OPENWRT_DIR}}/.config" | cut -d' ' -f1)
-          src_rev=$(git -C "${{env.OPENWRT_DIR}}" rev-parse --short=12 HEAD)
-          hash=$(printf '%s\n%s\n' "$src_rev" "$cfg_hash" | sha256sum | cut -d' ' -f1)
-          echo "hash=$hash" >> "$GITHUB_OUTPUT"
-
-      - name: 恢复交叉工具链缓存
-        uses: actions/cache@v6.1.0
-        with:
-          # 只缓存 staging_dir 不足以跳过重建：.prepared/.configured/.built 等 stamp 位于 build_dir/toolchain-*，
-          # 缺失时 make 会重新解包并完整重编交叉工具链，编译器 mtime 仍会漂移
-          path: |
-            ${{env.OPENWRT_DIR}}/staging_dir/toolchain-*
-            ${{env.OPENWRT_DIR}}/build_dir/toolchain-*
-          # 精确匹配、不设 restore-keys：OpenWrt 只按 stamp 是否存在判断，不校验工具链内容，
-          # 复用与当前配置不匹配的工具链会静默编出错误产物
-          key: toolchain-${{ matrix.config_name }}-${{ steps.toolchain_cache.outputs.hash }}
-
       - name: 下载依赖包
         id: download
         if: success()
