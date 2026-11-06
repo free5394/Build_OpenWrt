@@ -1,0 +1,43 @@
+name: 诊断 apt 网络
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: 环境与源信息
+        run: |
+          date -u
+          sed -n '1,3p' /etc/os-release
+          echo "--- apt sources ---"
+          grep -rh '^deb ' /etc/apt/ 2>/dev/null | sed -n '1,5p'
+          echo "--- proxy env ---"
+          env | grep -i proxy || echo "(no proxy env)"
+
+      - name: 探测镜像 HTTP 可达性与耗时
+        run: |
+          set +e
+          out=$(curl -s -o /dev/null -w 'http_code=%{http_code} connect=%{time_connect}s total=%{time_total}s\n' --max-time 60 http://archive.ubuntu.com/ubuntu/dists/noble/Release 2>&1)
+          rc=$?
+          set -e
+          echo "$out"
+          echo "curl_exit=$rc"
+
+      - name: apt-get update 计时
+        run: |
+          set +e
+          start=$(date +%s)
+          sudo env DEBIAN_FRONTEND=noninteractive timeout 5m apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update -y
+          rc=$?
+          echo "apt_update_exit=$rc elapsed_s=$(( $(date +%s) - start ))"
+
+      - name: apt-get install 计时
+        run: |
+          set +e
+          start=$(date +%s)
+          sudo env DEBIAN_FRONTEND=noninteractive timeout 5m apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y --no-install-recommends rsync
+          rc=$?
+          echo "apt_install_exit=$rc elapsed_s=$(( $(date +%s) - start ))"
