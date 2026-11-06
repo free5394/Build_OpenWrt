@@ -1,6 +1,10 @@
 name: 诊断 apt 网络
 
 on:
+  push:
+    paths:
+      - .github/workflows/diag-apt.yml
+
   workflow_dispatch:
 
 jobs:
