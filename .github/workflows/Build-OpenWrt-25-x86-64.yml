@@ -68,10 +68,6 @@ jobs:
       UPLOAD_ARTIFACT: ${{ inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{ inputs.upload_release }}
       CCACHE_DIR: /home/runner/.ccache
-      # 固定编译器指纹：ccache 默认 compiler_check=mtime，依赖编译器二进制的大小与 mtime；
-      # 而每轮都会从零重建 toolchain-x86_64_gcc-14.3.0_musl，mtime 必然变化，导致目标侧编译全部 miss。
-      # 指纹取值为源码仓库 + 分支 + 目标架构 + GCC 版本 + libc，任一项变化时应同步更新此字符串。
-      CCACHE_COMPILERCHECK: "string:${{ inputs.repo_name || 'immortalwrt/immortalwrt' }}-${{ inputs.repo_branch || 'v25.12.2' }}-x86-64-gcc-14.3.0-musl"
       # LOG_REDIRECTION_ENABLE: 0 # 是否开启日志重定向，0 不启用， 1 启用
 
     strategy:
