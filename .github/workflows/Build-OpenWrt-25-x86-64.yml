@@ -67,7 +67,6 @@ jobs:
       IP_ADDRESS: ${{ inputs.ip_address || '192.168.10.1' }}
       UPLOAD_ARTIFACT: ${{ inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{ inputs.upload_release }}
-      CCACHE_DIR: /home/runner/.ccache
       # LOG_REDIRECTION_ENABLE: 0 # 是否开启日志重定向，0 不启用， 1 启用
 
     strategy:
@@ -109,22 +108,12 @@ jobs:
         run: |
           chmod +x scripts/init/init-env.sh && ./scripts/init/init-env.sh
 
-      - name: 恢复 ccache 缓存
-        uses: actions/cache@v6.1.0
-        with:
-          path: ${{env.CCACHE_DIR}}
-          key: ccache-${{ matrix.config_name }}-${{ github.run_id }}
-          restore-keys: |
-            ccache-${{ matrix.config_name }}-
-
       - name: 设置环境
         run: |
           echo "CUSTOM_CONFIG=custom_config/${{matrix.config_name}}.config" >> $GITHUB_ENV
           echo "COMPILE_DATE=$(date +"%Y%m%d")" >> $GITHUB_ENV
           echo "COMPILE_TIME=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
           mkdir -p "$LOG_DIR" "$UPLOAD_DIR"
-          # 缓存会带回上一轮的统计文件，此处清零，使构建结束时的 ccache -s 只反映本轮
-          ccache -z
 
       - name: 克隆OpenWrt源码
         uses: actions/checkout@v7.0.1
@@ -149,12 +138,6 @@ jobs:
         run: |
           cd "${{env.OPENWRT_DIR}}"
           [ -f "${{env.CUSTOM_CONFIG}}" ] && cp -f "${{env.CUSTOM_CONFIG}}" .config
-          # 启用 ccache：CONFIG_CCACHE 的提示受 CONFIG_DEVEL 门控，缓存目录需与 actions/cache 的 path 一致
-          {
-            echo 'CONFIG_DEVEL=y'
-            echo 'CONFIG_CCACHE=y'
-            echo 'CONFIG_CCACHE_DIR="/home/runner/.ccache"'
-          } >> .config
           make defconfig V=s
           ./scripts/diffconfig.sh >"$(basename ${{env.CUSTOM_CONFIG}})"
 
