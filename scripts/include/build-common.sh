@@ -98,6 +98,12 @@ process_task() {
 _custom_config() {
     log_info "补全配置文件..."
     cp -f "$CUSTOM_CONFIG" .config
+    # 启用 ccache：CONFIG_CCACHE 受 CONFIG_DEVEL 门控；目录用绝对路径，避免随源码目录变动而失效
+    {
+        echo 'CONFIG_DEVEL=y'
+        echo 'CONFIG_CCACHE=y'
+        echo "CONFIG_CCACHE_DIR=\"$HOME/ccache\""
+    } >>.config
     make defconfig V=s
     # 生成补丁文件，便于上传
     ./scripts/diffconfig.sh >"$(basename "$CUSTOM_CONFIG")"
@@ -129,6 +135,12 @@ build_new_config() {
 _custom_config_patch() {
     log_info "补全配置文件..."
     cp -f "$CUSTOM_CONFIG" .config
+    # 启用 ccache：CONFIG_CCACHE 受 CONFIG_DEVEL 门控；目录用绝对路径，避免随源码目录变动而失效
+    {
+        echo 'CONFIG_DEVEL=y'
+        echo 'CONFIG_CCACHE=y'
+        echo "CONFIG_CCACHE_DIR=\"$HOME/ccache\""
+    } >>.config
     make defconfig V=s
     log_info "调整配置文件..."
     make menuconfig
