@@ -271,6 +271,14 @@ update_golang() {
     log_info "复制golang1.27变体到 %s" "$golang_dir"
     cp -rf "$overlay_dir/." "$golang_dir/"
 
+    values_file="$golang_dir/golang-values.mk"
+    log_info "切换golang默认版本为1.27..."
+    sed -i 's/^GO_DEFAULT_VERSION:=1\.26$/GO_DEFAULT_VERSION:=1.27/' "$values_file"
+    if ! grep -q '^GO_DEFAULT_VERSION:=1\.27$' "$values_file"; then
+        log_error "golang默认版本切换失败: %s" "$values_file"
+        return 2
+    fi
+
     log_info "重建feeds索引以识别golang1.27..."
     ./scripts/feeds update -i
     return 0
