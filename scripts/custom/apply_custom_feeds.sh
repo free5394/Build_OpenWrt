@@ -241,6 +241,8 @@ update_package() {
     rm -rf "$community_dir"/kenzo/luci-app-eqos
     # xray-core: small 源的 26.10.31 要求 Go >= 1.27，当前 feeds 仅有 golang1.26（go 1.26.8），排除后沿用上游 26.3.27
     rm -rf "$community_dir"/small/xray-core
+    # adguardhome: kenzo 源的 0.107.80 要求 Go >= 1.27.3，当前 feeds 仅有 golang1.26（go 1.26.8），排除后沿用上游 0.107.78（go 1.26.5）
+    rm -rf "$community_dir"/kenzo/adguardhome
 
     log_info "覆盖原始package目录"
     update_matching_dirs "$community_dir/kenzo" "feeds"
