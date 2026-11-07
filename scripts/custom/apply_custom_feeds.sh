@@ -239,10 +239,6 @@ update_package() {
     log_info "删除出错插件"
     # luci-app-eqos: kenzo feed 中此插件与官方 luci-app-eqos 冲突导致编译报错，等待上游修复后可移除此行
     rm -rf "$community_dir"/kenzo/luci-app-eqos
-    # xray-core: small 源的 26.10.31 要求 Go >= 1.27，当前 feeds 仅有 golang1.26（go 1.26.8），排除后沿用上游 26.3.27
-    rm -rf "$community_dir"/small/xray-core
-    # adguardhome: kenzo 源的 0.107.80 要求 Go >= 1.27.3，当前 feeds 仅有 golang1.26（go 1.26.8），排除后沿用上游 0.107.78（go 1.26.5）
-    rm -rf "$community_dir"/kenzo/adguardhome
 
     log_info "覆盖原始package目录"
     update_matching_dirs "$community_dir/kenzo" "feeds"
