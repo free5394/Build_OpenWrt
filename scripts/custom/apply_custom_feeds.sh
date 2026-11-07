@@ -255,6 +255,27 @@ update_package() {
     return 0
 }
 
+# 更新golang变体
+update_golang() {
+    golang_dir="feeds/packages/lang/golang"
+    overlay_dir="$SCRIPT_ROOT/custom/feeds_overlay/lang/golang"
+
+    golang_dir=$(norm_path "$golang_dir")
+    overlay_dir=$(norm_path "$overlay_dir")
+
+    if [ ! -d "$golang_dir" ]; then
+        log_warn "golang目录 %s 不存在，跳过golang变体更新。" "$golang_dir"
+        return 0
+    fi
+
+    log_info "复制golang1.27变体到 %s" "$golang_dir"
+    cp -rf "$overlay_dir/." "$golang_dir/"
+
+    log_info "重建feeds索引以识别golang1.27..."
+    ./scripts/feeds update -i
+    return 0
+}
+
 # 校验关键环境变量
 verify_env() {
     if [ -z "$GITHUB_WORKSPACE" ]; then
@@ -273,6 +294,7 @@ work_flow() {
     # 添加自定义Feeds
     update_feeds
     update_package
+    update_golang
     install_feeds
 }
 
