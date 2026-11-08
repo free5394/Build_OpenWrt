@@ -31,3 +31,5 @@ upload/
 
 # git worktree 目录
 .worktrees/
+
+.scratch/
