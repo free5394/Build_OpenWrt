@@ -75,7 +75,7 @@ jobs:
         config_name:
           - minimal
           # - standard
-          # - full
+          - full
 
     steps:
       - name: 克隆仓库
