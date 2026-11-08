@@ -39,6 +39,16 @@ on:
         default: true
         type: boolean
 
+      config_name:
+        description: "选择配置档位；无输入触发的场景（如 schedule）该值为空，会兜底为 minimal"
+        required: false
+        default: minimal
+        type: choice
+        options:
+          - minimal
+          - standard
+          - full
+
 env:
   OPENWRT_DIR: openwrt
   UPLOAD_DIR: upload
@@ -73,9 +83,8 @@ jobs:
       fail-fast: false
       matrix:
         config_name:
-          # - minimal
-          # - standard
-          - full
+          # 档位由 workflow_dispatch 输入决定；无输入触发时兜底为 minimal
+          - ${{ inputs.config_name || 'minimal' }}
 
     steps:
       - name: 克隆仓库
