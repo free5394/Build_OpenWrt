@@ -39,6 +39,16 @@ on:
         default: true
         type: boolean
 
+      config_name:
+        description: "选择配置档位；无输入触发的场景（如 schedule）该值为空，会兜底为 minimal"
+        required: false
+        default: minimal
+        type: choice
+        options:
+          - minimal
+          - standard
+          - full
+
 env:
   OPENWRT_DIR: openwrt
   UPLOAD_DIR: upload
@@ -55,25 +65,26 @@ concurrency:
 jobs:
   Build_OpenWrt:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 300
+    defaults:
+      run:
+        shell: bash
 
     env:
       OPENWRT_REPO: ${{ inputs.repo_name || 'immortalwrt/immortalwrt' }}
-      OPENWRT_BRANCH: ${{ inputs.repo_branch || 'v25.12.1' }}
+      OPENWRT_BRANCH: ${{ inputs.repo_branch || 'v25.12.2' }}
       PART_SIZE: ${{ inputs.part_size || 1024 }}
       IP_ADDRESS: ${{ inputs.ip_address || '192.168.10.1' }}
       UPLOAD_ARTIFACT: ${{ inputs.upload_artifact}}
       UPLOAD_RELEASE: ${{ inputs.upload_release }}
-      CCACHE_DIR: /home/runner/.ccache
       # LOG_REDIRECTION_ENABLE: 0 # 是否开启日志重定向，0 不启用， 1 启用
 
     strategy:
       fail-fast: false
       matrix:
         config_name:
-          - minimal
-          # - standard
-          # - full
+          # 档位由 workflow_dispatch 输入决定；无输入触发时兜底为 minimal
+          - ${{ inputs.config_name || 'minimal' }}
 
     steps:
       - name: 克隆仓库
@@ -105,14 +116,6 @@ jobs:
       - name: 初始化环境
         run: |
           chmod +x scripts/init/init-env.sh && ./scripts/init/init-env.sh
-
-      - name: 恢复 ccache 缓存
-        uses: actions/cache@v6.1.0
-        with:
-          path: ${{env.CCACHE_DIR}}
-          key: ccache-${{ matrix.config_name }}-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ matrix.config_name }}-
 
       - name: 设置环境
         run: |
@@ -169,7 +172,6 @@ jobs:
           cd ${{env.OPENWRT_DIR}}
           echo -e "$(($(nproc) + 1)) thread compile"
           (make -j $(($(nproc)+1)) V=sc || make -j1 V=s) 2>&1 | tee -a "$GITHUB_WORKSPACE/$LOG_DIR/compile.log"
-          echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 编译后硬盘空间使用情况
         run: |
@@ -178,14 +180,15 @@ jobs:
 
       - name: 校验编译产物
         id: verify
-        if: steps.compile.outputs.status == 'success'
+        if: success()
         run: |
           cd ${{env.OPENWRT_DIR}}
-          if find bin/targets -name "*.img.gz" | head -1 | grep -q .; then
-            echo "status=success" >> $GITHUB_OUTPUT
-          else
+          _img=$(find bin/targets -name "*.img.gz" -print -quit)
+          if [ -z "$_img" ]; then
             echo "::error::未找到编译产物 *.img.gz"
+            exit 1
           fi
+          echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 组织编译后的固件
         run: |

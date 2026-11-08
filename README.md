@@ -42,7 +42,7 @@
 - **主题美化**：默认 Argon 主题，自定义背景图
 - **首次启动自动化**：通过 `uci-defaults` 脚本自动完成时区设置、仓库源切换、IPv6 配置、PPPoE 拨号、root 密码修改
 - **双分发渠道**：构建产物同时上传到 GitHub Actions Artifact 与 GitHub Release，并生成 `sha256sums` 校验文件
-- **本地可复现**：提供 `build.sh` / `rebuild.sh` 在 Ubuntu / WSL 中构建，支持 ccache 加速与 feeds 备份恢复
+- **本地可复现**：提供 `build.sh` / `rebuild.sh` 在 Ubuntu / WSL 中构建，本地启用 ccache 加速与 feeds 备份恢复
 
 ## 目录结构
 
@@ -67,7 +67,7 @@ Build_OpenWrt/
 │   │   └── collect_upload.sh         # 收集产物到上传目录，生成 sha256sums
 │   └── init/                        # 环境初始化
 │       ├── check.sh                 # 运行环境信息检查（CPU/内存/磁盘）
-│       └── init-env.sh              # 编译依赖安装 + ccache 配置
+│       └── init-env.sh              # 编译依赖安装 + ccache 初始化（本地与 CI 共用）
 ├── target/
 │   └── x86-64/                      # 注入到 OpenWrt 源码树的自定义内容
 │       ├── custom_config/           # 种子配置文件
@@ -93,7 +93,7 @@ Build_OpenWrt/
 | 名称              | 类型    | 必填 | 默认值                    | 说明                             |
 | ----------------- | ------- | ---- | ------------------------- | -------------------------------- |
 | `repo_name`       | string  | ✅   | `immortalwrt/immortalwrt` | 上游源码仓库                     |
-| `repo_branch`     | string  | ✅   | `v25.12.1`                | 上游源码分支                     |
+| `repo_branch`     | string  | ✅   | `v25.12.2`                | 上游源码分支                     |
 | `part_size`       | number  | ✅   | `1024`                    | rootfs 分区大小（MB）            |
 | `ip_address`      | string  | ✅   | `192.168.10.1`            | 默认 LAN 口 IP                   |
 | `upload_artifact` | boolean |      | `true`                    | 是否上传 GitHub Actions Artifact |
@@ -117,7 +117,7 @@ Build_OpenWrt/
 
 等待约 30–60 分钟构建完成后，可通过以下两种方式获取：
 
-- **Artifact**：文件名 `<repo_branch>-<YYYYMMDDHHMM>`，例如 `v25.12.1-202608041944`
+- **Artifact**：文件名 `<repo_branch>-<YYYYMMDDHHMM>`，例如 `v25.12.2-202608041944`
 - **Release**：Tag 同名（`make_latest: true`），Release 描述自动写入固件源码、分支、内核版本、默认 IP、默认密码
 
 上传目录包含以下文件：
@@ -136,7 +136,7 @@ Build_OpenWrt/
 | 项          | 默认值                                                     |
 | ----------- | ---------------------------------------------------------- |
 | 目标平台    | x86-64 generic                                             |
-| 上游源码    | `immortalwrt/immortalwrt` @ `v25.12.1`                     |
+| 上游源码    | `immortalwrt/immortalwrt` @ `v25.12.2`                     |
 | Rootfs 分区 | 1024 MB（`PART_SIZE`，可通过工作流 `part_size` 覆盖）      |
 | LAN IP      | `192.168.10.1`（`IP_ADDRESS`）                             |
 | Root 密码   | 无（`root_password` 默认为空，跳过修改；使用上游默认密码） |
@@ -152,7 +152,7 @@ Build_OpenWrt/
 [target/x86-64/files/etc/uci-defaults/99-custom-settings.sh](./target/x86-64/files/etc/uci-defaults/99-custom-settings.sh) 会在固件首次启动时自动执行（日志写入 `/tmp/99-custom-settings.log`）：
 
 1. **修改时区**：设置为 `Asia/Shanghai` (`CST-8`)
-2. **修补仓库源**：将 apk distfeeds 镜像源替换为 `mirrors.tuna.tsinghua.edu.cn`（清华源），替换失败自动回滚
+2. **修补仓库源**：将 apk distfeeds 镜像源替换为 `mirrors.pku.edu.cn/immortalwrt`（北大 ImmortalWrt 镜像），替换失败自动回滚
 3. **配置网络**：修改 LAN 口 IP（带 IPv4 格式校验）；若 PPPoE 凭据非空则将 WAN 口切换为 PPPoE 拨号
 4. **配置 IPv6**：`ipv6_type=2` 时启用独立 wan6 接口（DHCPv6）并加入 wan 防火墙区域；`ipv6_type=1` 时在 wan 接口启用 IPv6 委派；`ipv6_type=0` 时禁用
 5. **修改 LuCI 主题**：设置默认主题为 Argon 并清理缓存（`default_theme` 为空则跳过）
@@ -164,11 +164,11 @@ Build_OpenWrt/
 
 | 领域       | 选型                              | 说明                                                                         |
 | ---------- | --------------------------------- | ---------------------------------------------------------------------------- |
-| 上游源码   | ImmortalWrt `v25.12.1`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
+| 上游源码   | ImmortalWrt `v25.12.2`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
 | Shell 规范 | POSIX `/bin/sh`                   | 兼容 `sh` / `dash` / `ash`，可在 CI 与 OpenWrt 目标机一致运行                |
 | 日志系统   | 自研 `logger.sh`                  | 分级日志（DEBUG/INFO/WARN/ERROR）+ 可选重定向到文件                          |
-| CI 平台    | GitHub Actions                    | `ubuntu-latest`，180 分钟超时，ccache 缓存加速                               |
-| 缓存策略   | ccache + feeds 备份               | CI 用 actions/cache 缓存 ccache；本地用 `BAK_ENABLED` 备份 feeds/源码        |
+| CI 平台    | GitHub Actions                    | `ubuntu-latest`，300 分钟超时                                               |
+| 缓存策略   | 本地 ccache + feeds 备份          | CI 不使用 actions/cache；本地用 ccache 与 `BAK_ENABLED` 备份 feeds/源码     |
 | 配置注入   | 种子 `.config` + `make defconfig` | 不走交互式 menuconfig，保证可复现                                            |
 | 产物校验   | `sha256sums`                      | 自动为上传目录所有文件生成 SHA-256 校验                                      |
 | 错误处理   | 严格模式 + trap 清理              | `set -e` + `pipefail`（如支持）；`collect_upload.sh` 用 EXIT trap 清理半成品 |
@@ -185,7 +185,7 @@ Build_OpenWrt/
 ### 构建步骤
 
 ```bash
-# 1. 安装编译依赖（一次性，含 ccache 配置）
+# 1. 安装编译依赖（一次性，启用 ccache）
 sudo apt update
 sudo bash scripts/init/init-env.sh
 
@@ -206,9 +206,9 @@ sudo bash scripts/init/init-env.sh
 | ---------- | ------------------------------------------- | ------------------------------------ |
 | LAN IP     | `192.168.10.1`                              | `192.168.10.1`                       |
 | 种子配置   | `custom_config/full.config`                 | `custom_config/<config_name>.config` |
-| 上游分支   | `v25.12.1`                                  | `v25.12.1`                           |
+| 上游分支   | `v25.12.2`                                  | `v25.12.2`                           |
 | feeds 备份 | 启用（`BAK_ENABLED=1`，目录 `custom_bak/`） | 未启用                               |
-| ccache     | 启用（`USE_CCACHE=1`，`$HOME/ccache`）      | 启用（`/home/runner/.ccache`）       |
+| ccache     | 启用（`.config` 中 `CONFIG_CCACHE`，目录 `$HOME/ccache`） | 不使用（每轮重建工具链，缓存命中极低） |
 | 日志重定向 | 关闭（`LOG_REDIRECTION_ENABLE=0`）          | 关闭（工作流中注释，默认 0）         |
 
 如需切换配置，编辑 [scripts/build/set-env.sh](./scripts/build/set-env.sh) 中的 `CUSTOM_CONFIG` 变量（如改为 `custom_config/minimal.config` 或 `custom_config/standard.config`）。其他环境变量（IP、分区大小、PPPoE 凭据等）也可直接在该文件调整。
@@ -249,7 +249,7 @@ sudo bash scripts/init/init-env.sh
 ## 常见问题
 
 **Q1：构建失败提示磁盘空间不足？**
-CI runner 默认磁盘空间有限，工作流已通过 `jlumbroso/free-disk-space` 清理 Android、Docker、.NET 等无用组件。本地构建请确保 ≥ 30 GB 可用空间，并可启用 ccache 减少重复编译。
+CI runner 默认磁盘空间有限，工作流已通过 `jlumbroso/free-disk-space` 清理 Android、Docker、.NET 等无用组件。本地构建请确保 ≥ 30 GB 可用空间；本地默认启用 ccache，可减少重复编译耗时。
 
 **Q2：如何修改默认 LAN IP？**
 

@@ -18,9 +18,12 @@ append_env() {
 # 安装依赖
 install_dependencies() {
     echo "安装依赖..."
-    sudo apt update -y
-    sudo apt upgrade -y
-    sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+    # 禁止 apt/dpkg 弹出交互提示，避免无人值守环境下等待输入而挂起
+    export DEBIAN_FRONTEND=noninteractive
+    # 增加失败重试与下载超时，并对单条命令整体限时 15 分钟：
+    # 网络异常时快速失败并留下可诊断输出，而不是长时间无响应
+    sudo env DEBIAN_FRONTEND=noninteractive timeout 15m apt -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update -y
+    sudo env DEBIAN_FRONTEND=noninteractive timeout 15m apt -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
         bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext gcc-multilib \
         g++-multilib git gnutls-dev gperf haveged help2man intltool lib32gcc-s1 libc6-dev-i386 libelf-dev \
         libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
@@ -29,14 +32,11 @@ install_dependencies() {
         python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo uglifyjs \
         upx-ucl unzip vim wget xmlto xxd zlib1g-dev zstd
 
-    sudo apt install rsync
     return 0
 }
 
 # 设置ccache
 setup_ccache() {
-    append_env "export USE_CCACHE=1"
-    append_env "export CCACHE_DIR=\$HOME/ccache"
     # 忽略目录路径变更带来的 Hash 变化（提高缓存命中率）
     append_env "export CCACHE_NOHASHDIR=true"
     # 禁用 ccache 内部压缩以提升 CPU 换缓存的效率（若 SSD/内存空间充足）

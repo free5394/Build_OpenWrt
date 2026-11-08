@@ -28,3 +28,6 @@ openwrt/
 
 # 构建产物目录
 upload/
+
+# git worktree 目录
+.worktrees/

@@ -251,28 +251,32 @@ update_package() {
     return 0
 }
 
-# 更新golang
+# 更新golang变体
 update_golang() {
     golang_dir="feeds/packages/lang/golang"
+    overlay_dir="$SCRIPT_ROOT/custom/feeds_overlay/lang/golang"
+
     golang_dir=$(norm_path "$golang_dir")
+    overlay_dir=$(norm_path "$overlay_dir")
+
     if [ ! -d "$golang_dir" ]; then
-        log_info "%s 目录不存在，跳过更新" "$golang_dir"
+        log_warn "golang目录 %s 不存在，跳过golang变体更新。" "$golang_dir"
         return 0
     fi
-    golang_dir_tmp="$golang_dir.tmp"
-    bak_dir="$GITHUB_WORKSPACE/$CUSTOM_BAK/golang"
 
-    golang_dir_tmp=$(norm_path "$golang_dir_tmp")
-    bak_dir=$(norm_path "$bak_dir")
+    log_info "复制golang1.27变体到 %s" "$golang_dir"
+    cp -rf "$overlay_dir/." "$golang_dir/"
 
-    # 备份当前golang目录
-    log_info "%s 重命名 %s" "$golang_dir" "$golang_dir_tmp"
-    mv "$golang_dir" "$golang_dir_tmp"
-    clone_repo "https://github.com/kenzok8/golang" "$golang_dir" "1.26" || {
-        log_warn "更新golang失败,恢复原始版本"
-        log_info "%s 重命名 %s" "$golang_dir_tmp" "$golang_dir"
-        mv "$golang_dir_tmp" "$golang_dir"
-    }
+    values_file="$golang_dir/golang-values.mk"
+    log_info "切换golang默认版本为1.27..."
+    sed -i 's/^GO_DEFAULT_VERSION:=1\.26$/GO_DEFAULT_VERSION:=1.27/' "$values_file"
+    if ! grep -q '^GO_DEFAULT_VERSION:=1\.27$' "$values_file"; then
+        log_error "golang默认版本切换失败: %s" "$values_file"
+        return 2
+    fi
+
+    log_info "重建feeds索引以识别golang1.27..."
+    ./scripts/feeds update -i
     return 0
 }
 

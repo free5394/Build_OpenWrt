@@ -129,7 +129,7 @@ modify_luci_theme() {
 modify_repositories() {
     DISTFEEDS="/etc/apk/repositories.d/distfeeds.list"
     DISTFEEDS_BAK="$DISTFEEDS.bak"
-    mirrors="mirrors.tuna.tsinghua.edu.cn"
+    mirrors="mirrors.pku.edu.cn/immortalwrt"
 
     if [ ! -f "$DISTFEEDS" ]; then
         log "未找到 $DISTFEEDS，跳过仓库源修补"
@@ -139,8 +139,8 @@ modify_repositories() {
         log "备份 $DISTFEEDS 失败，放弃修改"
         return 0
     }
-    # 替换镜像源（清华源）
-    sed -i "s|https://.*/releases/|https://$mirrors/openwrt/releases/|g" "$DISTFEEDS" || {
+    # 替换镜像源（清华源无 immortalwrt 目录，必须指向 ImmortalWrt 镜像）
+    sed -i "s|https://[^/]*/releases/|https://$mirrors/releases/|g" "$DISTFEEDS" || {
         log "镜像源替换失败，回滚"
         cp -f "$DISTFEEDS_BAK" "$DISTFEEDS"
         return 1
