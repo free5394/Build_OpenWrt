@@ -50,3 +50,17 @@ PR 需包含：变更目的与影响面、关键配置差异、关联 Issue、�
 ## 安全与配置提示
 
 不要提交 PPPoE 凭据、root 密码、令牌等敏感信息。构建参数优先通过 `scripts/build/set-env.sh` 或 CI 输入调整，避免硬编码到脚本中。
+
+## Agent skills
+
+### Issue tracker
+
+议题与规格说明存放在 GitHub Issues 中，操作一律用 `gh` CLI。See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+分诊标签保留默认五角色（`needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human`、`wontfix`）。See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+single-context 布局：整个仓库共用仓库根目录一份 `GLOSSARY.md`，架构决定放 `docs/adr/`。See `docs/agents/domain.md`.
