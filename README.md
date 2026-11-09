@@ -36,6 +36,8 @@
 - **一键构建**：通过 GitHub Actions 手动触发（`workflow_dispatch`），无需本地环境
 - **参数可配置**：构建时自定义 LAN IP、rootfs 分区大小等
 - **三套种子配置**：`minimal` / `standard` / `full` 独立维护，覆盖从精简到全功能的不同场景
+- **Go 1.27 工具链**：`apply_custom_feeds.sh` 把 `golang1.27` 变体（Go 1.27.3）叠加进 `feeds/packages/lang/golang`，将 `GO_DEFAULT_VERSION` 切到 `1.27` 后重建 feeds 索引；`golang1.26` 保留为备选
+- **自定义 feeds 覆盖**：kenzo 与 small 源按目录覆盖上游 feeds，当前仅排除 `luci-app-eqos`；`adguardhome`（0.107.80）与 `xray-core`（26.10.31）使用自定义源版本
 - **预置代理组件**：集成 PassWall / PassWall2、OpenClash、SingBox、Xray、Shadowsocks、Hysteria、NaiveProxy、Shadow-TLS、chinadns-ng 等（按配置启停）
 - **网络与媒体服务**：内置 AdGuard Home、SmartDNS、MosDNS、UPnP、SQM、ttyd、timewol、qBittorrent、Syncthing、MiniDLNA 等 LuCI 应用
 - **容器与虚拟化**：`full` 配置可选启用 Docker、containerd、runc、HomeProxy 等
@@ -64,21 +66,23 @@ Build_OpenWrt/
 │   │   ├── apply_custom_feeds.sh     # 注入 kenzo / small feeds，更新 golang
 │   │   ├── apply_custom_settings.sh  # 修改 IP / 主题 / ttyd / OpenClash 核心
 │   │   ├── set_variable_values.sh    # 提取内核版本等元信息（CI 用）
-│   │   └── collect_upload.sh         # 收集产物到上传目录，生成 sha256sums
+│   │   ├── collect_upload.sh         # 收集产物到上传目录，生成 sha256sums
+│   │   └── feeds_overlay/lang/golang/golang1.27/  # golang1.27 变体（Go 1.27.3）
 │   └── init/                        # 环境初始化
 │       ├── check.sh                 # 运行环境信息检查（CPU/内存/磁盘）
 │       └── init-env.sh              # 编译依赖安装 + ccache 初始化（本地与 CI 共用）
 ├── target/
 │   └── x86-64/                      # 注入到 OpenWrt 源码树的自定义内容
 │       ├── custom_config/           # 种子配置文件
-│       │   ├── minimal.config       # 精简配置（CI 当前启用）
+│       │   ├── minimal.config       # 精简配置（CI 默认档位）
 │       │   ├── standard.config      # 标准配置（minimal + bash/OpenClash/AdGuard Home/ruby）
 │       │   └── full.config          # 完整配置（含 Docker/qBittorrent/Syncthing/MosDNS 等）
 │       └── files/etc/uci-defaults/
 │           └── 99-custom-settings.sh # 首次启动脚本
-├── test/                            # 模块化加载机制测试脚本（不参与构建）
 ├── images/
 │   └── bg1.jpg                      # Argon 主题背景图
+├── .gitignore                       # 忽略源码树、产物与 worktree（工作树）/临时目录
+├── CLAUDE.md                        # Claude Code 入口说明（指向 AGENTS.md）
 ├── CONTRIBUTING.md                  # 贡献指南
 ├── LICENSE                          # Apache License 2.0
 └── README.md
@@ -98,10 +102,11 @@ Build_OpenWrt/
 | `ip_address`      | string  | ✅   | `192.168.10.1`            | 默认 LAN 口 IP                   |
 | `upload_artifact` | boolean |      | `true`                    | 是否上传 GitHub Actions Artifact |
 | `upload_release`  | boolean |      | `true`                    | 是否发布 GitHub Release          |
+| `config_name`     | choice  |      | `minimal`                 | 配置档位（`minimal` / `standard` / `full`） |
 
 ### 2. 矩阵配置
 
-工作流 `strategy.matrix.config_name` 当前启用 **`minimal`**（`standard` 与 `full` 已在 [.github/workflows/Build-OpenWrt-25-x86-64.yml](.github/workflows/Build-OpenWrt-25-x86-64.yml) 中注释，可按需启用）。
+工作流 `strategy.matrix.config_name` 由手动触发的 `config_name` 输入决定（`minimal` / `standard` / `full`），默认 **`minimal`**；无输入触发的场景（如 `schedule`）该值为空，会兜底为 `minimal`。
 
 | 配置       | 说明                                                                                                                                                                                                     |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -111,11 +116,11 @@ Build_OpenWrt/
 
 > **三套配置独立维护**：并非严格增量关系，各 `.config` 文件均完整声明所需选项，可单独切换。`make defconfig` 会自动补全依赖项。
 >
-> **扩展配置**：如需启用其他配置，在工作流中取消对应行注释，并在 [target/x86-64/custom_config/](./target/x86-64/custom_config/) 下创建同名 `.config` 文件。产物文件名会自动以 config 名作为后缀。
+> **扩展配置**：新增档位需同步修改工作流档位输入的 `options` 选项，并在 [target/x86-64/custom_config/](./target/x86-64/custom_config/) 下创建同名 `.config` 文件。产物文件名会自动以 config 名作为后缀。
 
 ### 3. 获取产物
 
-等待约 30–60 分钟构建完成后，可通过以下两种方式获取：
+等待构建完成后（`minimal` 约 2 小时、`full` 约 3.5 小时），可通过以下两种方式获取：
 
 - **Artifact**：文件名 `<repo_branch>-<YYYYMMDDHHMM>`，例如 `v25.12.2-202608041944`
 - **Release**：Tag 同名（`make_latest: true`），Release 描述自动写入固件源码、分支、内核版本、默认 IP、默认密码
@@ -145,7 +150,7 @@ Build_OpenWrt/
 | IPv6        | 启用独立 wan6 接口（DHCPv6，`ipv6_type=2`）                |
 | ttyd        | 默认不启用免登录（`TTYD_AUTOLOGIN=1` 可开启）              |
 
-> [target/x86-64/custom_config/minimal.config](./target/x86-64/custom_config/minimal.config) 是工作流矩阵实际加载的种子配置；本地构建默认使用 `full.config`，可按需切换。
+> CI 默认加载 [target/x86-64/custom_config/minimal.config](./target/x86-64/custom_config/minimal.config)（可通过 `config_name` 切换档位）；本地构建默认使用 `full.config`，可按需切换。
 
 ## 首次启动脚本
 
@@ -165,6 +170,7 @@ Build_OpenWrt/
 | 领域       | 选型                              | 说明                                                                         |
 | ---------- | --------------------------------- | ---------------------------------------------------------------------------- |
 | 上游源码   | ImmortalWrt `v25.12.2`            | 国内友好的 OpenWrt 分支，预置较多本土化软件包                                |
+| Go 工具链  | `golang1.27` 变体（Go 1.27.3）     | 由 `apply_custom_feeds.sh` 叠加到 `feeds/packages/lang/golang` 并切换 `GO_DEFAULT_VERSION`；`golang1.26` 保留为备选 |
 | Shell 规范 | POSIX `/bin/sh`                   | 兼容 `sh` / `dash` / `ash`，可在 CI 与 OpenWrt 目标机一致运行                |
 | 日志系统   | 自研 `logger.sh`                  | 分级日志（DEBUG/INFO/WARN/ERROR）+ 可选重定向到文件                          |
 | CI 平台    | GitHub Actions                    | `ubuntu-latest`，300 分钟超时                                               |
@@ -208,7 +214,7 @@ sudo bash scripts/init/init-env.sh
 | 种子配置   | `custom_config/full.config`                 | `custom_config/<config_name>.config` |
 | 上游分支   | `v25.12.2`                                  | `v25.12.2`                           |
 | feeds 备份 | 启用（`BAK_ENABLED=1`，目录 `custom_bak/`） | 未启用                               |
-| ccache     | 启用（`.config` 中 `CONFIG_CCACHE`，目录 `$HOME/ccache`） | 不使用（每轮重建工具链，缓存命中极低） |
+| ccache（编译缓存） | 启用（`build-common.sh` 自动追加 `CONFIG_DEVEL=y` / `CONFIG_CCACHE=y` / `CONFIG_CCACHE_DIR="$HOME/ccache"`） | 不使用（每轮重建工具链，缓存命中极低） |
 | 日志重定向 | 关闭（`LOG_REDIRECTION_ENABLE=0`）          | 关闭（工作流中注释，默认 0）         |
 
 如需切换配置，编辑 [scripts/build/set-env.sh](./scripts/build/set-env.sh) 中的 `CUSTOM_CONFIG` 变量（如改为 `custom_config/minimal.config` 或 `custom_config/standard.config`）。其他环境变量（IP、分区大小、PPPoE 凭据等）也可直接在该文件调整。
@@ -273,7 +279,7 @@ CI runner 默认磁盘空间有限，工作流已通过 `jlumbroso/free-disk-spa
 `apply_custom_settings.sh` 检测到 `.config` 中选中 `luci-app-openclash` 后，会从 [OpenClash](https://github.com/vernesong/OpenClash) 仓库下载 `clash_meta` 核心（默认 `v2` 版本，可通过 `OPENCLASH_CORE_VERSION` 环境变量覆盖），并从 [v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat) 下载 GeoIP / GeoSite 数据，预置到固件中。
 
 **Q8：如何切换 CI 启用的种子配置？**
-编辑 [.github/workflows/Build-OpenWrt-25-x86-64.yml](.github/workflows/Build-OpenWrt-25-x86-64.yml) 中 `strategy.matrix.config_name`，取消目标配置行的注释（同时注释掉其他配置）。当前仅 `minimal` 未被注释。
+触发工作流时在 `config_name` 输入中选择档位即可（默认 `minimal`）。如需新增档位，同步修改 [.github/workflows/Build-OpenWrt-25-x86-64.yml](.github/workflows/Build-OpenWrt-25-x86-64.yml) 中该输入的 `options` 列表，并在 `target/x86-64/custom_config/` 下添加同名 `.config`。
 
 **Q9：`scripts/include/yh.config` 是什么？**
 一份参考配置片段，演示了关闭内核调试项、启用 zram 内存压缩、切换为体积优化模式、精简 Ruby 等常用优化。**当前未被任何脚本自动引用**，可手动合并到 `custom_config/*.config` 中使用。
