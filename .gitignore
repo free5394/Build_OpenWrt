@@ -33,3 +33,5 @@ upload/
 .worktrees/
 
 .scratch/
+.agents/
+.agent-teams/
