@@ -230,6 +230,44 @@ install_feeds() {
     return 0
 }
 
+# ==============================================================================
+# 子函数 4: 规范化 smartdns 版本号
+# 说明: kenzok8 feed 提供的 smartdns 版本号为 48.5-RC1，
+#       OpenWrt 25.12 起改用 apk 包格式，version 字段不接受 “-RC1” 后缀
+#       （-r 之后只能跟数字），会导致打包报 package version is invalid。
+#       此处保留 RC1 源码，仅把版本标识改写为合法的 48.5_rc1。
+# ==============================================================================
+fix_smartdns_version() {
+    _smartdns_dir=$(find feeds -mindepth 1 -maxdepth 3 -type d -name smartdns -print -quit 2>/dev/null)
+    _smartdns_mk=""
+    if [ -n "$_smartdns_dir" ]; then
+        _smartdns_mk="$_smartdns_dir/Makefile"
+    fi
+
+    if [ ! -f "$_smartdns_mk" ]; then
+        log_warn "未找到 smartdns Makefile，跳过版本号规范化。"
+        return 0
+    fi
+
+    if ! grep -q '^PKG_VERSION:=48\.5-RC1$' "$_smartdns_mk"; then
+        log_info "smartdns 版本号无需规范化，跳过。"
+        return 0
+    fi
+
+    log_info "规范化 smartdns 版本号: 48.5-RC1 -> 48.5_rc1"
+    sed -i \
+        -e 's|^PKG_VERSION:=.*|PKG_VERSION:=48.5_rc1|' \
+        -e 's|^PKG_SOURCE_URL:=.*|PKG_SOURCE_URL:=https://codeload.github.com/pymumu/smartdns/tar.gz/Release48.5-RC1?|' \
+        -e 's|^PKG_BUILD_DIR:=.*|PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-Release48.5-RC1|' \
+        "$_smartdns_mk"
+
+    if ! grep -q '^PKG_VERSION:=48\.5_rc1$' "$_smartdns_mk"; then
+        log_error "smartdns 版本号规范化失败: %s" "$_smartdns_mk"
+        return 2
+    fi
+    return 0
+}
+
 # 更新package
 update_package() {
     community_dir="package/community"
@@ -243,6 +281,10 @@ update_package() {
     log_info "覆盖原始package目录"
     update_matching_dirs "$community_dir/kenzo" "feeds"
     update_matching_dirs "$community_dir/small" "feeds"
+
+    # smartdns 版本号规范化，避免 apk 打包报 package version is invalid
+    log_info "修正 smartdns 版本号以适配 apk 包格式"
+    fix_smartdns_version
 
     clone_repo "https://github.com/timsaya/luci-app-bandix-plus" "$community_dir/luci-app-bandix-plus"
     clone_repo "https://github.com/timsaya/openwrt-bandix-plus" "$community_dir/openwrt-bandix-plus"
